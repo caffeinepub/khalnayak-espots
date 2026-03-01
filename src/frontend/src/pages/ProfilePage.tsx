@@ -5,6 +5,7 @@ import { useGetCallerUserProfile, useGetCallerStats, useGetCallerTeamRegistratio
 import { formatCurrency, getTournamentStatusLabel, formatDateTime } from "@/utils/format";
 import { User, Trophy, DollarSign, Calendar } from "lucide-react";
 import { Link } from "@tanstack/react-router";
+import { MyReportsSection } from "@/components/MyReportsSection";
 
 export function ProfilePage() {
   const { data: profile, isLoading: profileLoading } = useGetCallerUserProfile();
@@ -112,6 +113,9 @@ export function ProfilePage() {
           </Tabs>
         </CardContent>
       </Card>
+
+      {/* My Reports Section */}
+      <MyReportsSection />
     </div>
   );
 }

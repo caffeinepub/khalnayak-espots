@@ -5,6 +5,7 @@ import { Toaster } from "./components/ui/sonner";
 import { Header } from "./components/Header";
 import { Footer } from "./components/Footer";
 import { NotificationPoller } from "./components/NotificationPoller";
+import { BanNotification } from "./components/BanNotification";
 import { HomePage } from "./pages/HomePage";
 import { TournamentsPage } from "./pages/TournamentsPage";
 import { TournamentDetailPage } from "./pages/TournamentDetailPage";
@@ -111,6 +112,7 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <InternetIdentityProvider>
+        <BanNotification />
         <NotificationPoller />
         <RouterProvider router={router} />
         <Toaster position="top-right" richColors />

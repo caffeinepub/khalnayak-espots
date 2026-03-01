@@ -350,13 +350,22 @@ export function useRegisterTeam() {
       substitutes: Player[] | null;
     }) => {
       if (!actor) throw new Error("Actor not initialized");
-      return actor.registerTeam(tournamentId, teamName, members, substitutes);
+      console.log("Registering team:", { tournamentId, teamName, members, substitutes });
+      const result = await actor.registerTeam(tournamentId, teamName, members, substitutes);
+      console.log("Registration successful, team ID:", result);
+      return result;
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
+      // Invalidate all relevant queries to update UI
       queryClient.invalidateQueries({ queryKey: ["callerTeamRegistrations"] });
       queryClient.invalidateQueries({ queryKey: ["callerWallet"] });
       queryClient.invalidateQueries({ queryKey: ["teamRegistrations"] });
       queryClient.invalidateQueries({ queryKey: ["teams"] });
+      queryClient.invalidateQueries({ queryKey: ["tournaments"] });
+      queryClient.invalidateQueries({ queryKey: ["tournament", variables.tournamentId.toString()] });
+    },
+    onError: (error) => {
+      console.error("Registration error:", error);
     },
   });
 }

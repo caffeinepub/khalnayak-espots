@@ -3,19 +3,24 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useGetTournaments, useGetPlatformStats } from "@/hooks/useQueries";
+import { useGetTournaments, useGetPlatformStats, useIsCallerAdmin } from "@/hooks/useQueries";
 import { CountdownTimer } from "@/components/CountdownTimer";
 import { formatCurrency, getTournamentTypeLabel, getTournamentStatusLabel } from "@/utils/format";
-import { Trophy, Users, DollarSign, Calendar, ArrowRight } from "lucide-react";
+import { Trophy, Users, DollarSign, Calendar, ArrowRight, ShieldAlert, Ban } from "lucide-react";
 import { useInternetIdentity } from "@/hooks/useInternetIdentity";
+import { mockReports, mockBans } from "@/data/mockAntiCheat";
 
 export function HomePage() {
   const { identity, login } = useInternetIdentity();
   const { data: tournaments, isLoading: tournamentsLoading } = useGetTournaments();
   const { data: stats, isLoading: statsLoading } = useGetPlatformStats();
+  const { data: isAdmin } = useIsCallerAdmin();
 
   const upcomingTournaments = tournaments?.filter((t) => t.status === "upcoming").slice(0, 3) || [];
   const ongoingTournaments = tournaments?.filter((t) => t.status === "ongoing").slice(0, 3) || [];
+  
+  const pendingReports = mockReports.filter((r) => r.status === "pending").length;
+  const activeBans = mockBans.filter((b) => b.active).length;
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -109,6 +114,52 @@ export function HomePage() {
           )}
         </div>
       </section>
+
+      {/* Admin Anti-Cheat Stats (Only visible to admins) */}
+      {isAdmin && (
+        <section className="py-8 bg-destructive/5 border-y border-destructive/20">
+          <div className="container">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-2xl font-bold font-display flex items-center gap-2">
+                <ShieldAlert className="h-6 w-6 text-destructive" />
+                Anti-Cheat Dashboard
+              </h3>
+              <Button asChild variant="outline" size="sm">
+                <Link to="/admin" search={{ tab: "anticheat" }}>
+                  View All Reports
+                </Link>
+              </Button>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Card className="border-yellow-500/30">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <ShieldAlert className="h-4 w-4 text-yellow-500" />
+                    Pending Reports
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-3xl font-bold font-display text-yellow-500">{pendingReports}</p>
+                  <p className="text-xs text-muted-foreground mt-1">Requires immediate review</p>
+                </CardContent>
+              </Card>
+
+              <Card className="border-destructive/30">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <Ban className="h-4 w-4 text-destructive" />
+                    Active Bans
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-3xl font-bold font-display text-destructive">{activeBans}</p>
+                  <p className="text-xs text-muted-foreground mt-1">Currently banned players</p>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Ongoing Tournaments */}
       {ongoingTournaments.length > 0 && (

@@ -31,11 +31,13 @@ import {
   useGetTeams,
 } from "@/hooks/useQueries";
 import { formatCurrency, formatDateTime, getTournamentTypeLabel, getTournamentStatusLabel } from "@/utils/format";
-import { Shield, Users, Trophy, DollarSign, Plus, Check, X, Ban } from "lucide-react";
+import { Shield, Users, Trophy, DollarSign, Plus, Check, X, Ban, ShieldAlert } from "lucide-react";
 import { toast } from "sonner";
 import { Navigate } from "@tanstack/react-router";
 import type { TournamentType, TournamentStatus } from "@/backend";
 import { Principal } from "@icp-sdk/core/principal";
+import { AdminReportsTab } from "@/components/AdminReportsTab";
+import { mockReports } from "@/data/mockAntiCheat";
 
 export function AdminPage() {
   const { data: isAdmin, isLoading } = useIsCallerAdmin();
@@ -63,7 +65,7 @@ export function AdminPage() {
       </div>
 
       <Tabs defaultValue="overview" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2 lg:grid-cols-7">
+        <TabsList className="grid w-full grid-cols-2 lg:grid-cols-8">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="tournaments">Tournaments</TabsTrigger>
           <TabsTrigger value="registrations">Registrations</TabsTrigger>
@@ -71,6 +73,15 @@ export function AdminPage() {
           <TabsTrigger value="deposits">Deposits</TabsTrigger>
           <TabsTrigger value="withdrawals">Withdrawals</TabsTrigger>
           <TabsTrigger value="users">Users</TabsTrigger>
+          <TabsTrigger value="anticheat" className="relative">
+            <ShieldAlert className="h-4 w-4 mr-2" />
+            Anti-Cheat
+            {mockReports.filter((r) => r.status === "pending").length > 0 && (
+              <span className="absolute -top-1 -right-1 h-5 w-5 bg-destructive rounded-full text-xs flex items-center justify-center">
+                {mockReports.filter((r) => r.status === "pending").length}
+              </span>
+            )}
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview">
@@ -99,6 +110,10 @@ export function AdminPage() {
 
         <TabsContent value="users">
           <UsersTab />
+        </TabsContent>
+
+        <TabsContent value="anticheat">
+          <AdminReportsTab />
         </TabsContent>
       </Tabs>
     </div>

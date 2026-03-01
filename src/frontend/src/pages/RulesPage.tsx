@@ -182,20 +182,56 @@ export function RulesPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Shield className="h-5 w-5" />
-            Code of Conduct & Fair Play
+            Anti-Cheat Policy & Code of Conduct
           </CardTitle>
+          <CardDescription>Zero tolerance for cheating and unfair practices</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div>
-            <h3 className="font-semibold text-lg mb-2 flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-destructive" />
-              Anti-Cheat Policy
+          <div className="p-4 bg-destructive/10 border border-destructive/30 rounded-lg">
+            <h3 className="font-semibold text-lg mb-2 flex items-center gap-2 text-destructive">
+              <AlertTriangle className="h-5 w-5" />
+              Hackers will be banned permanently with NO REFUND
             </h3>
+            <p className="text-sm text-muted-foreground">
+              We take fair play extremely seriously. Any use of hacks, mods, or cheating tools will result in immediate
+              and permanent account suspension.
+            </p>
+          </div>
+
+          <div>
+            <h3 className="font-semibold mb-2">Prohibited Activities</h3>
             <ul className="list-disc list-inside space-y-1 text-muted-foreground">
-              <li><span className="text-destructive font-semibold">Zero tolerance</span> for hackers and cheaters</li>
-              <li>Use of any third-party tools or mods is strictly prohibited</li>
-              <li>Caught cheating = <span className="text-destructive font-semibold">Permanent ban</span></li>
-              <li>All winnings will be forfeited</li>
+              <li><span className="font-semibold text-destructive">Aimbot / Headshot Hack</span> - Automated or assisted aiming</li>
+              <li><span className="font-semibold text-destructive">Wallhack / ESP</span> - Seeing players through walls or obstacles</li>
+              <li><span className="font-semibold text-destructive">Speed Hack</span> - Moving faster than normal game speed</li>
+              <li><span className="font-semibold text-destructive">Mod Menu</span> - Any third-party modification tools</li>
+              <li><span className="font-semibold text-destructive">Auto-clickers, macros, or scripts</span> - Automated actions</li>
+              <li><span className="font-semibold text-destructive">Account sharing during tournaments</span> - Only registered players can play</li>
+            </ul>
+          </div>
+
+          <div>
+            <h3 className="font-semibold mb-2">How to Report Suspicious Players</h3>
+            <ol className="list-decimal list-inside space-y-1 text-sm text-muted-foreground">
+              <li>After the tournament, click the "Report Player" button on the leaderboard</li>
+              <li>Provide the suspect's name and Free Fire ID</li>
+              <li>Select the type of violation you observed</li>
+              <li>Add a detailed description (optional but helpful)</li>
+              <li>Submit the report - our admin team will investigate</li>
+            </ol>
+            <p className="text-xs text-muted-foreground mt-2 italic">
+              All reports are reviewed confidentially. Your identity remains anonymous.
+            </p>
+          </div>
+
+          <div>
+            <h3 className="font-semibold mb-2">Consequences for Cheating</h3>
+            <ul className="list-disc list-inside space-y-1 text-muted-foreground">
+              <li>First offense: <span className="text-destructive font-semibold">Permanent ban</span></li>
+              <li>All winnings and prizes forfeited</li>
+              <li>Entry fees are <span className="font-semibold">non-refundable</span></li>
+              <li>Team disqualification from current and future tournaments</li>
+              <li>Name and ID added to public ban list</li>
             </ul>
           </div>
 

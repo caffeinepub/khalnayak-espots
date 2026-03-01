@@ -13,9 +13,11 @@ import { useGetTournamentById, useGetCallerWallet, useRegisterTeam, useGetTeams,
 import { useInternetIdentity } from "@/hooks/useInternetIdentity";
 import { CountdownTimer } from "@/components/CountdownTimer";
 import { formatCurrency, getTournamentTypeLabel, getTournamentStatusLabel } from "@/utils/format";
-import { Calendar, DollarSign, Users, Trophy, Info, Wallet, Shield } from "lucide-react";
+import { Calendar, DollarSign, Users, Trophy, Info, Wallet, Shield, Flag } from "lucide-react";
 import { toast } from "sonner";
 import type { Player } from "@/backend";
+import { ReportPlayerDialog } from "@/components/ReportPlayerDialog";
+import { FairPlayReminder } from "@/components/FairPlayReminder";
 
 export function TournamentDetailPage() {
   const { id } = useParams({ from: "/tournament/$id" });
@@ -26,6 +28,7 @@ export function TournamentDetailPage() {
   const { data: teams } = useGetTeams();
   const { data: registrations } = useGetTeamRegistrations();
   const { data: leaderboard } = useGetLeaderboard(tournamentId, tournament?.status === "ongoing");
+  const [showReportDialog, setShowReportDialog] = useState(false);
 
   const tournamentRegistrations = registrations?.filter((r) => r.tournamentId === tournamentId) || [];
   const registeredTeamIds = new Set(tournamentRegistrations.map((r) => r.teamId));
@@ -230,8 +233,18 @@ export function TournamentDetailPage() {
         <TabsContent value="leaderboard">
           <Card>
             <CardHeader>
-              <CardTitle>Live Leaderboard</CardTitle>
-              <CardDescription>Rankings update in real-time during the tournament</CardDescription>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>Live Leaderboard</CardTitle>
+                  <CardDescription>Rankings update in real-time during the tournament</CardDescription>
+                </div>
+                {tournament?.status === "completed" && identity && (
+                  <Button variant="outline" size="sm" onClick={() => setShowReportDialog(true)}>
+                    <Flag className="mr-2 h-4 w-4" />
+                    Report Player
+                  </Button>
+                )}
+              </div>
             </CardHeader>
             <CardContent>
               {leaderboard && leaderboard.length > 0 ? (
@@ -297,6 +310,23 @@ export function TournamentDetailPage() {
           </CardContent>
         </Card>
       )}
+      
+      {/* Report Player Dialog */}
+      <ReportPlayerDialog
+        open={showReportDialog}
+        onOpenChange={setShowReportDialog}
+        tournamentId={id}
+        tournamentName={tournament?.name}
+      />
+
+      {/* Fair Play Reminder (shows after tournament completion) */}
+      {tournament?.status === "completed" && identity && isUserRegistered && (
+        <FairPlayReminder
+          tournamentId={id}
+          tournamentName={tournament.name}
+          onReportClick={() => setShowReportDialog(true)}
+        />
+      )}
     </div>
   );
 }
@@ -328,17 +358,54 @@ function RegistrationDialog({ tournament, walletBalance }: { tournament: any; wa
 
     try {
       const substitutes = includeSubstitute && hasSubstituteData ? [substitute] : null;
-      await registerMutation.mutateAsync({
+      
+      console.log("Submitting registration:", {
         tournamentId: tournament.id,
         teamName,
         members: players,
         substitutes,
       });
-      toast.success("Registration successful! Your team has been registered.");
+      
+      const teamId = await registerMutation.mutateAsync({
+        tournamentId: tournament.id,
+        teamName,
+        members: players,
+        substitutes,
+      });
+
+      console.log("Registration successful! Team ID:", teamId);
+      
+      toast.success("Registration Successful!", {
+        description: `Your team "${teamName}" has been registered for the tournament.`,
+      });
+      
       setOpen(false);
-      navigate({ to: "/profile" });
+      
+      // Small delay to let the toast show before navigation
+      setTimeout(() => {
+        navigate({ to: "/profile" });
+      }, 500);
     } catch (error: any) {
-      toast.error(error?.message || "Registration failed. Please try again.");
+      console.error("Registration error:", error);
+      
+      // Extract meaningful error message
+      let errorMessage = "Registration failed. Please try again.";
+      
+      if (error?.message) {
+        if (error.message.includes("Insufficient balance")) {
+          errorMessage = "Insufficient wallet balance. Please add money to your wallet.";
+        } else if (error.message.includes("already registered")) {
+          errorMessage = "You are already registered for this tournament.";
+        } else if (error.message.includes("full")) {
+          errorMessage = "This tournament is full. Registration is closed.";
+        } else {
+          errorMessage = error.message;
+        }
+      }
+      
+      toast.error("Registration Failed", {
+        description: errorMessage,
+      });
     }
   };
 
