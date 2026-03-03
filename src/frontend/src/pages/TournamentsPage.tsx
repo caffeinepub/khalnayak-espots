@@ -1,26 +1,45 @@
-import { useState } from "react";
-import { Link } from "@tanstack/react-router";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useGetTournaments } from "@/hooks/useQueries";
-import { CountdownTimer } from "@/components/CountdownTimer";
-import { formatCurrency, getTournamentTypeLabel, getTournamentStatusLabel } from "@/utils/format";
-import { Calendar, Users } from "lucide-react";
 import type { Tournament } from "@/backend";
+import { CountdownTimer } from "@/components/CountdownTimer";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useGetTournaments } from "@/hooks/useQueries";
+import {
+  formatCurrency,
+  getTournamentPlayerInfo,
+  getTournamentStatusLabel,
+  getTournamentTypeLabel,
+} from "@/utils/format";
+import { Link } from "@tanstack/react-router";
+import { Calendar, Users } from "lucide-react";
+import { useState } from "react";
 
 export function TournamentsPage() {
   const { data: tournaments, isLoading } = useGetTournaments();
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
 
-  const filteredTournaments = tournaments?.filter((t) => {
-    const matchesType = typeFilter === "all" || t.tournamentType === typeFilter;
-    const matchesStatus = statusFilter === "all" || t.status === statusFilter;
-    return matchesType && matchesStatus;
-  }) || [];
+  const filteredTournaments =
+    tournaments?.filter((t) => {
+      const matchesType =
+        typeFilter === "all" || t.tournamentType === typeFilter;
+      const matchesStatus = statusFilter === "all" || t.status === statusFilter;
+      return matchesType && matchesStatus;
+    }) || [];
 
   const getTournamentStatusColor = (status: string) => {
     switch (status) {
@@ -39,8 +58,12 @@ export function TournamentsPage() {
     <div className="container py-12 space-y-8">
       {/* Header */}
       <div>
-        <h1 className="text-4xl font-bold font-display mb-2">All Tournaments</h1>
-        <p className="text-muted-foreground">Browse and register for Free Fire tournaments</p>
+        <h1 className="text-4xl font-bold font-display mb-2">
+          All Tournaments
+        </h1>
+        <p className="text-muted-foreground">
+          Browse and register for Free Fire tournaments
+        </p>
       </div>
 
       {/* Filters */}
@@ -64,12 +87,15 @@ export function TournamentsPage() {
           <SelectContent>
             <SelectItem value="all">All Types</SelectItem>
             <SelectItem value="battleground">Battle Ground</SelectItem>
-            <SelectItem value="custom4v4">4v4 Custom</SelectItem>
+            <SelectItem value="custom4v4">4vs4 Custom</SelectItem>
+            <SelectItem value="custom1v1">1vs1 Custom</SelectItem>
+            <SelectItem value="custom2v2">2vs2 Custom</SelectItem>
           </SelectContent>
         </Select>
 
         <div className="ml-auto text-sm text-muted-foreground flex items-center">
-          {filteredTournaments.length} tournament{filteredTournaments.length !== 1 ? "s" : ""} found
+          {filteredTournaments.length} tournament
+          {filteredTournaments.length !== 1 ? "s" : ""} found
         </div>
       </div>
 
@@ -83,7 +109,11 @@ export function TournamentsPage() {
       ) : filteredTournaments.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredTournaments.map((tournament) => (
-            <TournamentCard key={tournament.id.toString()} tournament={tournament} statusColor={getTournamentStatusColor(tournament.status)} />
+            <TournamentCard
+              key={tournament.id.toString()}
+              tournament={tournament}
+              statusColor={getTournamentStatusColor(tournament.status)}
+            />
           ))}
         </div>
       ) : (
@@ -97,20 +127,29 @@ export function TournamentsPage() {
   );
 }
 
-function TournamentCard({ tournament, statusColor }: { tournament: Tournament; statusColor: string }) {
+function TournamentCard({
+  tournament,
+  statusColor,
+}: { tournament: Tournament; statusColor: string }) {
   const isUpcoming = tournament.status === "upcoming";
   const isOngoing = tournament.status === "ongoing";
 
   return (
-    <Card className={`border-primary/30 hover:border-primary/50 transition-all hover:shadow-glow ${isOngoing ? "border-destructive/50" : ""}`}>
+    <Card
+      className={`border-primary/30 hover:border-primary/50 transition-all hover:shadow-glow ${isOngoing ? "border-destructive/50" : ""}`}
+    >
       <CardHeader>
         <div className="flex items-start justify-between mb-2">
-          <Badge className={statusColor}>{getTournamentStatusLabel(tournament.status)}</Badge>
-          <Badge variant="outline">{getTournamentTypeLabel(tournament.tournamentType)}</Badge>
+          <Badge className={statusColor}>
+            {getTournamentStatusLabel(tournament.status)}
+          </Badge>
+          <Badge variant="outline">
+            {getTournamentTypeLabel(tournament.tournamentType)}
+          </Badge>
         </div>
         <CardTitle className="text-xl">{tournament.name}</CardTitle>
         <CardDescription>
-          {tournament.tournamentType === "battleground" ? "48 Players, 12 Teams" : "4 vs 4 Team Match"}
+          {getTournamentPlayerInfo(tournament.tournamentType).description}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -133,23 +172,37 @@ function TournamentCard({ tournament, statusColor }: { tournament: Tournament; s
         <div className="space-y-2 border-t border-border pt-3">
           <div className="flex justify-between text-sm">
             <span className="text-muted-foreground">Entry Fee</span>
-            <span className="font-semibold">{formatCurrency(tournament.entryFee)}</span>
+            <span className="font-semibold">
+              {formatCurrency(tournament.entryFee)}
+            </span>
           </div>
           <div className="flex justify-between text-sm">
             <span className="text-muted-foreground">Prize Pool</span>
-            <span className="font-semibold text-primary">{formatCurrency(tournament.prizePool)}</span>
+            <span className="font-semibold text-primary">
+              {formatCurrency(tournament.prizePool)}
+            </span>
           </div>
           <div className="flex justify-between text-sm">
             <span className="text-muted-foreground flex items-center gap-1">
               <Users className="h-3 w-3" /> Slots
             </span>
-            <span className="font-semibold">{tournament.maxTeams.toString()} teams</span>
+            <span className="font-semibold">
+              {tournament.maxTeams.toString()} teams
+            </span>
           </div>
         </div>
 
-        <Button asChild className="w-full" variant={isOngoing ? "default" : isUpcoming ? "default" : "outline"}>
+        <Button
+          asChild
+          className="w-full"
+          variant={isOngoing ? "default" : isUpcoming ? "default" : "outline"}
+        >
           <Link to="/tournament/$id" params={{ id: tournament.id.toString() }}>
-            {isOngoing ? "View Live" : isUpcoming ? "Register Now" : "View Details"}
+            {isOngoing
+              ? "View Live"
+              : isUpcoming
+                ? "Register Now"
+                : "View Details"}
           </Link>
         </Button>
       </CardContent>

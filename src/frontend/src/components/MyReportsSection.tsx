@@ -1,20 +1,32 @@
-import { useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Flag, Eye } from "lucide-react";
-import { mockReports, getReportReasonLabel, getReportStatusVariant } from "@/data/mockAntiCheat";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  getReportReasonLabel,
+  getReportStatusVariant,
+  mockReports,
+} from "@/data/mockAntiCheat";
 import { formatDateTime } from "@/utils/format";
+import { Eye, Flag } from "lucide-react";
+import { useState } from "react";
 
 export function MyReportsSection() {
   // TODO: Get current user ID from auth context
   const currentUserId = "user-001"; // Mock current user
-  
+
   // Filter reports by current user
   const myReports = mockReports.filter((r) => r.reporterId === currentUserId);
 
   // Also check localStorage for user-submitted reports
-  const localReports = JSON.parse(localStorage.getItem("playerReports") || "[]");
+  const localReports = JSON.parse(
+    localStorage.getItem("playerReports") || "[]",
+  );
 
   const allReports = [...myReports, ...localReports];
 
@@ -26,13 +38,18 @@ export function MyReportsSection() {
             <Flag className="h-5 w-5" />
             My Reports
           </CardTitle>
-          <CardDescription>Reports you've submitted to help maintain fair play</CardDescription>
+          <CardDescription>
+            Reports you've submitted to help maintain fair play
+          </CardDescription>
         </CardHeader>
         <CardContent className="py-12 text-center">
           <Flag className="h-12 w-12 text-muted-foreground mx-auto mb-3 opacity-50" />
-          <p className="text-muted-foreground">You haven't submitted any reports</p>
+          <p className="text-muted-foreground">
+            You haven't submitted any reports
+          </p>
           <p className="text-sm text-muted-foreground mt-2">
-            If you witness suspicious behavior in tournaments, you can report players
+            If you witness suspicious behavior in tournaments, you can report
+            players
           </p>
         </CardContent>
       </Card>
@@ -76,17 +93,24 @@ function ReportItem({ report }: { report: any }) {
       <div className="flex items-start justify-between gap-4">
         <div className="flex-1 space-y-2">
           <div className="flex items-center gap-2 flex-wrap">
-            <Badge variant={getReportStatusVariant(report.status)} className={statusColors[report.status]}>
+            <Badge
+              variant={getReportStatusVariant(report.status)}
+              className={statusColors[report.status]}
+            >
               {report.status.toUpperCase()}
             </Badge>
-            <Badge variant="outline">{getReportReasonLabel(report.reason)}</Badge>
+            <Badge variant="outline">
+              {getReportReasonLabel(report.reason)}
+            </Badge>
           </div>
 
           <div className="space-y-1 text-sm">
             <div>
               <span className="text-muted-foreground">Reported Player:</span>{" "}
               <span className="font-semibold">{report.suspectName}</span>
-              <span className="text-muted-foreground ml-1 text-xs">({report.suspectFreeFireId})</span>
+              <span className="text-muted-foreground ml-1 text-xs">
+                ({report.suspectFreeFireId})
+              </span>
             </div>
             <div>
               <span className="text-muted-foreground">Tournament:</span>{" "}
@@ -94,14 +118,18 @@ function ReportItem({ report }: { report: any }) {
             </div>
             <div>
               <span className="text-muted-foreground">Date:</span>{" "}
-              <span className="font-medium">{formatDateTime(BigInt(report.timestamp))}</span>
+              <span className="font-medium">
+                {formatDateTime(BigInt(report.timestamp))}
+              </span>
             </div>
           </div>
 
           {showDetails && report.description && (
             <div className="p-3 bg-muted rounded-lg text-sm mt-2">
               <p className="font-semibold mb-1">Your Report:</p>
-              <p className="text-muted-foreground italic">"{report.description}"</p>
+              <p className="text-muted-foreground italic">
+                "{report.description}"
+              </p>
             </div>
           )}
 
@@ -131,17 +159,20 @@ function ReportItem({ report }: { report: any }) {
       )}
       {report.status === "investigating" && (
         <div className="mt-3 p-2 bg-orange-500/10 border border-orange-500/20 rounded text-xs text-muted-foreground">
-          Our team is actively investigating this report. Thank you for your patience.
+          Our team is actively investigating this report. Thank you for your
+          patience.
         </div>
       )}
       {report.status === "banned" && (
         <div className="mt-3 p-2 bg-destructive/10 border border-destructive/20 rounded text-xs text-muted-foreground">
-          ✓ Action taken: Player has been banned. Thank you for helping maintain fair play!
+          ✓ Action taken: Player has been banned. Thank you for helping maintain
+          fair play!
         </div>
       )}
       {report.status === "cleared" && (
         <div className="mt-3 p-2 bg-success/10 border border-success/20 rounded text-xs text-muted-foreground">
-          Report reviewed and cleared. No violation found or insufficient evidence.
+          Report reviewed and cleared. No violation found or insufficient
+          evidence.
         </div>
       )}
     </div>

@@ -1,4 +1,4 @@
- 
+/* eslint-disable */
 
 // @ts-nocheck
 
@@ -169,6 +169,10 @@ export interface _SERVICE {
     }
   >,
   'getPrizeDistributions' : ActorMethod<[], Array<PrizeDistribution>>,
+  'getRegistrationsByTournament' : ActorMethod<
+    [bigint],
+    Array<TeamRegistration>
+  >,
   'getTeamRegistrations' : ActorMethod<[], Array<TeamRegistration>>,
   'getTeams' : ActorMethod<[], Array<Team>>,
   'getTournamentById' : ActorMethod<[bigint], [] | [Tournament]>,
@@ -191,6 +195,7 @@ export interface _SERVICE {
     [bigint, string, Array<Player>, [] | [Array<Player>]],
     bigint
   >,
+  'rejectDeposit' : ActorMethod<[bigint], undefined>,
   'rejectTeamRegistration' : ActorMethod<[bigint], undefined>,
   'rejectWithdrawal' : ActorMethod<[bigint], undefined>,
   'saveCallerUserProfile' : ActorMethod<[UserProfile], undefined>,

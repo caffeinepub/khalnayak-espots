@@ -253,6 +253,7 @@ export interface backendInterface {
         totalTournaments: bigint;
     }>;
     getPrizeDistributions(): Promise<Array<PrizeDistribution>>;
+    getRegistrationsByTournament(tournamentId: bigint): Promise<Array<TeamRegistration>>;
     getTeamRegistrations(): Promise<Array<TeamRegistration>>;
     getTeams(): Promise<Array<Team>>;
     getTournamentById(tournamentId: bigint): Promise<Tournament | null>;
@@ -272,6 +273,7 @@ export interface backendInterface {
     isCallerAdmin(): Promise<boolean>;
     markNotificationAsRead(notificationId: bigint): Promise<void>;
     registerTeam(tournamentId: bigint, teamName: string, members: Array<Player>, substitutes: Array<Player> | null): Promise<bigint>;
+    rejectDeposit(depositId: bigint): Promise<void>;
     rejectTeamRegistration(registrationId: bigint): Promise<void>;
     rejectWithdrawal(withdrawalId: bigint): Promise<void>;
     saveCallerUserProfile(profile: UserProfile): Promise<void>;
@@ -656,6 +658,20 @@ export class Backend implements backendInterface {
             return result;
         }
     }
+    async getRegistrationsByTournament(arg0: bigint): Promise<Array<TeamRegistration>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getRegistrationsByTournament(arg0);
+                return from_candid_vec_n25(this._uploadFile, this._downloadFile, result);
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getRegistrationsByTournament(arg0);
+            return from_candid_vec_n25(this._uploadFile, this._downloadFile, result);
+        }
+    }
     async getTeamRegistrations(): Promise<Array<TeamRegistration>> {
         if (this.processError) {
             try {
@@ -880,6 +896,20 @@ export class Backend implements backendInterface {
             }
         } else {
             const result = await this.actor.registerTeam(arg0, arg1, arg2, to_candid_opt_n53(this._uploadFile, this._downloadFile, arg3));
+            return result;
+        }
+    }
+    async rejectDeposit(arg0: bigint): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.rejectDeposit(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.rejectDeposit(arg0);
             return result;
         }
     }

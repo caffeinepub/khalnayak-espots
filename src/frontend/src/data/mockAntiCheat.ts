@@ -1,8 +1,13 @@
 // Mock data for anti-cheat system until backend is ready
 
-export type ReportReason = 'aimbot' | 'wallhack' | 'speedhack' | 'modmenu' | 'other';
-export type ReportStatus = 'pending' | 'investigating' | 'banned' | 'cleared';
-export type BanDuration = '1day' | '7days' | 'permanent';
+export type ReportReason =
+  | "aimbot"
+  | "wallhack"
+  | "speedhack"
+  | "modmenu"
+  | "other";
+export type ReportStatus = "pending" | "investigating" | "banned" | "cleared";
+export type BanDuration = "1day" | "7days" | "permanent";
 
 export interface Report {
   id: string;
@@ -66,7 +71,8 @@ export const mockReports: Report[] = [
     tournamentId: "1",
     tournamentName: "Friday Night Showdown",
     reason: "aimbot",
-    description: "Perfect headshots every time, unnatural aim tracking through walls",
+    description:
+      "Perfect headshots every time, unnatural aim tracking through walls",
     timestamp: Date.now() - 1000 * 60 * 30, // 30 mins ago
     status: "pending",
   },
@@ -279,16 +285,76 @@ export const mockPlayerStats: { [userId: string]: PlayerStats } = {
     reportsAgainst: 3,
     banHistory: 1,
     matchHistory: [
-      { tournamentName: "Friday Night Showdown", kills: 18, placement: 1, points: 30, date: Date.now() - 1000 * 60 * 60 },
-      { tournamentName: "Weekend Warriors", kills: 15, placement: 2, points: 24, date: Date.now() - 1000 * 60 * 60 * 24 * 2 },
-      { tournamentName: "Sunday Legends Cup", kills: 14, placement: 1, points: 26, date: Date.now() - 1000 * 60 * 60 * 24 * 5 },
-      { tournamentName: "Midnight Battle", kills: 16, placement: 3, points: 24, date: Date.now() - 1000 * 60 * 60 * 24 * 7 },
-      { tournamentName: "Friday Night Showdown", kills: 13, placement: 4, points: 20, date: Date.now() - 1000 * 60 * 60 * 24 * 10 },
-      { tournamentName: "Weekend Warriors", kills: 12, placement: 5, points: 18, date: Date.now() - 1000 * 60 * 60 * 24 * 12 },
-      { tournamentName: "Sunday Legends Cup", kills: 11, placement: 2, points: 20, date: Date.now() - 1000 * 60 * 60 * 24 * 15 },
-      { tournamentName: "Midnight Battle", kills: 10, placement: 1, points: 22, date: Date.now() - 1000 * 60 * 60 * 24 * 20 },
-      { tournamentName: "Friday Night Showdown", kills: 9, placement: 3, points: 17, date: Date.now() - 1000 * 60 * 60 * 24 * 25 },
-      { tournamentName: "Weekend Warriors", kills: 8, placement: 6, points: 13, date: Date.now() - 1000 * 60 * 60 * 24 * 30 },
+      {
+        tournamentName: "Friday Night Showdown",
+        kills: 18,
+        placement: 1,
+        points: 30,
+        date: Date.now() - 1000 * 60 * 60,
+      },
+      {
+        tournamentName: "Weekend Warriors",
+        kills: 15,
+        placement: 2,
+        points: 24,
+        date: Date.now() - 1000 * 60 * 60 * 24 * 2,
+      },
+      {
+        tournamentName: "Sunday Legends Cup",
+        kills: 14,
+        placement: 1,
+        points: 26,
+        date: Date.now() - 1000 * 60 * 60 * 24 * 5,
+      },
+      {
+        tournamentName: "Midnight Battle",
+        kills: 16,
+        placement: 3,
+        points: 24,
+        date: Date.now() - 1000 * 60 * 60 * 24 * 7,
+      },
+      {
+        tournamentName: "Friday Night Showdown",
+        kills: 13,
+        placement: 4,
+        points: 20,
+        date: Date.now() - 1000 * 60 * 60 * 24 * 10,
+      },
+      {
+        tournamentName: "Weekend Warriors",
+        kills: 12,
+        placement: 5,
+        points: 18,
+        date: Date.now() - 1000 * 60 * 60 * 24 * 12,
+      },
+      {
+        tournamentName: "Sunday Legends Cup",
+        kills: 11,
+        placement: 2,
+        points: 20,
+        date: Date.now() - 1000 * 60 * 60 * 24 * 15,
+      },
+      {
+        tournamentName: "Midnight Battle",
+        kills: 10,
+        placement: 1,
+        points: 22,
+        date: Date.now() - 1000 * 60 * 60 * 24 * 20,
+      },
+      {
+        tournamentName: "Friday Night Showdown",
+        kills: 9,
+        placement: 3,
+        points: 17,
+        date: Date.now() - 1000 * 60 * 60 * 24 * 25,
+      },
+      {
+        tournamentName: "Weekend Warriors",
+        kills: 8,
+        placement: 6,
+        points: 13,
+        date: Date.now() - 1000 * 60 * 60 * 24 * 30,
+      },
     ],
   },
   "user-089": {
@@ -303,11 +369,41 @@ export const mockPlayerStats: { [userId: string]: PlayerStats } = {
     reportsAgainst: 1,
     banHistory: 0,
     matchHistory: [
-      { tournamentName: "Sunday Legends Cup", kills: 12, placement: 2, points: 21, date: Date.now() - 1000 * 60 * 60 * 2 },
-      { tournamentName: "Friday Night Showdown", kills: 10, placement: 5, points: 16, date: Date.now() - 1000 * 60 * 60 * 24 * 3 },
-      { tournamentName: "Weekend Warriors", kills: 11, placement: 3, points: 19, date: Date.now() - 1000 * 60 * 60 * 24 * 7 },
-      { tournamentName: "Midnight Battle", kills: 9, placement: 4, points: 16, date: Date.now() - 1000 * 60 * 60 * 24 * 10 },
-      { tournamentName: "Sunday Legends Cup", kills: 8, placement: 7, points: 12, date: Date.now() - 1000 * 60 * 60 * 24 * 12 },
+      {
+        tournamentName: "Sunday Legends Cup",
+        kills: 12,
+        placement: 2,
+        points: 21,
+        date: Date.now() - 1000 * 60 * 60 * 2,
+      },
+      {
+        tournamentName: "Friday Night Showdown",
+        kills: 10,
+        placement: 5,
+        points: 16,
+        date: Date.now() - 1000 * 60 * 60 * 24 * 3,
+      },
+      {
+        tournamentName: "Weekend Warriors",
+        kills: 11,
+        placement: 3,
+        points: 19,
+        date: Date.now() - 1000 * 60 * 60 * 24 * 7,
+      },
+      {
+        tournamentName: "Midnight Battle",
+        kills: 9,
+        placement: 4,
+        points: 16,
+        date: Date.now() - 1000 * 60 * 60 * 24 * 10,
+      },
+      {
+        tournamentName: "Sunday Legends Cup",
+        kills: 8,
+        placement: 7,
+        points: 12,
+        date: Date.now() - 1000 * 60 * 60 * 24 * 12,
+      },
     ],
   },
   "user-156": {
@@ -322,11 +418,41 @@ export const mockPlayerStats: { [userId: string]: PlayerStats } = {
     reportsAgainst: 5,
     banHistory: 1,
     matchHistory: [
-      { tournamentName: "Friday Night Showdown", kills: 22, placement: 1, points: 34, date: Date.now() - 1000 * 60 * 60 * 5 },
-      { tournamentName: "Weekend Warriors", kills: 19, placement: 1, points: 31, date: Date.now() - 1000 * 60 * 60 * 24 },
-      { tournamentName: "Sunday Legends Cup", kills: 21, placement: 1, points: 33, date: Date.now() - 1000 * 60 * 60 * 24 * 2 },
-      { tournamentName: "Midnight Battle", kills: 18, placement: 1, points: 30, date: Date.now() - 1000 * 60 * 60 * 24 * 3 },
-      { tournamentName: "Friday Night Showdown", kills: 20, placement: 1, points: 32, date: Date.now() - 1000 * 60 * 60 * 24 * 5 },
+      {
+        tournamentName: "Friday Night Showdown",
+        kills: 22,
+        placement: 1,
+        points: 34,
+        date: Date.now() - 1000 * 60 * 60 * 5,
+      },
+      {
+        tournamentName: "Weekend Warriors",
+        kills: 19,
+        placement: 1,
+        points: 31,
+        date: Date.now() - 1000 * 60 * 60 * 24,
+      },
+      {
+        tournamentName: "Sunday Legends Cup",
+        kills: 21,
+        placement: 1,
+        points: 33,
+        date: Date.now() - 1000 * 60 * 60 * 24 * 2,
+      },
+      {
+        tournamentName: "Midnight Battle",
+        kills: 18,
+        placement: 1,
+        points: 30,
+        date: Date.now() - 1000 * 60 * 60 * 24 * 3,
+      },
+      {
+        tournamentName: "Friday Night Showdown",
+        kills: 20,
+        placement: 1,
+        points: 32,
+        date: Date.now() - 1000 * 60 * 60 * 24 * 5,
+      },
     ],
   },
   "user-201": {
@@ -341,11 +467,41 @@ export const mockPlayerStats: { [userId: string]: PlayerStats } = {
     reportsAgainst: 1,
     banHistory: 0,
     matchHistory: [
-      { tournamentName: "Weekend Warriors", kills: 7, placement: 8, points: 10, date: Date.now() - 1000 * 60 * 60 * 24 },
-      { tournamentName: "Friday Night Showdown", kills: 5, placement: 12, points: 5, date: Date.now() - 1000 * 60 * 60 * 24 * 5 },
-      { tournamentName: "Sunday Legends Cup", kills: 6, placement: 10, points: 7, date: Date.now() - 1000 * 60 * 60 * 24 * 10 },
-      { tournamentName: "Midnight Battle", kills: 4, placement: 15, points: 4, date: Date.now() - 1000 * 60 * 60 * 24 * 15 },
-      { tournamentName: "Weekend Warriors", kills: 5, placement: 9, points: 7, date: Date.now() - 1000 * 60 * 60 * 24 * 20 },
+      {
+        tournamentName: "Weekend Warriors",
+        kills: 7,
+        placement: 8,
+        points: 10,
+        date: Date.now() - 1000 * 60 * 60 * 24,
+      },
+      {
+        tournamentName: "Friday Night Showdown",
+        kills: 5,
+        placement: 12,
+        points: 5,
+        date: Date.now() - 1000 * 60 * 60 * 24 * 5,
+      },
+      {
+        tournamentName: "Sunday Legends Cup",
+        kills: 6,
+        placement: 10,
+        points: 7,
+        date: Date.now() - 1000 * 60 * 60 * 24 * 10,
+      },
+      {
+        tournamentName: "Midnight Battle",
+        kills: 4,
+        placement: 15,
+        points: 4,
+        date: Date.now() - 1000 * 60 * 60 * 24 * 15,
+      },
+      {
+        tournamentName: "Weekend Warriors",
+        kills: 5,
+        placement: 9,
+        points: 7,
+        date: Date.now() - 1000 * 60 * 60 * 24 * 20,
+      },
     ],
   },
 };
@@ -366,13 +522,13 @@ export function getActiveBans(): Ban[] {
 export function getUserBan(userId: string): Ban | null {
   const ban = mockBans.find((b) => b.playerId === userId && b.active);
   if (!ban) return null;
-  
+
   // Check if ban has expired
   if (ban.expiryDate && ban.expiryDate < Date.now()) {
     ban.active = false;
     return null;
   }
-  
+
   return ban;
 }
 
@@ -399,7 +555,9 @@ export function getReportReasonLabel(reason: ReportReason): string {
 }
 
 // Get report status badge variant
-export function getReportStatusVariant(status: ReportStatus): "default" | "secondary" | "destructive" | "outline" {
+export function getReportStatusVariant(
+  status: ReportStatus,
+): "default" | "secondary" | "destructive" | "outline" {
   switch (status) {
     case "banned":
       return "destructive";
@@ -407,7 +565,6 @@ export function getReportStatusVariant(status: ReportStatus): "default" | "secon
       return "default";
     case "investigating":
       return "secondary";
-    case "pending":
     default:
       return "outline";
   }

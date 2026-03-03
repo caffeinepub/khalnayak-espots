@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
 import { getTimeRemaining } from "@/utils/format";
+import { useEffect, useState } from "react";
 
 interface CountdownTimerProps {
   targetTime: bigint;
@@ -8,7 +8,12 @@ interface CountdownTimerProps {
   compact?: boolean;
 }
 
-export function CountdownTimer({ targetTime, onExpire, className = "", compact = false }: CountdownTimerProps) {
+export function CountdownTimer({
+  targetTime,
+  onExpire,
+  className = "",
+  compact = false,
+}: CountdownTimerProps) {
   const [timeLeft, setTimeLeft] = useState(getTimeRemaining(targetTime));
 
   useEffect(() => {
@@ -31,24 +36,40 @@ export function CountdownTimer({ targetTime, onExpire, className = "", compact =
 
   if (compact) {
     if (timeLeft.days > 0) {
-      return <span className={className}>{timeLeft.days}d {timeLeft.hours}h</span>;
+      return (
+        <span className={className}>
+          {timeLeft.days}d {timeLeft.hours}h
+        </span>
+      );
     }
     if (timeLeft.hours > 0) {
-      return <span className={className}>{timeLeft.hours}h {timeLeft.minutes}m</span>;
+      return (
+        <span className={className}>
+          {timeLeft.hours}h {timeLeft.minutes}m
+        </span>
+      );
     }
-    return <span className={className}>{timeLeft.minutes}m {timeLeft.seconds}s</span>;
+    return (
+      <span className={className}>
+        {timeLeft.minutes}m {timeLeft.seconds}s
+      </span>
+    );
   }
 
   return (
     <div className={`flex gap-2 ${className}`}>
       {timeLeft.days > 0 && (
         <div className="flex flex-col items-center bg-card border border-primary/20 rounded-md px-3 py-2">
-          <span className="text-2xl font-bold text-primary font-display">{timeLeft.days}</span>
+          <span className="text-2xl font-bold text-primary font-display">
+            {timeLeft.days}
+          </span>
           <span className="text-xs text-muted-foreground uppercase">Days</span>
         </div>
       )}
       <div className="flex flex-col items-center bg-card border border-primary/20 rounded-md px-3 py-2">
-        <span className="text-2xl font-bold text-primary font-display">{String(timeLeft.hours).padStart(2, "0")}</span>
+        <span className="text-2xl font-bold text-primary font-display">
+          {String(timeLeft.hours).padStart(2, "0")}
+        </span>
         <span className="text-xs text-muted-foreground uppercase">Hours</span>
       </div>
       <div className="flex flex-col items-center bg-card border border-primary/20 rounded-md px-3 py-2">

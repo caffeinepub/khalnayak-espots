@@ -1,4 +1,4 @@
- 
+/* eslint-disable */
 
 // @ts-nocheck
 
@@ -221,6 +221,11 @@ export const idlService = IDL.Service({
       [IDL.Vec(PrizeDistribution)],
       ['query'],
     ),
+  'getRegistrationsByTournament' : IDL.Func(
+      [IDL.Nat],
+      [IDL.Vec(TeamRegistration)],
+      ['query'],
+    ),
   'getTeamRegistrations' : IDL.Func([], [IDL.Vec(TeamRegistration)], ['query']),
   'getTeams' : IDL.Func([], [IDL.Vec(Team)], ['query']),
   'getTournamentById' : IDL.Func([IDL.Nat], [IDL.Opt(Tournament)], ['query']),
@@ -266,6 +271,7 @@ export const idlService = IDL.Service({
       [IDL.Nat],
       [],
     ),
+  'rejectDeposit' : IDL.Func([IDL.Nat], [], []),
   'rejectTeamRegistration' : IDL.Func([IDL.Nat], [], []),
   'rejectWithdrawal' : IDL.Func([IDL.Nat], [], []),
   'saveCallerUserProfile' : IDL.Func([UserProfile], [], []),
@@ -494,6 +500,11 @@ export const idlFactory = ({ IDL }) => {
         [IDL.Vec(PrizeDistribution)],
         ['query'],
       ),
+    'getRegistrationsByTournament' : IDL.Func(
+        [IDL.Nat],
+        [IDL.Vec(TeamRegistration)],
+        ['query'],
+      ),
     'getTeamRegistrations' : IDL.Func(
         [],
         [IDL.Vec(TeamRegistration)],
@@ -547,6 +558,7 @@ export const idlFactory = ({ IDL }) => {
         [IDL.Nat],
         [],
       ),
+    'rejectDeposit' : IDL.Func([IDL.Nat], [], []),
     'rejectTeamRegistration' : IDL.Func([IDL.Nat], [], []),
     'rejectWithdrawal' : IDL.Func([IDL.Nat], [], []),
     'saveCallerUserProfile' : IDL.Func([UserProfile], [], []),

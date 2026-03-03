@@ -1,13 +1,33 @@
-import { useState, useMemo } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ShieldAlert, Flag, Search, Eye, Ban as BanIcon } from "lucide-react";
-import { mockReports, mockBans, getReportReasonLabel, getReportStatusVariant, type Report, type ReportStatus, type ReportReason } from "@/data/mockAntiCheat";
+import {
+  type Report,
+  type ReportReason,
+  type ReportStatus,
+  getReportReasonLabel,
+  getReportStatusVariant,
+  mockBans,
+  mockReports,
+} from "@/data/mockAntiCheat";
 import { formatRelativeTime } from "@/utils/format";
+import { Ban as BanIcon, Eye, Flag, Search, ShieldAlert } from "lucide-react";
+import { useMemo, useState } from "react";
 import { ReportDetailView } from "./ReportDetailView";
 
 export function AdminReportsTab() {
@@ -18,18 +38,24 @@ export function AdminReportsTab() {
 
   // Calculate stats
   const totalReports = mockReports.length;
-  const pendingReports = mockReports.filter((r) => r.status === "pending").length;
-  const resolvedReports = mockReports.filter((r) => r.status === "banned" || r.status === "cleared").length;
+  const pendingReports = mockReports.filter(
+    (r) => r.status === "pending",
+  ).length;
+  const resolvedReports = mockReports.filter(
+    (r) => r.status === "banned" || r.status === "cleared",
+  ).length;
   const activeBans = mockBans.filter((b) => b.active).length;
 
   // Filter reports
   const filteredReports = useMemo(() => {
     return mockReports.filter((report) => {
       // Status filter
-      if (statusFilter !== "all" && report.status !== statusFilter) return false;
+      if (statusFilter !== "all" && report.status !== statusFilter)
+        return false;
 
       // Reason filter
-      if (reasonFilter !== "all" && report.reason !== reasonFilter) return false;
+      if (reasonFilter !== "all" && report.reason !== reasonFilter)
+        return false;
 
       // Search query
       if (searchQuery) {
@@ -48,7 +74,9 @@ export function AdminReportsTab() {
 
   // Group reports by status
   const pendingList = filteredReports.filter((r) => r.status === "pending");
-  const investigatingList = filteredReports.filter((r) => r.status === "investigating");
+  const investigatingList = filteredReports.filter(
+    (r) => r.status === "investigating",
+  );
   const bannedList = filteredReports.filter((r) => r.status === "banned");
   const clearedList = filteredReports.filter((r) => r.status === "cleared");
 
@@ -76,16 +104,22 @@ export function AdminReportsTab() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-bold font-display text-yellow-500">{pendingReports}</p>
+            <p className="text-3xl font-bold font-display text-yellow-500">
+              {pendingReports}
+            </p>
           </CardContent>
         </Card>
 
         <Card className="border-success/30">
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm text-muted-foreground">Resolved</CardTitle>
+            <CardTitle className="text-sm text-muted-foreground">
+              Resolved
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-bold font-display text-success">{resolvedReports}</p>
+            <p className="text-3xl font-bold font-display text-success">
+              {resolvedReports}
+            </p>
           </CardContent>
         </Card>
 
@@ -97,7 +131,9 @@ export function AdminReportsTab() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-bold font-display text-destructive">{activeBans}</p>
+            <p className="text-3xl font-bold font-display text-destructive">
+              {activeBans}
+            </p>
           </CardContent>
         </Card>
       </div>
@@ -109,7 +145,9 @@ export function AdminReportsTab() {
             <ShieldAlert className="h-5 w-5" />
             Player Reports Management
           </CardTitle>
-          <CardDescription>Review and take action on suspicious player reports</CardDescription>
+          <CardDescription>
+            Review and take action on suspicious player reports
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -123,7 +161,12 @@ export function AdminReportsTab() {
               />
             </div>
 
-            <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as ReportStatus | "all")}>
+            <Select
+              value={statusFilter}
+              onValueChange={(value) =>
+                setStatusFilter(value as ReportStatus | "all")
+              }
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Filter by status" />
               </SelectTrigger>
@@ -136,7 +179,12 @@ export function AdminReportsTab() {
               </SelectContent>
             </Select>
 
-            <Select value={reasonFilter} onValueChange={(value) => setReasonFilter(value as ReportReason | "all")}>
+            <Select
+              value={reasonFilter}
+              onValueChange={(value) =>
+                setReasonFilter(value as ReportReason | "all")
+              }
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Filter by reason" />
               </SelectTrigger>
@@ -162,13 +210,19 @@ export function AdminReportsTab() {
               </TabsTrigger>
               <TabsTrigger value="pending">
                 Pending
-                <Badge variant="secondary" className="ml-2 bg-yellow-500/20 text-yellow-500">
+                <Badge
+                  variant="secondary"
+                  className="ml-2 bg-yellow-500/20 text-yellow-500"
+                >
                   {pendingList.length}
                 </Badge>
               </TabsTrigger>
               <TabsTrigger value="investigating">
                 Investigating
-                <Badge variant="secondary" className="ml-2 bg-orange-500/20 text-orange-500">
+                <Badge
+                  variant="secondary"
+                  className="ml-2 bg-orange-500/20 text-orange-500"
+                >
                   {investigatingList.length}
                 </Badge>
               </TabsTrigger>
@@ -180,26 +234,44 @@ export function AdminReportsTab() {
               </TabsTrigger>
               <TabsTrigger value="cleared">
                 Cleared
-                <Badge variant="secondary" className="ml-2 bg-success/20 text-success">
+                <Badge
+                  variant="secondary"
+                  className="ml-2 bg-success/20 text-success"
+                >
                   {clearedList.length}
                 </Badge>
               </TabsTrigger>
             </TabsList>
 
             <TabsContent value="all">
-              <ReportList reports={filteredReports} onReportClick={setSelectedReport} />
+              <ReportList
+                reports={filteredReports}
+                onReportClick={setSelectedReport}
+              />
             </TabsContent>
             <TabsContent value="pending">
-              <ReportList reports={pendingList} onReportClick={setSelectedReport} />
+              <ReportList
+                reports={pendingList}
+                onReportClick={setSelectedReport}
+              />
             </TabsContent>
             <TabsContent value="investigating">
-              <ReportList reports={investigatingList} onReportClick={setSelectedReport} />
+              <ReportList
+                reports={investigatingList}
+                onReportClick={setSelectedReport}
+              />
             </TabsContent>
             <TabsContent value="banned">
-              <ReportList reports={bannedList} onReportClick={setSelectedReport} />
+              <ReportList
+                reports={bannedList}
+                onReportClick={setSelectedReport}
+              />
             </TabsContent>
             <TabsContent value="cleared">
-              <ReportList reports={clearedList} onReportClick={setSelectedReport} />
+              <ReportList
+                reports={clearedList}
+                onReportClick={setSelectedReport}
+              />
             </TabsContent>
           </Tabs>
         </CardContent>
@@ -207,13 +279,20 @@ export function AdminReportsTab() {
 
       {/* Report Detail View (Modal/Drawer) */}
       {selectedReport && (
-        <ReportDetailView report={selectedReport} open={!!selectedReport} onClose={() => setSelectedReport(null)} />
+        <ReportDetailView
+          report={selectedReport}
+          open={!!selectedReport}
+          onClose={() => setSelectedReport(null)}
+        />
       )}
     </div>
   );
 }
 
-function ReportList({ reports, onReportClick }: { reports: Report[]; onReportClick: (report: Report) => void }) {
+function ReportList({
+  reports,
+  onReportClick,
+}: { reports: Report[]; onReportClick: (report: Report) => void }) {
   if (reports.length === 0) {
     return (
       <div className="text-center py-12">
@@ -226,13 +305,20 @@ function ReportList({ reports, onReportClick }: { reports: Report[]; onReportCli
   return (
     <div className="space-y-3">
       {reports.map((report) => (
-        <ReportCard key={report.id} report={report} onClick={() => onReportClick(report)} />
+        <ReportCard
+          key={report.id}
+          report={report}
+          onClick={() => onReportClick(report)}
+        />
       ))}
     </div>
   );
 }
 
-function ReportCard({ report, onClick }: { report: Report; onClick: () => void }) {
+function ReportCard({
+  report,
+  onClick,
+}: { report: Report; onClick: () => void }) {
   const statusColors = {
     pending: "border-yellow-500/30 bg-yellow-500/5",
     investigating: "border-orange-500/30 bg-orange-500/5",
@@ -256,18 +342,27 @@ function ReportCard({ report, onClick }: { report: Report; onClick: () => void }
       <div className="flex items-start justify-between gap-4">
         <div className="flex-1 space-y-2">
           <div className="flex items-center gap-2 flex-wrap">
-            <Badge variant={getReportStatusVariant(report.status)} className={statusBadgeColors[report.status]}>
+            <Badge
+              variant={getReportStatusVariant(report.status)}
+              className={statusBadgeColors[report.status]}
+            >
               {report.status.toUpperCase()}
             </Badge>
-            <Badge variant="outline">{getReportReasonLabel(report.reason)}</Badge>
-            <span className="text-xs text-muted-foreground">{formatRelativeTime(BigInt(report.timestamp))}</span>
+            <Badge variant="outline">
+              {getReportReasonLabel(report.reason)}
+            </Badge>
+            <span className="text-xs text-muted-foreground">
+              {formatRelativeTime(BigInt(report.timestamp))}
+            </span>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-2 text-sm">
             <div>
               <span className="text-muted-foreground">Suspect:</span>{" "}
               <span className="font-semibold">{report.suspectName}</span>
-              <span className="text-muted-foreground ml-1 text-xs">({report.suspectFreeFireId})</span>
+              <span className="text-muted-foreground ml-1 text-xs">
+                ({report.suspectFreeFireId})
+              </span>
             </div>
             <div>
               <span className="text-muted-foreground">Reporter:</span>{" "}
@@ -280,12 +375,15 @@ function ReportCard({ report, onClick }: { report: Report; onClick: () => void }
           </div>
 
           {report.description && (
-            <p className="text-sm text-muted-foreground line-clamp-2 italic">"{report.description}"</p>
+            <p className="text-sm text-muted-foreground line-clamp-2 italic">
+              "{report.description}"
+            </p>
           )}
 
           {report.adminNotes && (
             <div className="p-2 bg-muted/50 rounded text-xs border border-border">
-              <span className="font-semibold">Admin Notes:</span> {report.adminNotes}
+              <span className="font-semibold">Admin Notes:</span>{" "}
+              {report.adminNotes}
             </div>
           )}
         </div>

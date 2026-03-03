@@ -1,26 +1,33 @@
-import { Link } from "@tanstack/react-router";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
-import { useGetTournaments, useGetPlatformStats, useIsCallerAdmin } from "@/hooks/useQueries";
 import { CountdownTimer } from "@/components/CountdownTimer";
-import { formatCurrency, getTournamentTypeLabel, getTournamentStatusLabel } from "@/utils/format";
-import { Trophy, Users, DollarSign, Calendar, ArrowRight, ShieldAlert, Ban } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useInternetIdentity } from "@/hooks/useInternetIdentity";
-import { mockReports, mockBans } from "@/data/mockAntiCheat";
+import { useGetPlatformStats, useGetTournaments } from "@/hooks/useQueries";
+import {
+  formatCurrency,
+  getTournamentStatusLabel,
+  getTournamentTypeLabel,
+} from "@/utils/format";
+import { Link } from "@tanstack/react-router";
+import { ArrowRight, Calendar, DollarSign, Trophy, Users } from "lucide-react";
 
 export function HomePage() {
   const { identity, login } = useInternetIdentity();
-  const { data: tournaments, isLoading: tournamentsLoading } = useGetTournaments();
+  const { data: tournaments, isLoading: tournamentsLoading } =
+    useGetTournaments();
   const { data: stats, isLoading: statsLoading } = useGetPlatformStats();
-  const { data: isAdmin } = useIsCallerAdmin();
-
-  const upcomingTournaments = tournaments?.filter((t) => t.status === "upcoming").slice(0, 3) || [];
-  const ongoingTournaments = tournaments?.filter((t) => t.status === "ongoing").slice(0, 3) || [];
-  
-  const pendingReports = mockReports.filter((r) => r.status === "pending").length;
-  const activeBans = mockBans.filter((b) => b.active).length;
+  const upcomingTournaments =
+    tournaments?.filter((t) => t.status === "upcoming").slice(0, 3) || [];
+  const ongoingTournaments =
+    tournaments?.filter((t) => t.status === "ongoing").slice(0, 3) || [];
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -28,33 +35,49 @@ export function HomePage() {
       <section className="relative py-20 md:py-32 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-secondary/5 to-accent/5" />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,_var(--tw-gradient-stops))] from-primary/20 via-transparent to-transparent" />
-        
+
         <div className="container relative z-10">
           <div className="max-w-3xl mx-auto text-center space-y-8">
             <div className="space-y-4">
               <h1 className="text-5xl md:text-7xl font-bold font-display">
                 <span className="glow-cyan">DOMINATE</span>
                 <br />
-                <span className="text-secondary glow-pink">THE BATTLEGROUND</span>
+                <span className="text-secondary glow-pink">
+                  THE BATTLEGROUND
+                </span>
               </h1>
               <p className="text-xl md:text-2xl text-muted-foreground">
-                Join India's most competitive Free Fire tournament platform. Battle, conquer, and claim your victory.
+                Join India's most competitive Free Fire tournament platform.
+                Battle, conquer, and claim your victory.
               </p>
             </div>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               {identity ? (
-                <Button asChild size="lg" className="bg-primary hover:bg-primary/90 text-lg px-8 shadow-glow">
+                <Button
+                  asChild
+                  size="lg"
+                  className="bg-primary hover:bg-primary/90 text-lg px-8 shadow-glow"
+                >
                   <Link to="/tournaments">
                     Browse Tournaments <ArrowRight className="ml-2 h-5 w-5" />
                   </Link>
                 </Button>
               ) : (
-                <Button onClick={login} size="lg" className="bg-primary hover:bg-primary/90 text-lg px-8 shadow-glow">
+                <Button
+                  onClick={login}
+                  size="lg"
+                  className="bg-primary hover:bg-primary/90 text-lg px-8 shadow-glow"
+                >
                   Get Started <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               )}
-              <Button asChild variant="outline" size="lg" className="text-lg px-8 border-primary/30">
+              <Button
+                asChild
+                variant="outline"
+                size="lg"
+                className="text-lg px-8 border-primary/30"
+              >
                 <Link to="/rules">Learn How It Works</Link>
               </Button>
             </div>
@@ -81,7 +104,9 @@ export function HomePage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-4xl font-bold font-display">{stats?.totalPlayers.toString() || "0"}</p>
+                  <p className="text-4xl font-bold font-display">
+                    {stats?.totalPlayers.toString() || "0"}
+                  </p>
                 </CardContent>
               </Card>
 
@@ -93,7 +118,9 @@ export function HomePage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-4xl font-bold font-display">{stats?.totalTournaments.toString() || "0"}</p>
+                  <p className="text-4xl font-bold font-display">
+                    {stats?.totalTournaments.toString() || "0"}
+                  </p>
                 </CardContent>
               </Card>
 
@@ -115,60 +142,18 @@ export function HomePage() {
         </div>
       </section>
 
-      {/* Admin Anti-Cheat Stats (Only visible to admins) */}
-      {isAdmin && (
-        <section className="py-8 bg-destructive/5 border-y border-destructive/20">
-          <div className="container">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-2xl font-bold font-display flex items-center gap-2">
-                <ShieldAlert className="h-6 w-6 text-destructive" />
-                Anti-Cheat Dashboard
-              </h3>
-              <Button asChild variant="outline" size="sm">
-                <Link to="/admin" search={{ tab: "anticheat" }}>
-                  View All Reports
-                </Link>
-              </Button>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Card className="border-yellow-500/30">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm flex items-center gap-2">
-                    <ShieldAlert className="h-4 w-4 text-yellow-500" />
-                    Pending Reports
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-3xl font-bold font-display text-yellow-500">{pendingReports}</p>
-                  <p className="text-xs text-muted-foreground mt-1">Requires immediate review</p>
-                </CardContent>
-              </Card>
-
-              <Card className="border-destructive/30">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm flex items-center gap-2">
-                    <Ban className="h-4 w-4 text-destructive" />
-                    Active Bans
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-3xl font-bold font-display text-destructive">{activeBans}</p>
-                  <p className="text-xs text-muted-foreground mt-1">Currently banned players</p>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-        </section>
-      )}
-
       {/* Ongoing Tournaments */}
       {ongoingTournaments.length > 0 && (
         <section className="py-16">
           <div className="container">
             <div className="flex items-center justify-between mb-8">
               <div>
-                <h2 className="text-3xl font-bold font-display text-primary">🔴 Live Tournaments</h2>
-                <p className="text-muted-foreground mt-2">Battles happening right now</p>
+                <h2 className="text-3xl font-bold font-display text-primary">
+                  🔴 Live Tournaments
+                </h2>
+                <p className="text-muted-foreground mt-2">
+                  Battles happening right now
+                </p>
               </div>
               <Button asChild variant="ghost" className="hidden sm:flex">
                 <Link to="/tournaments">
@@ -179,29 +164,48 @@ export function HomePage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {ongoingTournaments.map((tournament) => (
-                <Card key={tournament.id.toString()} className="border-primary/30 hover:border-primary/50 transition-all">
+                <Card
+                  key={tournament.id.toString()}
+                  className="border-primary/30 hover:border-primary/50 transition-all"
+                >
                   <CardHeader>
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
-                        <Badge variant="default" className="mb-2 bg-destructive">
+                        <Badge
+                          variant="default"
+                          className="mb-2 bg-destructive"
+                        >
                           {getTournamentStatusLabel(tournament.status)}
                         </Badge>
-                        <CardTitle className="text-xl">{tournament.name}</CardTitle>
+                        <CardTitle className="text-xl">
+                          {tournament.name}
+                        </CardTitle>
                       </div>
                     </div>
-                    <CardDescription>{getTournamentTypeLabel(tournament.tournamentType)}</CardDescription>
+                    <CardDescription>
+                      {getTournamentTypeLabel(tournament.tournamentType)}
+                    </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-3">
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">Entry Fee</span>
-                      <span className="font-semibold">{formatCurrency(tournament.entryFee)}</span>
+                      <span className="font-semibold">
+                        {formatCurrency(tournament.entryFee)}
+                      </span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">Prize Pool</span>
-                      <span className="font-semibold text-primary">{formatCurrency(tournament.prizePool)}</span>
+                      <span className="font-semibold text-primary">
+                        {formatCurrency(tournament.prizePool)}
+                      </span>
                     </div>
                     <Button asChild className="w-full" variant="outline">
-                      <Link to="/tournament/$id" params={{ id: tournament.id.toString() }}>View Details</Link>
+                      <Link
+                        to="/tournament/$id"
+                        params={{ id: tournament.id.toString() }}
+                      >
+                        View Details
+                      </Link>
                     </Button>
                   </CardContent>
                 </Card>
@@ -216,8 +220,12 @@ export function HomePage() {
         <div className="container">
           <div className="flex items-center justify-between mb-8">
             <div>
-              <h2 className="text-3xl font-bold font-display">Upcoming Tournaments</h2>
-              <p className="text-muted-foreground mt-2">Register now and secure your spot</p>
+              <h2 className="text-3xl font-bold font-display">
+                Upcoming Tournaments
+              </h2>
+              <p className="text-muted-foreground mt-2">
+                Register now and secure your spot
+              </p>
             </div>
             <Button asChild variant="ghost" className="hidden sm:flex">
               <Link to="/tournaments">
@@ -245,10 +253,14 @@ export function HomePage() {
                         <Badge variant="secondary" className="mb-2">
                           {getTournamentStatusLabel(tournament.status)}
                         </Badge>
-                        <CardTitle className="text-xl">{tournament.name}</CardTitle>
+                        <CardTitle className="text-xl">
+                          {tournament.name}
+                        </CardTitle>
                       </div>
                     </div>
-                    <CardDescription>{getTournamentTypeLabel(tournament.tournamentType)}</CardDescription>
+                    <CardDescription>
+                      {getTournamentTypeLabel(tournament.tournamentType)}
+                    </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -258,14 +270,26 @@ export function HomePage() {
                     <CountdownTimer targetTime={tournament.startTime} compact />
                     <div className="flex justify-between text-sm border-t border-border pt-3">
                       <span className="text-muted-foreground">Entry Fee</span>
-                      <span className="font-semibold">{formatCurrency(tournament.entryFee)}</span>
+                      <span className="font-semibold">
+                        {formatCurrency(tournament.entryFee)}
+                      </span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">Prize Pool</span>
-                      <span className="font-semibold text-primary">{formatCurrency(tournament.prizePool)}</span>
+                      <span className="font-semibold text-primary">
+                        {formatCurrency(tournament.prizePool)}
+                      </span>
                     </div>
-                    <Button asChild className="w-full bg-accent hover:bg-accent/90">
-                      <Link to="/tournament/$id" params={{ id: tournament.id.toString() }}>Register Now</Link>
+                    <Button
+                      asChild
+                      className="w-full bg-accent hover:bg-accent/90"
+                    >
+                      <Link
+                        to="/tournament/$id"
+                        params={{ id: tournament.id.toString() }}
+                      >
+                        Register Now
+                      </Link>
                     </Button>
                   </CardContent>
                 </Card>
@@ -287,11 +311,18 @@ export function HomePage() {
         <section className="py-20 bg-gradient-to-br from-primary/10 via-secondary/10 to-accent/10">
           <div className="container">
             <div className="max-w-2xl mx-auto text-center space-y-6">
-              <h2 className="text-4xl font-bold font-display">Ready to Compete?</h2>
+              <h2 className="text-4xl font-bold font-display">
+                Ready to Compete?
+              </h2>
               <p className="text-xl text-muted-foreground">
-                Join thousands of players competing in daily tournaments. Start your journey to become a champion.
+                Join thousands of players competing in daily tournaments. Start
+                your journey to become a champion.
               </p>
-              <Button onClick={login} size="lg" className="bg-secondary hover:bg-secondary/90 text-lg px-8">
+              <Button
+                onClick={login}
+                size="lg"
+                className="bg-secondary hover:bg-secondary/90 text-lg px-8"
+              >
                 Create Account
               </Button>
             </div>

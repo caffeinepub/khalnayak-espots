@@ -1,25 +1,42 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { RouterProvider, createRouter, createRootRoute, createRoute, Outlet } from "@tanstack/react-router";
-import { InternetIdentityProvider } from "./hooks/useInternetIdentity";
-import { Toaster } from "./components/ui/sonner";
-import { Header } from "./components/Header";
-import { Footer } from "./components/Footer";
-import { NotificationPoller } from "./components/NotificationPoller";
+import {
+  Outlet,
+  RouterProvider,
+  createRootRoute,
+  createRoute,
+  createRouter,
+} from "@tanstack/react-router";
 import { BanNotification } from "./components/BanNotification";
+import { Footer } from "./components/Footer";
+import { Header } from "./components/Header";
+import { NotificationPoller } from "./components/NotificationPoller";
+import { Toaster } from "./components/ui/sonner";
+import { InternetIdentityProvider } from "./hooks/useInternetIdentity";
+import { AdminPage } from "./pages/AdminPage";
 import { HomePage } from "./pages/HomePage";
-import { TournamentsPage } from "./pages/TournamentsPage";
-import { TournamentDetailPage } from "./pages/TournamentDetailPage";
-import { WalletPage } from "./pages/WalletPage";
 import { ProfilePage } from "./pages/ProfilePage";
 import { RulesPage } from "./pages/RulesPage";
 import { SupportPage } from "./pages/SupportPage";
-import { AdminPage } from "./pages/AdminPage";
+import { TournamentDetailPage } from "./pages/TournamentDetailPage";
+import { TournamentsPage } from "./pages/TournamentsPage";
+import { WalletPage } from "./pages/WalletPage";
 
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: 1000 * 60 * 5, // 5 minutes
-      retry: 1,
+      retry: (failureCount, error) => {
+        // Don't retry on authorization or trap errors from the canister
+        const msg = error instanceof Error ? error.message : String(error);
+        if (
+          msg.includes("Unauthorized") ||
+          msg.includes("trap") ||
+          msg.includes("not implemented")
+        ) {
+          return false;
+        }
+        return failureCount < 2;
+      },
     },
   },
 });

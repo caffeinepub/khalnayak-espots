@@ -1,14 +1,20 @@
-import { useState } from "react";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Flag } from "lucide-react";
-import { toast } from "sonner";
+import { Textarea } from "@/components/ui/textarea";
 import type { ReportReason } from "@/data/mockAntiCheat";
 import { getReportReasonLabel } from "@/data/mockAntiCheat";
+import { Flag } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
 
 interface ReportPlayerDialogProps {
   open: boolean;
@@ -35,7 +41,7 @@ export function ReportPlayerDialog({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!suspectName.trim() || !suspectFreeFireId.trim()) {
       toast.error("Please provide suspect player details");
       return;
@@ -68,7 +74,8 @@ export function ReportPlayerDialog({
       localStorage.setItem("playerReports", JSON.stringify(reports));
 
       toast.success("Report Submitted", {
-        description: "Thank you for helping us maintain fair play. We'll review this report soon.",
+        description:
+          "Thank you for helping us maintain fair play. We'll review this report soon.",
       });
 
       // Reset form
@@ -77,7 +84,7 @@ export function ReportPlayerDialog({
       setReason("aimbot");
       setDescription("");
       onOpenChange(false);
-    } catch (error) {
+    } catch (_error) {
       toast.error("Failed to submit report. Please try again.");
     } finally {
       setIsSubmitting(false);
@@ -93,7 +100,8 @@ export function ReportPlayerDialog({
             Report Suspicious Player
           </DialogTitle>
           <DialogDescription>
-            Help us maintain fair play by reporting suspicious behavior. All reports are reviewed by our admin team.
+            Help us maintain fair play by reporting suspicious behavior. All
+            reports are reviewed by our admin team.
           </DialogDescription>
         </DialogHeader>
 
@@ -129,7 +137,10 @@ export function ReportPlayerDialog({
 
           <div className="space-y-3">
             <Label>Report Reason *</Label>
-            <RadioGroup value={reason} onValueChange={(value) => setReason(value as ReportReason)}>
+            <RadioGroup
+              value={reason}
+              onValueChange={(value) => setReason(value as ReportReason)}
+            >
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="aimbot" id="aimbot" />
                 <Label htmlFor="aimbot" className="cursor-pointer font-normal">
@@ -138,13 +149,19 @@ export function ReportPlayerDialog({
               </div>
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="wallhack" id="wallhack" />
-                <Label htmlFor="wallhack" className="cursor-pointer font-normal">
+                <Label
+                  htmlFor="wallhack"
+                  className="cursor-pointer font-normal"
+                >
                   {getReportReasonLabel("wallhack")}
                 </Label>
               </div>
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="speedhack" id="speedhack" />
-                <Label htmlFor="speedhack" className="cursor-pointer font-normal">
+                <Label
+                  htmlFor="speedhack"
+                  className="cursor-pointer font-normal"
+                >
                   {getReportReasonLabel("speedhack")}
                 </Label>
               </div>
@@ -173,7 +190,9 @@ export function ReportPlayerDialog({
               rows={4}
               maxLength={500}
             />
-            <p className="text-xs text-muted-foreground">{description.length}/500 characters</p>
+            <p className="text-xs text-muted-foreground">
+              {description.length}/500 characters
+            </p>
           </div>
 
           <div className="p-3 bg-destructive/5 border border-destructive/20 rounded-lg text-sm text-muted-foreground">
@@ -181,7 +200,10 @@ export function ReportPlayerDialog({
             <ul className="space-y-1 text-xs">
               <li>• False reports may result in penalties</li>
               <li>• Provide accurate information only</li>
-              <li>• Screenshots as proof are encouraged (upload feature coming soon)</li>
+              <li>
+                • Screenshots as proof are encouraged (upload feature coming
+                soon)
+              </li>
             </ul>
           </div>
 
@@ -195,7 +217,11 @@ export function ReportPlayerDialog({
             >
               Cancel
             </Button>
-            <Button type="submit" className="flex-1 bg-destructive hover:bg-destructive/90" disabled={isSubmitting}>
+            <Button
+              type="submit"
+              className="flex-1 bg-destructive hover:bg-destructive/90"
+              disabled={isSubmitting}
+            >
               {isSubmitting ? "Submitting..." : "Submit Report"}
             </Button>
           </div>

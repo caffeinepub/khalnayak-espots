@@ -1,4 +1,3 @@
-import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -8,10 +7,15 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Wallet, Menu, User, LogOut, Shield, Trophy } from "lucide-react";
 import { useInternetIdentity } from "@/hooks/useInternetIdentity";
-import { useGetCallerWallet, useIsCallerAdmin } from "@/hooks/useQueries";
+import {
+  useAutoSetupProfile,
+  useGetCallerWallet,
+  useIsCallerAdmin,
+} from "@/hooks/useQueries";
 import { formatCurrency } from "@/utils/format";
+import { Link } from "@tanstack/react-router";
+import { LogOut, Menu, Shield, Trophy, User, Wallet } from "lucide-react";
 import { useState } from "react";
 
 export function Header() {
@@ -19,6 +23,9 @@ export function Header() {
   const { data: wallet } = useGetCallerWallet();
   const { data: isAdmin } = useIsCallerAdmin();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  // Automatically create profile + wallet for new users on first login
+  useAutoSetupProfile();
 
   const navLinks = [
     { to: "/", label: "Home" },
@@ -32,8 +39,12 @@ export function Header() {
       <div className="container flex h-16 items-center justify-between">
         <Link to="/" className="flex items-center space-x-2">
           <Trophy className="h-8 w-8 text-primary" />
-          <span className="text-2xl font-bold font-display glow-cyan">KHALNAYAK</span>
-          <span className="text-2xl font-bold font-display text-secondary">ESPOTS</span>
+          <span className="text-2xl font-bold font-display glow-cyan">
+            KHALNAYAK
+          </span>
+          <span className="text-2xl font-bold font-display text-secondary">
+            ESPOTS
+          </span>
         </Link>
 
         {/* Desktop Navigation */}
@@ -55,16 +66,26 @@ export function Header() {
             <>
               {/* Wallet Balance */}
               <Link to="/wallet">
-                <Button variant="outline" size="sm" className="hidden sm:flex items-center gap-2 border-primary/30">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="hidden sm:flex items-center gap-2 border-primary/30"
+                >
                   <Wallet className="h-4 w-4" />
-                  <span className="font-mono">{wallet ? formatCurrency(wallet.balance) : "₹0.00"}</span>
+                  <span className="font-mono">
+                    {wallet ? formatCurrency(wallet.balance) : "₹0.00"}
+                  </span>
                 </Button>
               </Link>
 
               {/* User Menu */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="border border-primary/30">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="border border-primary/30"
+                  >
                     <User className="h-5 w-5" />
                   </Button>
                 </DropdownMenuTrigger>
@@ -85,7 +106,10 @@ export function Header() {
                     <>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem asChild>
-                        <Link to="/admin" className="cursor-pointer text-primary">
+                        <Link
+                          to="/admin"
+                          className="cursor-pointer text-primary"
+                        >
                           <Shield className="mr-2 h-4 w-4" />
                           Admin Panel
                         </Link>
@@ -93,7 +117,10 @@ export function Header() {
                     </>
                   )}
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={clear} className="cursor-pointer text-destructive">
+                  <DropdownMenuItem
+                    onClick={clear}
+                    className="cursor-pointer text-destructive"
+                  >
                     <LogOut className="mr-2 h-4 w-4" />
                     Logout
                   </DropdownMenuItem>
@@ -101,7 +128,10 @@ export function Header() {
               </DropdownMenu>
             </>
           ) : (
-            <Button onClick={login} className="bg-primary text-primary-foreground hover:bg-primary/90">
+            <Button
+              onClick={login}
+              className="bg-primary text-primary-foreground hover:bg-primary/90"
+            >
               Login
             </Button>
           )}
