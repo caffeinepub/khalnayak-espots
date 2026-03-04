@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useInternetIdentity } from "@/hooks/useInternetIdentity";
@@ -21,9 +22,11 @@ import {
   useGetTournaments,
   useSaveUserProfile,
 } from "@/hooks/useQueries";
+import { useTokens } from "@/hooks/useTokens";
 import { formatCurrency, getTournamentStatusLabel } from "@/utils/format";
 import { Link } from "@tanstack/react-router";
 import {
+  Coins,
   DollarSign,
   Loader2,
   LogIn,
@@ -42,6 +45,7 @@ export function ProfilePage() {
   const { data: registrations } = useGetCallerTeamRegistrations();
   const { data: tournaments } = useGetTournaments();
   const { data: teams } = useGetTeams();
+  const tokens = useTokens();
 
   const myTournaments =
     registrations?.map((reg) => {
@@ -206,6 +210,70 @@ export function ProfilePage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Token Balance Card */}
+      <Card className="border-yellow-500/40 bg-gradient-to-br from-yellow-950/30 to-card">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2 text-yellow-400">
+              <Coins className="h-5 w-5 text-yellow-400" />
+              Token Balance
+            </CardTitle>
+            <Button
+              asChild
+              size="sm"
+              className="bg-yellow-500 hover:bg-yellow-400 text-black font-bold"
+            >
+              <Link to="/earn">Watch Ads & Earn</Link>
+            </Button>
+          </div>
+          <CardDescription>
+            Ads dekho, tokens kamao, real money withdraw karo
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center gap-6">
+            <div className="text-center">
+              <p
+                className="text-5xl font-bold font-display text-yellow-300"
+                style={{ textShadow: "0 0 14px rgba(253,224,71,0.5)" }}
+              >
+                {tokens.balance}
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">🪙 Tokens</p>
+            </div>
+            <div className="flex-1 space-y-2">
+              <div className="flex justify-between text-xs text-muted-foreground">
+                <span>{tokens.tokensForNextWithdrawal}/25 for withdrawal</span>
+                <span
+                  className={
+                    tokens.canWithdraw ? "text-green-400 font-semibold" : ""
+                  }
+                >
+                  {tokens.canWithdraw
+                    ? "₹1.25 ready!"
+                    : `${tokens.tokensNeeded} more needed`}
+                </span>
+              </div>
+              <Progress value={tokens.progressPct} className="h-2" />
+              <div className="grid grid-cols-2 gap-2 pt-1 text-xs text-center">
+                <div className="rounded-md bg-muted/40 py-1.5">
+                  <p className="text-muted-foreground">Total Earned</p>
+                  <p className="font-bold text-yellow-400">
+                    {tokens.totalEarned} 🪙
+                  </p>
+                </div>
+                <div className="rounded-md bg-muted/40 py-1.5">
+                  <p className="text-muted-foreground">Withdrawn</p>
+                  <p className="font-bold text-green-400">
+                    ₹{((tokens.totalWithdrawn / 25) * 1.25).toFixed(2)}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* My Tournaments */}
       <Card>

@@ -13,15 +13,25 @@ import {
   useGetCallerWallet,
   useIsCallerAdmin,
 } from "@/hooks/useQueries";
+import { useTokens } from "@/hooks/useTokens";
 import { formatCurrency } from "@/utils/format";
 import { Link } from "@tanstack/react-router";
-import { LogOut, Menu, Shield, Trophy, User, Wallet } from "lucide-react";
+import {
+  Coins,
+  LogOut,
+  Menu,
+  Shield,
+  Trophy,
+  User,
+  Wallet,
+} from "lucide-react";
 import { useState } from "react";
 
 export function Header() {
   const { identity, login, clear } = useInternetIdentity();
   const { data: wallet } = useGetCallerWallet();
   const { data: isAdmin } = useIsCallerAdmin();
+  const { balance: tokenBalance } = useTokens();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Automatically create profile + wallet for new users on first login
@@ -30,6 +40,7 @@ export function Header() {
   const navLinks = [
     { to: "/", label: "Home" },
     { to: "/tournaments", label: "Tournaments" },
+    { to: "/earn", label: "🪙 Earn" },
     { to: "/rules", label: "Rules" },
     { to: "/support", label: "Support" },
   ];
@@ -64,6 +75,18 @@ export function Header() {
         <div className="flex items-center space-x-4">
           {identity ? (
             <>
+              {/* Token Balance */}
+              <Link to="/earn">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="hidden sm:flex items-center gap-2 border-yellow-500/40 bg-yellow-950/20 hover:bg-yellow-900/30 text-yellow-400"
+                >
+                  <Coins className="h-4 w-4 text-yellow-400" />
+                  <span className="font-mono font-bold">{tokenBalance}</span>
+                </Button>
+              </Link>
+
               {/* Wallet Balance */}
               <Link to="/wallet">
                 <Button
@@ -100,6 +123,12 @@ export function Header() {
                     <Link to="/wallet" className="cursor-pointer">
                       <Wallet className="mr-2 h-4 w-4" />
                       Wallet
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/earn" className="cursor-pointer text-yellow-400">
+                      <Coins className="mr-2 h-4 w-4" />
+                      Earn Tokens ({tokenBalance} 🪙)
                     </Link>
                   </DropdownMenuItem>
                   {isAdmin && (
@@ -172,6 +201,13 @@ export function Header() {
                       className="text-lg font-medium transition-colors hover:text-primary"
                     >
                       Wallet
+                    </Link>
+                    <Link
+                      to="/earn"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="text-lg font-medium transition-colors text-yellow-400 hover:text-yellow-300"
+                    >
+                      🪙 Earn Tokens ({tokenBalance})
                     </Link>
                     {isAdmin && (
                       <Link

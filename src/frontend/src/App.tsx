@@ -13,6 +13,7 @@ import { NotificationPoller } from "./components/NotificationPoller";
 import { Toaster } from "./components/ui/sonner";
 import { InternetIdentityProvider } from "./hooks/useInternetIdentity";
 import { AdminPage } from "./pages/AdminPage";
+import { EarnPage } from "./pages/EarnPage";
 import { HomePage } from "./pages/HomePage";
 import { ProfilePage } from "./pages/ProfilePage";
 import { RulesPage } from "./pages/RulesPage";
@@ -103,6 +104,12 @@ const adminRoute = createRoute({
   component: AdminPage,
 });
 
+const earnRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/earn",
+  component: EarnPage,
+});
+
 // Create the route tree
 const routeTree = rootRoute.addChildren([
   indexRoute,
@@ -113,6 +120,7 @@ const routeTree = rootRoute.addChildren([
   rulesRoute,
   supportRoute,
   adminRoute,
+  earnRoute,
 ]);
 
 // Create the router

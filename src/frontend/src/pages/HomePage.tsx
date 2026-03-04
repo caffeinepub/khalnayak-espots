@@ -8,22 +8,34 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useInternetIdentity } from "@/hooks/useInternetIdentity";
 import { useGetPlatformStats, useGetTournaments } from "@/hooks/useQueries";
+import { useTokens } from "@/hooks/useTokens";
 import {
   formatCurrency,
   getTournamentStatusLabel,
   getTournamentTypeLabel,
 } from "@/utils/format";
 import { Link } from "@tanstack/react-router";
-import { ArrowRight, Calendar, DollarSign, Trophy, Users } from "lucide-react";
+import {
+  ArrowRight,
+  Calendar,
+  Coins,
+  DollarSign,
+  IndianRupee,
+  Trophy,
+  Users,
+  Zap,
+} from "lucide-react";
 
 export function HomePage() {
   const { identity, login } = useInternetIdentity();
   const { data: tournaments, isLoading: tournamentsLoading } =
     useGetTournaments();
   const { data: stats, isLoading: statsLoading } = useGetPlatformStats();
+  const tokens = useTokens();
   const upcomingTournaments =
     tournaments?.filter((t) => t.status === "upcoming").slice(0, 3) || [];
   const ongoingTournaments =
@@ -139,6 +151,132 @@ export function HomePage() {
               </Card>
             </div>
           )}
+        </div>
+      </section>
+
+      {/* Earn Tokens Section */}
+      <section className="py-14 bg-gradient-to-br from-yellow-950/30 via-background to-background border-y border-yellow-500/20">
+        <div className="container">
+          <div className="flex flex-col md:flex-row items-center gap-8">
+            {/* Left: CTA */}
+            <div className="flex-1 space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="rounded-full bg-yellow-500/20 p-3 border border-yellow-500/30">
+                  <Coins className="h-7 w-7 text-yellow-400" />
+                </div>
+                <div>
+                  <h2 className="text-3xl font-bold font-display text-yellow-400">
+                    Earn Real Money
+                  </h2>
+                  <p className="text-muted-foreground text-sm">
+                    Watch Ads → Tokens Kamao → ₹ Withdraw Karo
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-3">
+                {[
+                  { icon: "▶️", label: "Ad Dekho", sub: "Unlimited" },
+                  { icon: "🪙", label: "Token Pao", sub: "1 per ad" },
+                  { icon: "💰", label: "₹ Withdraw", sub: "25 tokens = ₹1.25" },
+                ].map((item) => (
+                  <div
+                    key={item.label}
+                    className="text-center rounded-xl border border-yellow-500/20 bg-yellow-950/20 p-3"
+                  >
+                    <span className="text-2xl">{item.icon}</span>
+                    <p className="text-xs font-semibold mt-1">{item.label}</p>
+                    <p className="text-xs text-muted-foreground">{item.sub}</p>
+                  </div>
+                ))}
+              </div>
+
+              <Button
+                asChild
+                size="lg"
+                className="bg-yellow-500 hover:bg-yellow-400 text-black font-bold px-8"
+                style={{ boxShadow: "0 0 20px rgba(234,179,8,0.4)" }}
+                data-ocid="home.primary_button"
+              >
+                <Link to="/earn">
+                  <Zap className="mr-2 h-5 w-5" />
+                  Start Earning Now
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Link>
+              </Button>
+            </div>
+
+            {/* Right: Token Status (if logged in) */}
+            {identity ? (
+              <div className="w-full md:w-80 rounded-2xl border border-yellow-500/30 bg-yellow-950/20 p-6 space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-yellow-400 font-medium">
+                    Your Tokens
+                  </span>
+                  <Badge
+                    variant="outline"
+                    className="border-yellow-500/50 text-yellow-400"
+                  >
+                    {tokens.canWithdraw ? "Withdraw Ready!" : "Earning..."}
+                  </Badge>
+                </div>
+                <div className="text-center py-2">
+                  <p
+                    className="text-6xl font-bold font-display text-yellow-300"
+                    style={{ textShadow: "0 0 16px rgba(253,224,71,0.5)" }}
+                  >
+                    {tokens.balance}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    🪙 Tokens
+                  </p>
+                </div>
+                <div className="space-y-1">
+                  <div className="flex justify-between text-xs text-muted-foreground">
+                    <span>{tokens.tokensForNextWithdrawal}/25</span>
+                    <span>
+                      {tokens.canWithdraw
+                        ? "₹1.25 ready!"
+                        : `${tokens.tokensNeeded} more needed`}
+                    </span>
+                  </div>
+                  <Progress value={tokens.progressPct} className="h-2" />
+                </div>
+                {tokens.canWithdraw ? (
+                  <Button
+                    asChild
+                    className="w-full bg-green-500 hover:bg-green-400 text-black font-bold"
+                  >
+                    <Link to="/earn">
+                      <IndianRupee className="mr-2 h-4 w-4" />
+                      Withdraw ₹1.25
+                    </Link>
+                  </Button>
+                ) : (
+                  <Button
+                    asChild
+                    variant="outline"
+                    className="w-full border-yellow-500/40 text-yellow-400 hover:bg-yellow-950/30"
+                  >
+                    <Link to="/earn">Watch Ads to Earn More</Link>
+                  </Button>
+                )}
+              </div>
+            ) : (
+              <div className="w-full md:w-80 rounded-2xl border border-yellow-500/30 bg-yellow-950/20 p-6 text-center space-y-4">
+                <Coins className="h-12 w-12 text-yellow-400/50 mx-auto" />
+                <p className="text-muted-foreground text-sm">
+                  Login karke earning shuru karo
+                </p>
+                <Button
+                  onClick={login}
+                  className="bg-yellow-500 hover:bg-yellow-400 text-black font-bold w-full"
+                >
+                  Login & Earn
+                </Button>
+              </div>
+            )}
+          </div>
         </div>
       </section>
 
