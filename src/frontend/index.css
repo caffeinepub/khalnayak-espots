@@ -117,3 +117,8 @@
     box-shadow: 0 0 10px oklch(var(--neon-purple) / 0.5), inset 0 0 10px oklch(var(--neon-purple) / 0.1);
   }
 }
+
+@keyframes hero-logo-float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}

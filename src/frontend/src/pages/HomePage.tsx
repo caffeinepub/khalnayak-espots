@@ -50,7 +50,20 @@ export function HomePage() {
 
         <div className="container relative z-10">
           <div className="max-w-3xl mx-auto text-center space-y-8">
-            <div className="space-y-4">
+            <div className="space-y-6">
+              {/* Shield Logo */}
+              <div className="flex justify-center">
+                <img
+                  src="/assets/generated/khalnayak-espots-logo.dim_512x512.png"
+                  alt="Khalnayak Espots"
+                  className="w-32 h-32 md:w-44 md:h-44 object-contain"
+                  style={{
+                    filter:
+                      "drop-shadow(0 0 24px rgba(0,245,255,0.6)) drop-shadow(0 0 48px rgba(0,245,255,0.25))",
+                    animation: "hero-logo-float 4s ease-in-out infinite",
+                  }}
+                />
+              </div>
               <h1 className="text-5xl md:text-7xl font-bold font-display">
                 <span className="glow-cyan">DOMINATE</span>
                 <br />
@@ -174,36 +187,67 @@ export function HomePage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-3 gap-3">
+              <div className="space-y-2">
                 {[
-                  { icon: "▶️", label: "Ad Dekho", sub: "Unlimited" },
-                  { icon: "🪙", label: "Token Pao", sub: "1 per ad" },
-                  { icon: "💰", label: "₹ Withdraw", sub: "25 tokens = ₹1.25" },
+                  {
+                    icon: "▶️",
+                    label: "Watch Ad → 1 Token",
+                    sub: "Unlimited • No daily limit",
+                    color: "border-yellow-500/20 bg-yellow-950/20",
+                  },
+                  {
+                    icon: "🎮",
+                    label: "Register Tournament → +1 Token Bonus",
+                    sub: "Extra token on every tournament join",
+                    color: "border-cyan-500/20 bg-cyan-950/20",
+                  },
+                  {
+                    icon: "💰",
+                    label: "25 Tokens → Watch Ad → ₹1.25",
+                    sub: "Multiple withdrawals allowed",
+                    color: "border-green-500/20 bg-green-950/20",
+                  },
                 ].map((item) => (
                   <div
                     key={item.label}
-                    className="text-center rounded-xl border border-yellow-500/20 bg-yellow-950/20 p-3"
+                    className={`flex items-center gap-3 rounded-xl border px-4 py-2.5 ${item.color}`}
                   >
-                    <span className="text-2xl">{item.icon}</span>
-                    <p className="text-xs font-semibold mt-1">{item.label}</p>
-                    <p className="text-xs text-muted-foreground">{item.sub}</p>
+                    <span className="text-xl flex-shrink-0">{item.icon}</span>
+                    <div className="min-w-0">
+                      <p className="text-xs font-bold leading-tight">
+                        {item.label}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {item.sub}
+                      </p>
+                    </div>
                   </div>
                 ))}
               </div>
 
-              <Button
-                asChild
-                size="lg"
-                className="bg-yellow-500 hover:bg-yellow-400 text-black font-bold px-8"
-                style={{ boxShadow: "0 0 20px rgba(234,179,8,0.4)" }}
-                data-ocid="home.primary_button"
-              >
-                <Link to="/earn">
-                  <Zap className="mr-2 h-5 w-5" />
-                  Start Earning Now
-                  <ArrowRight className="ml-2 h-5 w-5" />
-                </Link>
-              </Button>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <Button
+                  asChild
+                  size="lg"
+                  className="bg-yellow-500 hover:bg-yellow-400 text-black font-bold px-8"
+                  style={{ boxShadow: "0 0 20px rgba(234,179,8,0.4)" }}
+                  data-ocid="home.primary_button"
+                >
+                  <Link to="/earn">
+                    <Zap className="mr-2 h-5 w-5" />
+                    Watch Ad Now
+                    <ArrowRight className="ml-2 h-5 w-5" />
+                  </Link>
+                </Button>
+                <Button
+                  asChild
+                  variant="outline"
+                  size="lg"
+                  className="border-yellow-500/40 text-yellow-400 hover:bg-yellow-950/30"
+                >
+                  <Link to="/earn">Start Earning</Link>
+                </Button>
+              </div>
             </div>
 
             {/* Right: Token Status (if logged in) */}

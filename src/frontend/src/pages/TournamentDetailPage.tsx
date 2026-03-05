@@ -1,5 +1,8 @@
 import type { Player } from "@/backend";
+import { AdModal } from "@/components/AdModal";
+import { CheaterAutoFlagBanner } from "@/components/CheaterAutoFlagBanner";
 import { CountdownTimer } from "@/components/CountdownTimer";
+import { useVpnStatus } from "@/components/VpnBlocker";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -31,6 +34,7 @@ import {
   useGetTournamentById,
   useRegisterTeam,
 } from "@/hooks/useQueries";
+import { useTokens } from "@/hooks/useTokens";
 import {
   formatCurrency,
   getTournamentPlayerInfo,
@@ -41,6 +45,7 @@ import {
 import { Link, useNavigate, useParams } from "@tanstack/react-router";
 import {
   Calendar,
+  Coins,
   DollarSign,
   Info,
   Shield,
@@ -48,7 +53,7 @@ import {
   Users,
   Wallet,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 export function TournamentDetailPage() {
@@ -63,6 +68,18 @@ export function TournamentDetailPage() {
     tournamentId,
     tournament?.status === "ongoing",
   );
+  const navigate = useNavigate();
+  const { isVpnDetected } = useVpnStatus();
+
+  // VPN mid-match disconnect
+  useEffect(() => {
+    if (tournament?.status === "ongoing" && isVpnDetected) {
+      toast.error("VPN detected! You have been disconnected from the match.", {
+        duration: 5000,
+      });
+      navigate({ to: "/tournaments" });
+    }
+  }, [isVpnDetected, tournament?.status, navigate]);
 
   const tournamentRegistrations =
     registrations?.filter((r) => r.tournamentId === tournamentId) || [];
@@ -366,7 +383,10 @@ export function TournamentDetailPage() {
         </TabsContent>
 
         <TabsContent value="leaderboard">
-          <Card>
+          {/* Auto-cheat banner — shown when a player in this tournament is flagged */}
+          <CheaterAutoFlagBanner tournamentId={id} />
+
+          <Card className="mt-4">
             <CardHeader>
               <CardTitle>Live Leaderboard</CardTitle>
               <CardDescription>
@@ -516,11 +536,14 @@ function getTeamNameLabel(tournamentType: string): string {
   }
 }
 
+type RegFlowState = "idle" | "adPlaying" | "registering" | "done";
+
 function RegistrationDialog({
   tournament,
   walletBalance,
 }: { tournament: any; walletBalance: bigint }) {
   const [open, setOpen] = useState(false);
+  const [flowState, setFlowState] = useState<RegFlowState>("idle");
   const [teamName, setTeamName] = useState("");
   const requiredPlayers = getRequiredPlayers(tournament.tournamentType);
   const [players, setPlayers] = useState<Player[]>(
@@ -536,6 +559,7 @@ function RegistrationDialog({
   const [includeSubstitute, setIncludeSubstitute] = useState(false);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const navigate = useNavigate();
+  const tokens = useTokens();
 
   const registerMutation = useRegisterTeam();
 
@@ -552,46 +576,52 @@ function RegistrationDialog({
     agreedToTerms &&
     sufficientBalance;
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  // When form is submitted, show ad first
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!canSubmit) return;
+    // Start the ad-gate flow
+    setFlowState("adPlaying");
+  };
+
+  // Ad completed → earn token + register
+  const handleAdComplete = async () => {
+    setFlowState("registering");
+
+    // Award +1 bonus token for tournament join
+    tokens.earnTokenFromTournament(tournament.name);
+    toast.success("🪙 +1 Token Bonus Earned!", {
+      description: "Tournament join bonus credited!",
+    });
 
     try {
       const substitutes =
         includeSubstitute && hasSubstituteData ? [substitute] : null;
 
-      console.log("Submitting registration:", {
+      await registerMutation.mutateAsync({
         tournamentId: tournament.id,
         teamName,
         members: players,
         substitutes,
       });
 
-      const teamId = await registerMutation.mutateAsync({
-        tournamentId: tournament.id,
-        teamName,
-        members: players,
-        substitutes,
-      });
+      setFlowState("done");
 
-      console.log("Registration successful! Team ID:", teamId);
-
-      toast.success("Registration Successful!", {
+      toast.success("Registration Successful! +1 Token Bonus Credited", {
         description: `Your team "${teamName}" has been registered for the tournament.`,
       });
 
       setOpen(false);
+      setFlowState("idle");
 
-      // Small delay to let the toast show before navigation
       setTimeout(() => {
         navigate({ to: "/profile" });
       }, 500);
     } catch (error: any) {
       console.error("Registration error:", error);
+      setFlowState("idle");
 
-      // Extract meaningful error message
       let errorMessage = "Registration failed. Please try again.";
-
       if (error?.message) {
         if (error.message.includes("Insufficient balance")) {
           errorMessage =
@@ -611,193 +641,258 @@ function RegistrationDialog({
     }
   };
 
+  // Ad cancelled → cancel registration
+  const handleAdCancel = () => {
+    setFlowState("idle");
+    toast.error("Registration Cancelled", {
+      description: "Ad not completed. Registration cancelled.",
+    });
+  };
+
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button size="lg" className="bg-primary hover:bg-primary/90">
-          Register Team
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Register Your Team</DialogTitle>
-          <DialogDescription>
-            Fill in your team details to register for the tournament
-          </DialogDescription>
-        </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {!sufficientBalance && (
-            <Card className="border-destructive bg-destructive/5">
-              <CardContent className="pt-4">
-                <div className="flex items-start gap-2 text-sm text-destructive">
-                  <Wallet className="h-4 w-4 mt-0.5" />
-                  <div>
-                    <p className="font-semibold">Insufficient Balance</p>
-                    <p className="text-xs">
-                      You need {formatCurrency(tournament.entryFee)} but have{" "}
-                      {formatCurrency(walletBalance)}. Please add money to your
-                      wallet.
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
+    <>
+      {/* Ad modal renders outside dialog for proper z-index */}
+      <AdModal
+        isOpen={flowState === "adPlaying"}
+        onComplete={handleAdComplete}
+        onCancel={handleAdCancel}
+        duration={30}
+        title="Watch Ad to Register"
+        rewardLabel="+1 Token Bonus"
+      />
 
-          {/* Prize info for all modes */}
-          {(() => {
-            const prizeInfo = getTournamentPrizeInfo(tournament.tournamentType);
-            return (
-              <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 text-xs space-y-2">
-                <p className="font-semibold text-primary">Prize Structure</p>
-                <div className="flex gap-3 text-muted-foreground">
-                  <span className="text-destructive">
-                    Commission: {prizeInfo.commissionPct}%
-                  </span>
-                  <span>Prize Pool: {prizeInfo.prizePct}%</span>
-                </div>
-                <p className="text-muted-foreground">
-                  {prizeInfo.prizeStructure}
-                </p>
-              </div>
-            );
-          })()}
-
-          <div className="space-y-2">
-            <Label htmlFor="teamName">
-              {getTeamNameLabel(tournament.tournamentType)} *
-            </Label>
-            <Input
-              id="teamName"
-              value={teamName}
-              onChange={(e) => setTeamName(e.target.value)}
-              placeholder={
-                is1v1 ? "Enter your player name" : "Enter your team name"
-              }
-              required
-            />
-          </div>
-
-          <div className="space-y-4">
-            <Label>
-              {is1v1
-                ? "Player Details *"
-                : `Players (${requiredPlayers} Required) *`}
-            </Label>
-            {players.map((player, idx) => (
-              // biome-ignore lint/suspicious/noArrayIndexKey: fixed-size player array, positions don't change
-              <div key={idx} className="grid grid-cols-2 gap-3">
-                <Input
-                  placeholder={is1v1 ? "Your Name" : `Player ${idx + 1} Name`}
-                  value={player.name}
-                  onChange={(e) => {
-                    const newPlayers = [...players];
-                    newPlayers[idx] = {
-                      ...newPlayers[idx],
-                      name: e.target.value,
-                    };
-                    setPlayers(newPlayers);
-                  }}
-                  required
-                />
-                <Input
-                  placeholder={"Free Fire ID"}
-                  value={player.freeFireId}
-                  onChange={(e) => {
-                    const newPlayers = [...players];
-                    newPlayers[idx] = {
-                      ...newPlayers[idx],
-                      freeFireId: e.target.value,
-                    };
-                    setPlayers(newPlayers);
-                  }}
-                  required
-                />
-              </div>
-            ))}
-          </div>
-
-          {!is1v1 && (
-            <div className="space-y-3">
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="includeSubstitute"
-                  checked={includeSubstitute}
-                  onCheckedChange={(checked) =>
-                    setIncludeSubstitute(checked as boolean)
-                  }
-                />
-                <Label htmlFor="includeSubstitute" className="cursor-pointer">
-                  Add Substitute Player (Optional)
-                </Label>
-              </div>
-              {includeSubstitute && (
-                <div className="grid grid-cols-2 gap-3 ml-6">
-                  <Input
-                    placeholder="Substitute Name"
-                    value={substitute.name}
-                    onChange={(e) =>
-                      setSubstitute({ ...substitute, name: e.target.value })
-                    }
-                  />
-                  <Input
-                    placeholder="Free Fire ID"
-                    value={substitute.freeFireId}
-                    onChange={(e) =>
-                      setSubstitute({
-                        ...substitute,
-                        freeFireId: e.target.value,
-                      })
-                    }
-                  />
-                </div>
-              )}
-            </div>
-          )}
-
-          <div className="border-t border-border pt-4 space-y-3">
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Entry Fee</span>
-              <span className="font-semibold">
-                {formatCurrency(tournament.entryFee)}
-              </span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Your Balance</span>
-              <span
-                className={`font-semibold ${sufficientBalance ? "text-success" : "text-destructive"}`}
-              >
-                {formatCurrency(walletBalance)}
-              </span>
-            </div>
-          </div>
-
-          <div className="flex items-start space-x-2">
-            <Checkbox
-              id="terms"
-              checked={agreedToTerms}
-              onCheckedChange={(checked) =>
-                setAgreedToTerms(checked as boolean)
-              }
-              required
-            />
-            <Label htmlFor="terms" className="text-sm cursor-pointer">
-              I agree to the tournament rules and understand that entry fee will
-              be deducted from my wallet
-            </Label>
-          </div>
-
+      <Dialog
+        open={open}
+        onOpenChange={(v) => {
+          if (!v && flowState === "adPlaying") return; // don't close dialog while ad playing
+          setOpen(v);
+          if (!v) setFlowState("idle");
+        }}
+      >
+        <DialogTrigger asChild>
           <Button
-            type="submit"
-            className="w-full"
-            disabled={!canSubmit || registerMutation.isPending}
+            size="lg"
+            className="bg-primary hover:bg-primary/90"
+            data-ocid="tournament.open_modal_button"
           >
-            {registerMutation.isPending
-              ? "Registering..."
-              : `Register Team - ${formatCurrency(tournament.entryFee)}`}
+            Register → Watch Ad → Get +1 Token
           </Button>
-        </form>
-      </DialogContent>
-    </Dialog>
+        </DialogTrigger>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Register Your Team</DialogTitle>
+            <DialogDescription>
+              Fill in your team details to register for the tournament
+            </DialogDescription>
+          </DialogHeader>
+
+          {/* Token bonus banner */}
+          <div className="flex items-center gap-3 rounded-lg border border-yellow-500/40 bg-yellow-950/20 px-4 py-3">
+            <Coins className="h-5 w-5 text-yellow-400 flex-shrink-0" />
+            <div className="flex-1 text-sm">
+              <p className="font-semibold text-yellow-300">
+                🪙 Watch Ad & Get +1 Token Bonus
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Ek 30-second rewarded video ad dikhega. Ad complete karne par +1
+                bonus token milega. Agar ad skip karo to registration cancel ho
+                jayega.
+              </p>
+            </div>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {!sufficientBalance && (
+              <Card className="border-destructive bg-destructive/5">
+                <CardContent className="pt-4">
+                  <div className="flex items-start gap-2 text-sm text-destructive">
+                    <Wallet className="h-4 w-4 mt-0.5" />
+                    <div>
+                      <p className="font-semibold">Insufficient Balance</p>
+                      <p className="text-xs">
+                        You need {formatCurrency(tournament.entryFee)} but have{" "}
+                        {formatCurrency(walletBalance)}. Please add money to
+                        your wallet.
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Prize info for all modes */}
+            {(() => {
+              const prizeInfo = getTournamentPrizeInfo(
+                tournament.tournamentType,
+              );
+              return (
+                <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 text-xs space-y-2">
+                  <p className="font-semibold text-primary">Prize Structure</p>
+                  <div className="flex gap-3 text-muted-foreground">
+                    <span className="text-destructive">
+                      Commission: {prizeInfo.commissionPct}%
+                    </span>
+                    <span>Prize Pool: {prizeInfo.prizePct}%</span>
+                  </div>
+                  <p className="text-muted-foreground">
+                    {prizeInfo.prizeStructure}
+                  </p>
+                </div>
+              );
+            })()}
+
+            <div className="space-y-2">
+              <Label htmlFor="teamName">
+                {getTeamNameLabel(tournament.tournamentType)} *
+              </Label>
+              <Input
+                id="teamName"
+                value={teamName}
+                onChange={(e) => setTeamName(e.target.value)}
+                placeholder={
+                  is1v1 ? "Enter your player name" : "Enter your team name"
+                }
+                required
+                data-ocid="tournament.input"
+              />
+            </div>
+
+            <div className="space-y-4">
+              <Label>
+                {is1v1
+                  ? "Player Details *"
+                  : `Players (${requiredPlayers} Required) *`}
+              </Label>
+              {players.map((player, idx) => (
+                // biome-ignore lint/suspicious/noArrayIndexKey: fixed-size player array, positions don't change
+                <div key={idx} className="grid grid-cols-2 gap-3">
+                  <Input
+                    placeholder={is1v1 ? "Your Name" : `Player ${idx + 1} Name`}
+                    value={player.name}
+                    onChange={(e) => {
+                      const newPlayers = [...players];
+                      newPlayers[idx] = {
+                        ...newPlayers[idx],
+                        name: e.target.value,
+                      };
+                      setPlayers(newPlayers);
+                    }}
+                    required
+                  />
+                  <Input
+                    placeholder={"Free Fire ID"}
+                    value={player.freeFireId}
+                    onChange={(e) => {
+                      const newPlayers = [...players];
+                      newPlayers[idx] = {
+                        ...newPlayers[idx],
+                        freeFireId: e.target.value,
+                      };
+                      setPlayers(newPlayers);
+                    }}
+                    required
+                  />
+                </div>
+              ))}
+            </div>
+
+            {!is1v1 && (
+              <div className="space-y-3">
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="includeSubstitute"
+                    checked={includeSubstitute}
+                    onCheckedChange={(checked) =>
+                      setIncludeSubstitute(checked as boolean)
+                    }
+                    data-ocid="tournament.checkbox"
+                  />
+                  <Label htmlFor="includeSubstitute" className="cursor-pointer">
+                    Add Substitute Player (Optional)
+                  </Label>
+                </div>
+                {includeSubstitute && (
+                  <div className="grid grid-cols-2 gap-3 ml-6">
+                    <Input
+                      placeholder="Substitute Name"
+                      value={substitute.name}
+                      onChange={(e) =>
+                        setSubstitute({ ...substitute, name: e.target.value })
+                      }
+                    />
+                    <Input
+                      placeholder="Free Fire ID"
+                      value={substitute.freeFireId}
+                      onChange={(e) =>
+                        setSubstitute({
+                          ...substitute,
+                          freeFireId: e.target.value,
+                        })
+                      }
+                    />
+                  </div>
+                )}
+              </div>
+            )}
+
+            <div className="border-t border-border pt-4 space-y-3">
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Entry Fee</span>
+                <span className="font-semibold">
+                  {formatCurrency(tournament.entryFee)}
+                </span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Your Balance</span>
+                <span
+                  className={`font-semibold ${sufficientBalance ? "text-success" : "text-destructive"}`}
+                >
+                  {formatCurrency(walletBalance)}
+                </span>
+              </div>
+              <div className="flex justify-between text-sm border-t border-yellow-500/20 pt-2">
+                <span className="text-yellow-400 font-medium">
+                  🪙 Token Bonus
+                </span>
+                <span className="text-yellow-400 font-semibold">
+                  +1 Token (after ad)
+                </span>
+              </div>
+            </div>
+
+            <div className="flex items-start space-x-2">
+              <Checkbox
+                id="terms"
+                checked={agreedToTerms}
+                onCheckedChange={(checked) =>
+                  setAgreedToTerms(checked as boolean)
+                }
+                required
+                data-ocid="tournament.checkbox"
+              />
+              <Label htmlFor="terms" className="text-sm cursor-pointer">
+                I agree to the tournament rules and understand that entry fee
+                will be deducted from my wallet
+              </Label>
+            </div>
+
+            <Button
+              type="submit"
+              className="w-full bg-primary hover:bg-primary/90"
+              disabled={
+                !canSubmit ||
+                registerMutation.isPending ||
+                flowState === "registering"
+              }
+              data-ocid="tournament.submit_button"
+            >
+              {flowState === "registering"
+                ? "Registering..."
+                : "Register → Watch Ad → Get +1 Token"}
+            </Button>
+          </form>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

@@ -1,3 +1,4 @@
+import { AdModal } from "@/components/AdModal";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,24 +13,19 @@ import { useInternetIdentity } from "@/hooks/useInternetIdentity";
 import { useTokens } from "@/hooks/useTokens";
 import { Link } from "@tanstack/react-router";
 import {
-  CheckCircle2,
-  Clock,
   Coins,
   IndianRupee,
   LogIn,
   Play,
   TrendingUp,
+  Trophy,
   Zap,
 } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useState } from "react";
 import { toast } from "sonner";
 
-// ─── Ad Simulation ─────────────────────────────────────────────────────────────
-// In a real app this would integrate AdMob / Google Ad Manager.
-// Here we simulate with a countdown timer.
-
-const AD_DURATION_SECONDS = 15; // short ad per token
-const WITHDRAWAL_AD_SECONDS = 60; // 1-minute rewarded ad for withdrawal
+const AD_DURATION_SECONDS = 30;
+const WITHDRAWAL_AD_SECONDS = 60;
 
 // ─── Main Page ─────────────────────────────────────────────────────────────────
 
@@ -81,6 +77,45 @@ export function EarnPage() {
         <p className="text-muted-foreground text-lg">
           Ads dekho → Tokens kamao → Real Money withdraw karo
         </p>
+      </div>
+
+      {/* 3-system explainer */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {[
+          {
+            icon: "▶️",
+            label: "System 1: Manual Ads",
+            desc: "Watch Ad → Get 1 Token",
+            sub: "Unlimited • No daily limit",
+            color: "border-yellow-500/30 bg-yellow-950/20",
+          },
+          {
+            icon: "🎮",
+            label: "System 2: Tournament Join",
+            desc: "Register → Watch Ad → Get +1 Token",
+            sub: "Bonus token on every registration",
+            color: "border-cyan-500/30 bg-cyan-950/20",
+          },
+          {
+            icon: "💰",
+            label: "System 3: Withdrawal",
+            desc: "25 Tokens → Watch Ad → ₹1.25",
+            sub: "Multiple withdrawals allowed",
+            color: "border-green-500/30 bg-green-950/20",
+          },
+        ].map((item) => (
+          <div
+            key={item.label}
+            className={`rounded-xl border p-4 space-y-1 ${item.color}`}
+          >
+            <div className="flex items-center gap-2">
+              <span className="text-2xl">{item.icon}</span>
+              <p className="text-sm font-bold">{item.label}</p>
+            </div>
+            <p className="text-sm font-semibold text-yellow-300">{item.desc}</p>
+            <p className="text-xs text-muted-foreground">{item.sub}</p>
+          </div>
+        ))}
       </div>
 
       {/* Token Balance Card + Progress */}
@@ -205,57 +240,45 @@ function TokenBalanceCard({
 // ─── Watch Ad Section ──────────────────────────────────────────────────────────
 
 function WatchAdSection({ onAdComplete }: { onAdComplete: () => void }) {
-  const [adState, setAdState] = useState<"idle" | "playing" | "done">("idle");
-  const [countdown, setCountdown] = useState(AD_DURATION_SECONDS);
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [adOpen, setAdOpen] = useState(false);
 
-  const startAd = useCallback(() => {
-    setAdState("playing");
-    setCountdown(AD_DURATION_SECONDS);
-    timerRef.current = setInterval(() => {
-      setCountdown((prev) => {
-        if (prev <= 1) {
-          clearInterval(timerRef.current!);
-          setAdState("done");
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-  }, []);
-
-  const claimToken = useCallback(() => {
+  const handleComplete = useCallback(() => {
+    setAdOpen(false);
     onAdComplete();
-    setAdState("idle");
-    setCountdown(AD_DURATION_SECONDS);
     toast.success("🪙 +1 Token Earned!", {
       description: "Keep watching ads to earn more tokens!",
     });
   }, [onAdComplete]);
 
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
-    };
+  const handleCancel = useCallback(() => {
+    setAdOpen(false);
   }, []);
 
   return (
-    <Card
-      className="border-yellow-500/30 bg-gradient-to-br from-card to-yellow-950/20"
-      data-ocid="earn.panel"
-    >
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-yellow-400">
-          <Zap className="h-5 w-5" />
-          Watch Ads & Earn Tokens
-        </CardTitle>
-        <CardDescription>
-          Koi daily limit nahi — jitne chahe utne ads dekho! Har ad = 1 Token
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        {adState === "idle" && (
+    <>
+      <AdModal
+        isOpen={adOpen}
+        onComplete={handleComplete}
+        onCancel={handleCancel}
+        duration={AD_DURATION_SECONDS}
+        title="Watch Ad & Earn Token"
+        rewardLabel="+1 Token"
+      />
+
+      <Card
+        className="border-yellow-500/30 bg-gradient-to-br from-card to-yellow-950/20"
+        data-ocid="earn.panel"
+      >
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-yellow-400">
+            <Zap className="h-5 w-5" />
+            Watch Ads & Earn Tokens
+          </CardTitle>
+          <CardDescription>
+            Koi daily limit nahi — jitne chahe utne ads dekho! Har ad = 1 Token
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
           <div className="text-center space-y-4">
             {/* Ad Placeholder Banner */}
             <div className="w-full h-40 rounded-xl border-2 border-dashed border-yellow-500/40 bg-yellow-950/20 flex items-center justify-center">
@@ -268,12 +291,12 @@ function WatchAdSection({ onAdComplete }: { onAdComplete: () => void }) {
                   variant="outline"
                   className="border-yellow-500/50 text-yellow-400"
                 >
-                  15 sec ad
+                  30 sec ad
                 </Badge>
               </div>
             </div>
             <Button
-              onClick={startAd}
+              onClick={() => setAdOpen(true)}
               size="lg"
               className="bg-yellow-500 hover:bg-yellow-400 text-black font-bold px-10 text-lg shadow-lg"
               style={{ boxShadow: "0 0 20px rgba(234,179,8,0.4)" }}
@@ -283,85 +306,28 @@ function WatchAdSection({ onAdComplete }: { onAdComplete: () => void }) {
               Watch Ad & Earn 1 Token
             </Button>
             <p className="text-xs text-muted-foreground">
-              Unlimited ads available • 1 Token per ad
+              Unlimited ads available • 1 Token per ad • 30 sec ad
             </p>
           </div>
-        )}
 
-        {adState === "playing" && (
-          <div className="text-center space-y-4" data-ocid="earn.loading_state">
-            {/* Simulated Ad Playing */}
-            <div className="w-full h-40 rounded-xl border-2 border-yellow-500/60 bg-yellow-950/30 flex items-center justify-center relative overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-r from-yellow-900/20 via-yellow-800/30 to-yellow-900/20 animate-pulse" />
-              <div className="relative z-10 text-center space-y-2">
-                <div className="text-5xl font-bold font-display text-yellow-300">
-                  {countdown}
-                </div>
-                <p className="text-sm text-yellow-400">Ad playing...</p>
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Progress
-                value={
-                  ((AD_DURATION_SECONDS - countdown) / AD_DURATION_SECONDS) *
-                  100
-                }
-                className="h-3"
-              />
-              <p className="text-sm text-muted-foreground flex items-center justify-center gap-2">
-                <Clock className="h-4 w-4" />
-                {countdown} seconds remaining...
-              </p>
-            </div>
-            <Button
-              disabled
-              size="lg"
-              className="opacity-50 cursor-not-allowed"
-            >
-              Please wait...
-            </Button>
-          </div>
-        )}
-
-        {adState === "done" && (
-          <div className="text-center space-y-4" data-ocid="earn.success_state">
-            <div className="w-full h-40 rounded-xl border-2 border-green-500/50 bg-green-950/20 flex items-center justify-center">
-              <div className="text-center space-y-2">
-                <CheckCircle2 className="h-12 w-12 text-green-400 mx-auto" />
-                <p className="text-green-400 font-semibold">
-                  Ad complete! Claim your token
+          {/* How it works */}
+          <div className="grid grid-cols-3 gap-3 pt-2 border-t border-border/50">
+            {[
+              { step: "1", label: "Ad Dekho", icon: "▶️" },
+              { step: "2", label: "Token Pao", icon: "🪙" },
+              { step: "3", label: "Withdraw Karo", icon: "💰" },
+            ].map((item) => (
+              <div key={item.step} className="text-center space-y-1">
+                <span className="text-2xl">{item.icon}</span>
+                <p className="text-xs text-muted-foreground font-medium">
+                  {item.label}
                 </p>
               </div>
-            </div>
-            <Button
-              onClick={claimToken}
-              size="lg"
-              className="bg-green-500 hover:bg-green-400 text-black font-bold px-10 text-lg"
-              data-ocid="earn.primary_button"
-            >
-              <Coins className="mr-2 h-5 w-5" />
-              Claim 1 Token!
-            </Button>
+            ))}
           </div>
-        )}
-
-        {/* How it works */}
-        <div className="grid grid-cols-3 gap-3 pt-2 border-t border-border/50">
-          {[
-            { step: "1", label: "Ad Dekho", icon: "▶️" },
-            { step: "2", label: "Token Pao", icon: "🪙" },
-            { step: "3", label: "Withdraw Karo", icon: "💰" },
-          ].map((item) => (
-            <div key={item.step} className="text-center space-y-1">
-              <span className="text-2xl">{item.icon}</span>
-              <p className="text-xs text-muted-foreground font-medium">
-                {item.label}
-              </p>
-            </div>
-          ))}
-        </div>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+    </>
   );
 }
 
@@ -372,31 +338,12 @@ function WithdrawalSection({
 }: {
   tokens: ReturnType<typeof useTokens>;
 }) {
-  const [adState, setAdState] = useState<"idle" | "playing" | "done">("idle");
-  const [countdown, setCountdown] = useState(WITHDRAWAL_AD_SECONDS);
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [adOpen, setAdOpen] = useState(false);
 
-  const startWithdrawalAd = useCallback(() => {
-    if (!tokens.canWithdraw) return;
-    setAdState("playing");
-    setCountdown(WITHDRAWAL_AD_SECONDS);
-    timerRef.current = setInterval(() => {
-      setCountdown((prev) => {
-        if (prev <= 1) {
-          clearInterval(timerRef.current!);
-          setAdState("done");
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-  }, [tokens.canWithdraw]);
-
-  const confirmWithdrawal = useCallback(() => {
+  const handleComplete = useCallback(() => {
+    setAdOpen(false);
     const success = tokens.withdrawTokens();
     if (success) {
-      setAdState("idle");
-      setCountdown(WITHDRAWAL_AD_SECONDS);
       toast.success("💰 ₹1.25 Wallet mein add ho gaye!", {
         description:
           "25 tokens deduct ho gaye. Transaction history mein dekho.",
@@ -405,82 +352,90 @@ function WithdrawalSection({
     }
   }, [tokens]);
 
-  useEffect(() => {
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
-    };
+  const handleCancel = useCallback(() => {
+    setAdOpen(false);
   }, []);
 
   return (
-    <Card
-      className={`border-2 transition-all ${
-        tokens.canWithdraw
-          ? "border-yellow-500/60 bg-gradient-to-br from-yellow-950/30 to-card shadow-lg"
-          : "border-border/40 bg-card/50 opacity-80"
-      }`}
-      data-ocid="earn.panel"
-    >
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <IndianRupee
-            className={`h-5 w-5 ${tokens.canWithdraw ? "text-yellow-400" : "text-muted-foreground"}`}
-          />
-          <span
-            className={
-              tokens.canWithdraw ? "text-yellow-400" : "text-muted-foreground"
-            }
-          >
-            Token Withdrawal
-          </span>
-          {tokens.canWithdraw && (
-            <Badge className="bg-green-500 text-black text-xs animate-pulse ml-1">
-              AVAILABLE
-            </Badge>
-          )}
-        </CardTitle>
-        <CardDescription>
-          25 tokens = ₹1.25 wallet mein. Ek rewarded video ad dekhna hoga.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {/* Rate card */}
-        <div className="rounded-xl border border-yellow-500/30 bg-yellow-950/20 p-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="rounded-full bg-yellow-500/20 p-2">
-                <Coins className="h-5 w-5 text-yellow-400" />
+    <>
+      <AdModal
+        isOpen={adOpen}
+        onComplete={handleComplete}
+        onCancel={handleCancel}
+        duration={WITHDRAWAL_AD_SECONDS}
+        title="Watch Ad to Withdraw"
+        rewardLabel="₹1.25"
+      />
+
+      <Card
+        className={`border-2 transition-all ${
+          tokens.canWithdraw
+            ? "border-yellow-500/60 bg-gradient-to-br from-yellow-950/30 to-card shadow-lg"
+            : "border-border/40 bg-card/50 opacity-80"
+        }`}
+        data-ocid="earn.panel"
+      >
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <IndianRupee
+              className={`h-5 w-5 ${tokens.canWithdraw ? "text-yellow-400" : "text-muted-foreground"}`}
+            />
+            <span
+              className={
+                tokens.canWithdraw ? "text-yellow-400" : "text-muted-foreground"
+              }
+            >
+              Token Withdrawal
+            </span>
+            {tokens.canWithdraw && (
+              <Badge className="bg-green-500 text-black text-xs animate-pulse ml-1">
+                AVAILABLE
+              </Badge>
+            )}
+          </CardTitle>
+          <CardDescription>
+            25 tokens = ₹1.25 wallet mein. Ek 1-minute rewarded video ad dekhna
+            hoga.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {/* Rate card */}
+          <div className="rounded-xl border border-yellow-500/30 bg-yellow-950/20 p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="rounded-full bg-yellow-500/20 p-2">
+                  <Coins className="h-5 w-5 text-yellow-400" />
+                </div>
+                <div>
+                  <p className="font-semibold text-yellow-300">
+                    25 Tokens = ₹1.25
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Directly wallet mein add hoga
+                  </p>
+                </div>
               </div>
-              <div>
-                <p className="font-semibold text-yellow-300">
-                  25 Tokens = ₹1.25
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  Directly wallet mein add hoga
+              <div className="text-right">
+                <p className="text-sm text-muted-foreground">Your balance</p>
+                <p className="text-2xl font-bold text-yellow-400">
+                  {tokens.balance}
                 </p>
               </div>
             </div>
-            <div className="text-right">
-              <p className="text-sm text-muted-foreground">Your balance</p>
-              <p className="text-2xl font-bold text-yellow-400">
-                {tokens.balance}
-              </p>
+          </div>
+
+          {/* Progress bar */}
+          <div className="space-y-1">
+            <div className="flex justify-between text-xs text-muted-foreground">
+              <span>{tokens.tokensForNextWithdrawal}/25 tokens</span>
+              <span>{tokens.progressPct}%</span>
             </div>
+            <Progress value={tokens.progressPct} className="h-2" />
           </div>
-        </div>
 
-        {/* Progress bar */}
-        <div className="space-y-1">
-          <div className="flex justify-between text-xs text-muted-foreground">
-            <span>{tokens.tokensForNextWithdrawal}/25 tokens</span>
-            <span>{tokens.progressPct}%</span>
-          </div>
-          <Progress value={tokens.progressPct} className="h-2" />
-        </div>
-
-        {/* Withdraw button / ad states */}
-        {adState === "idle" && (
+          {/* Withdraw button */}
           <Button
-            onClick={startWithdrawalAd}
+            onClick={() => setAdOpen(true)}
             disabled={!tokens.canWithdraw}
             size="lg"
             className={`w-full font-bold text-base ${
@@ -507,68 +462,16 @@ function WithdrawalSection({
               </>
             )}
           </Button>
-        )}
 
-        {adState === "playing" && (
-          <div className="space-y-3" data-ocid="earn.loading_state">
-            <div className="w-full h-32 rounded-xl border-2 border-yellow-500/50 bg-yellow-950/30 flex items-center justify-center relative overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-r from-yellow-900/20 via-yellow-700/20 to-yellow-900/20 animate-pulse" />
-              <div className="relative z-10 text-center">
-                <div className="text-4xl font-bold font-display text-yellow-300">
-                  {countdown}s
-                </div>
-                <p className="text-xs text-yellow-400 mt-1">
-                  Rewarded video playing...
-                </p>
-              </div>
-            </div>
-            <Progress
-              value={
-                ((WITHDRAWAL_AD_SECONDS - countdown) / WITHDRAWAL_AD_SECONDS) *
-                100
-              }
-              className="h-3"
-            />
-            <Button
-              disabled
-              size="lg"
-              className="w-full opacity-60 cursor-not-allowed"
-            >
-              <Clock className="mr-2 h-4 w-4 animate-spin" />
-              Ad complete karo... ({countdown}s)
-            </Button>
-          </div>
-        )}
-
-        {adState === "done" && (
-          <div className="space-y-3 text-center" data-ocid="earn.success_state">
-            <div className="rounded-xl border border-green-500/40 bg-green-950/20 p-4">
-              <CheckCircle2 className="h-8 w-8 text-green-400 mx-auto mb-2" />
-              <p className="text-green-400 font-semibold">Ad complete!</p>
-              <p className="text-sm text-muted-foreground">
-                Confirm karke ₹1.25 pao
-              </p>
-            </div>
-            <Button
-              onClick={confirmWithdrawal}
-              size="lg"
-              className="w-full bg-green-500 hover:bg-green-400 text-black font-bold text-base"
-              data-ocid="earn.confirm_button"
-            >
-              <IndianRupee className="mr-2 h-5 w-5" />
-              Confirm — ₹1.25 Wallet mein add karo
-            </Button>
-          </div>
-        )}
-
-        {!tokens.canWithdraw && adState === "idle" && (
-          <p className="text-xs text-center text-muted-foreground">
-            Aur {tokens.tokensNeeded} ads dekho phir withdraw button active ho
-            jayega
-          </p>
-        )}
-      </CardContent>
-    </Card>
+          {!tokens.canWithdraw && (
+            <p className="text-xs text-center text-muted-foreground">
+              Aur {tokens.tokensNeeded} ads dekho phir withdraw button active ho
+              jayega
+            </p>
+          )}
+        </CardContent>
+      </Card>
+    </>
   );
 }
 
@@ -653,5 +556,29 @@ function TokenHistorySection({
         )}
       </CardContent>
     </Card>
+  );
+}
+
+// ─── Today's Ad Stats Mini Card ────────────────────────────────────────────────
+
+export function TodayAdStatsBar() {
+  const tokens = useTokens();
+  const stats = tokens.adStats;
+
+  if (stats.totalAdsToday === 0) return null;
+
+  return (
+    <div className="flex items-center gap-4 text-xs text-muted-foreground px-4 py-2 rounded-lg border border-yellow-500/20 bg-yellow-950/10">
+      <Trophy className="h-3.5 w-3.5 text-yellow-400" />
+      <span>
+        Today:{" "}
+        <strong className="text-yellow-400">{stats.totalAdsToday} ads</strong>{" "}
+        watched,{" "}
+        <strong className="text-yellow-400">
+          {stats.totalTokensEarnedToday} tokens
+        </strong>{" "}
+        earned
+      </span>
+    </div>
   );
 }

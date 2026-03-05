@@ -3,11 +3,13 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useInternetIdentity } from "@/hooks/useInternetIdentity";
+import { useLocalAuth } from "@/hooks/useLocalAuth";
 import {
   useAutoSetupProfile,
   useGetCallerWallet,
@@ -15,27 +17,43 @@ import {
 } from "@/hooks/useQueries";
 import { useTokens } from "@/hooks/useTokens";
 import { formatCurrency } from "@/utils/format";
-import { Link } from "@tanstack/react-router";
+import { Link, useRouter } from "@tanstack/react-router";
 import {
   Coins,
   LogOut,
   Menu,
   Shield,
-  Trophy,
+  Swords,
   User,
   Wallet,
 } from "lucide-react";
 import { useState } from "react";
+import { HeaderInstallButton } from "./InstallPrompt";
 
 export function Header() {
-  const { identity, login, clear } = useInternetIdentity();
+  const { identity, clear } = useInternetIdentity();
+  const { currentUser, isLoggedIn, logout: localLogout } = useLocalAuth();
   const { data: wallet } = useGetCallerWallet();
   const { data: isAdmin } = useIsCallerAdmin();
   const { balance: tokenBalance } = useTokens();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const router = useRouter();
 
   // Automatically create profile + wallet for new users on first login
   useAutoSetupProfile();
+
+  // Determine display name: prefer local auth name, fall back to II identity
+  const displayName = currentUser?.fullName || (identity ? "Player" : null);
+  const displayInitial = displayName
+    ? displayName.charAt(0).toUpperCase()
+    : null;
+
+  const handleLogout = () => {
+    localLogout();
+    clear();
+    setMobileMenuOpen(false);
+    void router.navigate({ to: "/" });
+  };
 
   const navLinks = [
     { to: "/", label: "Home" },
@@ -48,12 +66,19 @@ export function Header() {
   return (
     <header className="sticky top-0 z-50 w-full border-b border-primary/20 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
       <div className="container flex h-16 items-center justify-between">
-        <Link to="/" className="flex items-center space-x-2">
-          <Trophy className="h-8 w-8 text-primary" />
-          <span className="text-2xl font-bold font-display glow-cyan">
+        <Link to="/" className="flex items-center space-x-2 group">
+          <img
+            src="/assets/generated/khalnayak-espots-logo.dim_512x512.png"
+            alt="Khalnayak Espots"
+            className="h-10 w-10 object-contain transition-all group-hover:drop-shadow-[0_0_10px_rgba(0,245,255,0.8)]"
+            style={{
+              filter: "drop-shadow(0 0 4px rgba(0,245,255,0.5))",
+            }}
+          />
+          <span className="text-xl font-bold font-display glow-cyan hidden sm:inline">
             KHALNAYAK
           </span>
-          <span className="text-2xl font-bold font-display text-secondary">
+          <span className="text-xl font-bold font-display text-secondary hidden sm:inline">
             ESPOTS
           </span>
         </Link>
@@ -73,7 +98,10 @@ export function Header() {
         </nav>
 
         <div className="flex items-center space-x-4">
-          {identity ? (
+          {/* PWA Install Button */}
+          <HeaderInstallButton />
+
+          {isLoggedIn || identity ? (
             <>
               {/* Token Balance */}
               <Link to="/earn">
@@ -107,26 +135,72 @@ export function Header() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="border border-primary/30"
+                    className="border border-primary/30 font-bold text-primary"
+                    data-ocid="header.open_modal_button"
                   >
-                    <User className="h-5 w-5" />
+                    {displayInitial ? (
+                      <span className="text-sm font-bold">
+                        {displayInitial}
+                      </span>
+                    ) : (
+                      <User className="h-5 w-5" />
+                    )}
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuContent
+                  align="end"
+                  className="w-56"
+                  data-ocid="header.dropdown_menu"
+                >
+                  {currentUser && (
+                    <>
+                      <DropdownMenuLabel className="text-xs">
+                        <p className="font-semibold text-sm text-foreground">
+                          Hello, {currentUser.fullName}!
+                        </p>
+                        <p className="text-muted-foreground font-normal truncate">
+                          {currentUser.email}
+                        </p>
+                      </DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                    </>
+                  )}
                   <DropdownMenuItem asChild>
-                    <Link to="/profile" className="cursor-pointer">
+                    <Link
+                      to="/profile"
+                      className="cursor-pointer"
+                      data-ocid="header.link"
+                    >
                       <User className="mr-2 h-4 w-4" />
-                      Profile
+                      My Profile
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link to="/wallet" className="cursor-pointer">
+                    <Link
+                      to="/wallet"
+                      className="cursor-pointer"
+                      data-ocid="header.link"
+                    >
                       <Wallet className="mr-2 h-4 w-4" />
                       Wallet
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link to="/earn" className="cursor-pointer text-yellow-400">
+                    <Link
+                      to="/my-matches"
+                      className="cursor-pointer text-primary"
+                      data-ocid="header.my_matches.link"
+                    >
+                      <Swords className="mr-2 h-4 w-4" />
+                      My Matches
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link
+                      to="/earn"
+                      className="cursor-pointer text-yellow-400"
+                      data-ocid="header.link"
+                    >
                       <Coins className="mr-2 h-4 w-4" />
                       Earn Tokens ({tokenBalance} 🪙)
                     </Link>
@@ -138,6 +212,7 @@ export function Header() {
                         <Link
                           to="/admin"
                           className="cursor-pointer text-primary"
+                          data-ocid="header.link"
                         >
                           <Shield className="mr-2 h-4 w-4" />
                           Admin Panel
@@ -147,8 +222,9 @@ export function Header() {
                   )}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
-                    onClick={clear}
+                    onClick={handleLogout}
                     className="cursor-pointer text-destructive"
+                    data-ocid="header.delete_button"
                   >
                     <LogOut className="mr-2 h-4 w-4" />
                     Logout
@@ -158,10 +234,11 @@ export function Header() {
             </>
           ) : (
             <Button
-              onClick={login}
+              asChild
               className="bg-primary text-primary-foreground hover:bg-primary/90"
+              data-ocid="header.primary_button"
             >
-              Login
+              <Link to="/login">Login</Link>
             </Button>
           )}
 
@@ -185,9 +262,19 @@ export function Header() {
                     {link.label}
                   </Link>
                 ))}
-                {identity && (
+                {(isLoggedIn || identity) && (
                   <>
                     <hr className="border-border" />
+                    {currentUser && (
+                      <div className="px-1 py-1.5">
+                        <p className="font-semibold text-foreground">
+                          {currentUser.fullName}
+                        </p>
+                        <p className="text-sm text-muted-foreground truncate">
+                          {currentUser.email}
+                        </p>
+                      </div>
+                    )}
                     <Link
                       to="/profile"
                       onClick={() => setMobileMenuOpen(false)}
@@ -201,6 +288,14 @@ export function Header() {
                       className="text-lg font-medium transition-colors hover:text-primary"
                     >
                       Wallet
+                    </Link>
+                    <Link
+                      to="/my-matches"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="text-lg font-medium transition-colors hover:text-primary"
+                      data-ocid="header.my_matches.link"
+                    >
+                      ⚔️ My Matches
                     </Link>
                     <Link
                       to="/earn"
@@ -218,6 +313,32 @@ export function Header() {
                         Admin Panel
                       </Link>
                     )}
+                    <button
+                      type="button"
+                      onClick={handleLogout}
+                      className="text-lg font-medium text-destructive hover:text-destructive/80 transition-colors text-left"
+                    >
+                      Logout
+                    </button>
+                  </>
+                )}
+                {!isLoggedIn && !identity && (
+                  <>
+                    <hr className="border-border" />
+                    <Link
+                      to="/login"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="text-lg font-medium text-primary hover:text-primary/80 transition-colors"
+                    >
+                      Login
+                    </Link>
+                    <Link
+                      to="/register"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="text-lg font-medium text-secondary hover:text-secondary/80 transition-colors"
+                    >
+                      Register
+                    </Link>
                   </>
                 )}
               </div>

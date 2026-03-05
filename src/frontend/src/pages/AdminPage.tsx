@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Progress } from "@/components/ui/progress";
 import {
   Select,
   SelectContent,
@@ -34,6 +35,14 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  autoFlagOnScoreEntry,
+  banFlaggedPlayer,
+  clearFlag,
+  disqualifyTeam,
+  useGetCheaterFlags,
+  useGetDisqualifiedTeams,
+} from "@/hooks/useCheaterDetection";
 import {
   useApproveDeposit,
   useApproveTeamRegistration,
@@ -55,8 +64,20 @@ import {
   useUpdateTournamentRoomCredentials,
   useUpdateTournamentStatus,
 } from "@/hooks/useQueries";
-import type { RedeemRequest } from "@/pages/WalletPage";
-import { getRedeemRequests, saveRedeemRequests } from "@/pages/WalletPage";
+import { type ReferralRecord, getReferralStats } from "@/hooks/useReferral";
+import { useTokens } from "@/hooks/useTokens";
+import type {
+  PlayVoucher,
+  RedeemRequest,
+  WithdrawalDetail,
+} from "@/pages/WalletPage";
+import {
+  getMyVouchers,
+  getRedeemRequests,
+  getWithdrawalDetails,
+  saveRedeemRequests,
+  saveWithdrawalDetails,
+} from "@/pages/WalletPage";
 import {
   formatCurrency,
   formatDateTime,
@@ -65,13 +86,29 @@ import {
 } from "@/utils/format";
 import { Navigate } from "@tanstack/react-router";
 import {
+  Activity,
+  AlertTriangle,
+  Calendar,
   Check,
+  CheckCircle2,
+  Coins,
   DollarSign,
+  Gift,
+  IndianRupee,
+  KeyRound,
+  Loader2,
+  Play,
   Plus,
+  RefreshCw,
+  Server,
   Shield,
+  ShieldAlert,
+  Swords,
   Trophy,
   Users,
   X,
+  XCircle,
+  Zap,
 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -103,9 +140,16 @@ export function AdminPage() {
         </div>
       </div>
 
-      <Tabs defaultValue="overview" className="space-y-6">
+      <Tabs defaultValue="matches" className="space-y-6">
         <div className="overflow-x-auto">
           <TabsList className="inline-flex w-max min-w-full h-auto flex-wrap gap-1 p-1">
+            <TabsTrigger
+              value="matches"
+              data-ocid="admin.matches.tab"
+              className="flex-shrink-0"
+            >
+              ⚔️ Manage Matches
+            </TabsTrigger>
             <TabsTrigger
               value="overview"
               data-ocid="admin.overview.tab"
@@ -162,8 +206,33 @@ export function AdminPage() {
             >
               Redeem Requests
             </TabsTrigger>
+            <TabsTrigger
+              value="adstats"
+              data-ocid="admin.adstats.tab"
+              className="flex-shrink-0"
+            >
+              Ad Stats
+            </TabsTrigger>
+            <TabsTrigger
+              value="referrals"
+              data-ocid="admin.referrals.tab"
+              className="flex-shrink-0"
+            >
+              🎁 Referrals
+            </TabsTrigger>
+            <TabsTrigger
+              value="security"
+              data-ocid="admin.security.tab"
+              className="flex-shrink-0"
+            >
+              🛡️ Security
+            </TabsTrigger>
           </TabsList>
         </div>
+
+        <TabsContent value="matches">
+          <ManageMatchesTab />
+        </TabsContent>
 
         <TabsContent value="overview">
           <OverviewTab />
@@ -196,7 +265,527 @@ export function AdminPage() {
         <TabsContent value="redeem">
           <RedeemRequestsTab />
         </TabsContent>
+
+        <TabsContent value="adstats">
+          <AdStatsTab />
+        </TabsContent>
+
+        <TabsContent value="referrals">
+          <ReferralsTab />
+        </TabsContent>
+
+        <TabsContent value="security">
+          <SecurityTab />
+        </TabsContent>
       </Tabs>
+    </div>
+  );
+}
+
+// ── Manage Matches Tab ────────────────────────────────────────────────────────
+
+type MatchFilter = "all" | "upcoming" | "ongoing" | "completed";
+
+function SetRoomDetailsDialog({
+  tournament,
+  onClose,
+}: {
+  tournament: any;
+  onClose: () => void;
+}) {
+  const updateCredentialsMutation = useUpdateTournamentRoomCredentials();
+
+  const defaultStartTime = (() => {
+    try {
+      const ms = Number(tournament.startTime) / 1_000_000;
+      return new Date(ms).toISOString().slice(0, 16);
+    } catch {
+      return "";
+    }
+  })();
+
+  const [roomId, setRoomId] = useState(tournament.roomId ?? "");
+  const [roomPassword, setRoomPassword] = useState(
+    tournament.roomPassword ?? "",
+  );
+  const [slotDetails, setSlotDetails] = useState(
+    localStorage.getItem(`roomSlot_${tournament.id.toString()}`) ?? "",
+  );
+  const [matchStartTime, setMatchStartTime] = useState(defaultStartTime);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await updateCredentialsMutation.mutateAsync({
+        tournamentId: tournament.id,
+        roomId,
+        roomPassword,
+      });
+      // Save slot details to localStorage
+      if (slotDetails.trim()) {
+        localStorage.setItem(
+          `roomSlot_${tournament.id.toString()}`,
+          slotDetails.trim(),
+        );
+      }
+      toast.success("Room details set! Users can now see room credentials.");
+      onClose();
+    } catch (error: any) {
+      toast.error(error?.message || "Failed to set room details");
+    }
+  };
+
+  return (
+    <DialogContent>
+      <DialogHeader>
+        <DialogTitle className="flex items-center gap-2">
+          <KeyRound className="h-5 w-5 text-primary" />
+          Set Room Details
+        </DialogTitle>
+        <DialogDescription className="truncate">
+          {tournament.name}
+        </DialogDescription>
+      </DialogHeader>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="roomIdInput">Room ID</Label>
+          <Input
+            id="roomIdInput"
+            value={roomId}
+            onChange={(e) => setRoomId(e.target.value)}
+            placeholder="e.g., 213579050"
+            required
+            data-ocid="admin.set_room.room_id.input"
+            className="font-mono"
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="roomPassInput">Room Password</Label>
+          <Input
+            id="roomPassInput"
+            value={roomPassword}
+            onChange={(e) => setRoomPassword(e.target.value)}
+            placeholder="e.g., 00"
+            required
+            data-ocid="admin.set_room.password.input"
+            className="font-mono"
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="slotInput">
+            Slot Details{" "}
+            <span className="text-muted-foreground text-xs">(optional)</span>
+          </Label>
+          <Input
+            id="slotInput"
+            value={slotDetails}
+            onChange={(e) => setSlotDetails(e.target.value)}
+            placeholder="e.g., A1 to A4"
+            data-ocid="admin.set_room.slot.input"
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="matchStartInput">Match Start Time</Label>
+          <Input
+            id="matchStartInput"
+            type="datetime-local"
+            value={matchStartTime}
+            onChange={(e) => setMatchStartTime(e.target.value)}
+          />
+          <p className="text-xs text-muted-foreground">
+            Room credentials will be visible to users at this time.
+          </p>
+        </div>
+        <Button
+          type="submit"
+          className="w-full"
+          disabled={updateCredentialsMutation.isPending}
+          data-ocid="admin.set_room.submit_button"
+        >
+          {updateCredentialsMutation.isPending ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Setting...
+            </>
+          ) : (
+            <>
+              <KeyRound className="mr-2 h-4 w-4" />
+              Set Room Details
+            </>
+          )}
+        </Button>
+      </form>
+    </DialogContent>
+  );
+}
+
+function RescheduleDialog({
+  tournament,
+  onClose,
+}: {
+  tournament: any;
+  onClose: () => void;
+}) {
+  const defaultStartTime = (() => {
+    try {
+      const ms = Number(tournament.startTime) / 1_000_000;
+      return new Date(ms).toISOString().slice(0, 16);
+    } catch {
+      return "";
+    }
+  })();
+  const [newTime, setNewTime] = useState(defaultStartTime);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    // Frontend-only reschedule: save to localStorage
+    localStorage.setItem(`rescheduled_${tournament.id.toString()}`, newTime);
+    toast.success(
+      `Rescheduled to ${new Date(newTime).toLocaleString("en-IN")}`,
+    );
+    onClose();
+  };
+
+  return (
+    <DialogContent>
+      <DialogHeader>
+        <DialogTitle className="flex items-center gap-2">
+          <Calendar className="h-5 w-5 text-secondary" />
+          Reschedule Match
+        </DialogTitle>
+        <DialogDescription>{tournament.name}</DialogDescription>
+      </DialogHeader>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="space-y-2">
+          <Label>New Start Time</Label>
+          <Input
+            type="datetime-local"
+            value={newTime}
+            onChange={(e) => setNewTime(e.target.value)}
+            required
+          />
+        </div>
+        <Button type="submit" className="w-full">
+          <RefreshCw className="mr-2 h-4 w-4" />
+          Reschedule
+        </Button>
+      </form>
+    </DialogContent>
+  );
+}
+
+function ManageMatchCard({
+  tournament,
+  index,
+}: {
+  tournament: any;
+  index: number;
+}) {
+  const updateStatusMutation = useUpdateTournamentStatus();
+  const [setRoomOpen, setSetRoomOpen] = useState(false);
+  const [rescheduleOpen, setRescheduleOpen] = useState(false);
+  const [cancelConfirmOpen, setCancelConfirmOpen] = useState(false);
+
+  const statusColors: Record<string, string> = {
+    upcoming: "bg-secondary/20 text-secondary border-secondary/30",
+    ongoing: "bg-primary/20 text-primary border-primary/30",
+    completed: "bg-muted text-muted-foreground border-border/40",
+  };
+  const statusLabel: Record<string, string> = {
+    upcoming: "Upcoming",
+    ongoing: "🔴 Live",
+    completed: "Completed",
+  };
+
+  const handleCancel = async () => {
+    try {
+      await updateStatusMutation.mutateAsync({
+        tournamentId: tournament.id,
+        status: "upcoming" as TournamentStatus,
+      });
+      toast.success("Match cancelled — status reset to Upcoming.");
+      setCancelConfirmOpen(false);
+    } catch (error: any) {
+      toast.error(error?.message || "Failed to cancel match");
+    }
+  };
+
+  const startMs = Number(tournament.startTime) / 1_000_000;
+  const formattedStart = new Date(startMs).toLocaleString("en-IN", {
+    weekday: "short",
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
+  return (
+    <Card
+      className="border-border/40 bg-card/60 overflow-hidden"
+      style={
+        tournament.status === "ongoing"
+          ? {
+              boxShadow: "0 0 16px oklch(0.75 0.18 195 / 0.2)",
+              border: "1px solid oklch(0.75 0.18 195 / 0.35)",
+            }
+          : {}
+      }
+    >
+      <CardContent className="p-4 space-y-3">
+        {/* Header row */}
+        <div className="flex items-start justify-between gap-2">
+          <div className="min-w-0">
+            <h3 className="font-bold font-display text-base leading-snug truncate">
+              {tournament.name}
+            </h3>
+            <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1">
+              <Calendar className="h-3 w-3 flex-shrink-0" />
+              {formattedStart}
+            </p>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <Badge
+              variant="outline"
+              className={`text-[10px] uppercase tracking-wide ${statusColors[tournament.status] ?? "bg-muted"}`}
+            >
+              {statusLabel[tournament.status] ?? tournament.status}
+            </Badge>
+            <Badge variant="outline" className="text-[10px]">
+              {getTournamentTypeLabel(tournament.tournamentType)}
+            </Badge>
+          </div>
+        </div>
+
+        {/* Room credentials indicator */}
+        {(tournament.roomId || tournament.roomPassword) && (
+          <div
+            className="text-xs flex items-center gap-2 px-2 py-1.5 rounded-lg"
+            style={{
+              background: "oklch(0.12 0.06 160 / 0.3)",
+              border: "1px solid oklch(0.70 0.20 160 / 0.25)",
+            }}
+          >
+            <KeyRound className="h-3.5 w-3.5 text-green-400 flex-shrink-0" />
+            <span className="text-green-400 font-mono">
+              Room: {tournament.roomId}
+            </span>
+            {tournament.roomPassword && (
+              <span className="text-muted-foreground">
+                / Pass: {tournament.roomPassword}
+              </span>
+            )}
+          </div>
+        )}
+
+        {/* Action buttons */}
+        <div className="flex flex-wrap gap-2">
+          {/* Set Room Details */}
+          <Dialog open={setRoomOpen} onOpenChange={setSetRoomOpen}>
+            <DialogTrigger asChild>
+              <Button
+                size="sm"
+                variant="outline"
+                className="border-primary/30 text-primary hover:bg-primary/10 gap-1.5 text-xs"
+                data-ocid={`admin.matches.set_room.button.${index}`}
+              >
+                <KeyRound className="h-3.5 w-3.5" />
+                Set Room Details
+              </Button>
+            </DialogTrigger>
+            <SetRoomDetailsDialog
+              tournament={tournament}
+              onClose={() => setSetRoomOpen(false)}
+            />
+          </Dialog>
+
+          {/* Reschedule */}
+          <Dialog open={rescheduleOpen} onOpenChange={setRescheduleOpen}>
+            <DialogTrigger asChild>
+              <Button
+                size="sm"
+                variant="outline"
+                className="border-secondary/30 text-secondary hover:bg-secondary/10 gap-1.5 text-xs"
+              >
+                <Calendar className="h-3.5 w-3.5" />
+                Reschedule
+              </Button>
+            </DialogTrigger>
+            <RescheduleDialog
+              tournament={tournament}
+              onClose={() => setRescheduleOpen(false)}
+            />
+          </Dialog>
+
+          {/* Submit Results (go to Scores) */}
+          <Button
+            size="sm"
+            variant="outline"
+            className="border-yellow-500/30 text-yellow-400 hover:bg-yellow-950/20 gap-1.5 text-xs"
+            onClick={() => {
+              toast.info(
+                "Go to the Scores tab to submit results for this tournament.",
+                { description: tournament.name, duration: 3000 },
+              );
+            }}
+          >
+            <Trophy className="h-3.5 w-3.5" />
+            Submit Results
+          </Button>
+
+          {/* Cancel Match */}
+          {tournament.status !== "completed" && (
+            <Dialog
+              open={cancelConfirmOpen}
+              onOpenChange={setCancelConfirmOpen}
+            >
+              <DialogTrigger asChild>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="border-destructive/30 text-destructive hover:bg-destructive/10 gap-1.5 text-xs"
+                >
+                  <X className="h-3.5 w-3.5" />
+                  Cancel Match
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle className="text-destructive">
+                    Cancel Match?
+                  </DialogTitle>
+                  <DialogDescription>
+                    This will reset the match status to "Upcoming".{" "}
+                    <strong>{tournament.name}</strong>
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="flex gap-3 pt-2">
+                  <Button
+                    variant="destructive"
+                    className="flex-1"
+                    onClick={handleCancel}
+                    disabled={updateStatusMutation.isPending}
+                    data-ocid="admin.matches.cancel.confirm_button"
+                  >
+                    {updateStatusMutation.isPending ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      "Yes, Cancel Match"
+                    )}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="flex-1"
+                    onClick={() => setCancelConfirmOpen(false)}
+                    data-ocid="admin.matches.cancel.cancel_button"
+                  >
+                    Keep Match
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function ManageMatchesTab() {
+  const { data: tournaments } = useGetTournaments();
+  const [filter, setFilter] = useState<MatchFilter>("all");
+
+  const filtered = (tournaments ?? []).filter((t) => {
+    if (filter === "all") return true;
+    return t.status === filter;
+  });
+
+  // Sort: ongoing first, then upcoming by start time, then completed
+  const sorted = [...filtered].sort((a, b) => {
+    const order = { ongoing: 0, upcoming: 1, completed: 2 };
+    const ao = order[a.status as keyof typeof order] ?? 3;
+    const bo = order[b.status as keyof typeof order] ?? 3;
+    if (ao !== bo) return ao - bo;
+    return Number(a.startTime) / 1_000_000 - Number(b.startTime) / 1_000_000;
+  });
+
+  const counts = {
+    all: tournaments?.length ?? 0,
+    upcoming: tournaments?.filter((t) => t.status === "upcoming").length ?? 0,
+    ongoing: tournaments?.filter((t) => t.status === "ongoing").length ?? 0,
+    completed: tournaments?.filter((t) => t.status === "completed").length ?? 0,
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center gap-3">
+        <div
+          className="w-9 h-9 rounded-lg flex items-center justify-center"
+          style={{
+            background: "oklch(0.12 0.06 195 / 0.4)",
+            border: "1px solid oklch(0.75 0.18 195 / 0.4)",
+          }}
+        >
+          <Swords className="h-4.5 w-4.5 text-primary" />
+        </div>
+        <div>
+          <h2 className="text-2xl font-bold font-display">Manage Matches</h2>
+          <p className="text-sm text-muted-foreground">
+            Set room details, reschedule, cancel, and submit results
+          </p>
+        </div>
+      </div>
+
+      {/* Filter tabs */}
+      <div className="flex gap-2 flex-wrap">
+        {(["all", "upcoming", "ongoing", "completed"] as MatchFilter[]).map(
+          (f) => (
+            <button
+              type="button"
+              key={f}
+              onClick={() => setFilter(f)}
+              data-ocid={`admin.matches.${f}.tab`}
+              className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all border ${
+                filter === f
+                  ? "bg-primary/20 text-primary border-primary/40"
+                  : "bg-transparent text-muted-foreground border-border/40 hover:border-border hover:text-foreground"
+              }`}
+            >
+              {f === "all"
+                ? "All"
+                : f === "ongoing"
+                  ? "🔴 Live"
+                  : f.charAt(0).toUpperCase() + f.slice(1)}{" "}
+              <span className="opacity-60 ml-1">({counts[f]})</span>
+            </button>
+          ),
+        )}
+      </div>
+
+      {/* Tournament list */}
+      {sorted.length > 0 ? (
+        <div className="space-y-4">
+          {sorted.map((tournament, idx) => (
+            <ManageMatchCard
+              key={tournament.id.toString()}
+              tournament={tournament}
+              index={idx + 1}
+            />
+          ))}
+        </div>
+      ) : (
+        <div
+          className="py-14 text-center space-y-3"
+          data-ocid="admin.matches.empty_state"
+        >
+          <Swords className="h-10 w-10 text-muted-foreground/30 mx-auto" />
+          <p className="text-muted-foreground">
+            {filter === "all"
+              ? "No tournaments created yet."
+              : `No ${filter} matches.`}
+          </p>
+        </div>
+      )}
     </div>
   );
 }
@@ -784,10 +1373,13 @@ function ScoresTab() {
   const [selectedTeam, setSelectedTeam] = useState<string>("");
   const [kills, setKills] = useState("");
   const [placement, setPlacement] = useState("");
+  const { refresh: refreshFlags } = useGetCheaterFlags();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedTournament || !selectedTeam) return;
+
+    const killsNum = Number.parseInt(kills, 10);
 
     try {
       await updateScoreMutation.mutateAsync({
@@ -797,6 +1389,38 @@ function ScoresTab() {
         placementRank: BigInt(placement),
       });
       toast.success("Score updated successfully");
+
+      // Auto-flag if kills >= 15
+      if (killsNum >= 15) {
+        const team = teams?.find((t) => t.id.toString() === selectedTeam);
+        const tournament = tournaments?.find(
+          (t) => t.id.toString() === selectedTournament,
+        );
+        if (team) {
+          const flag = autoFlagOnScoreEntry(
+            {
+              id: team.id.toString(),
+              name: team.name,
+              ffId: team.members[0]?.freeFireId ?? "Unknown",
+            },
+            selectedTournament,
+            tournament?.name ?? "Unknown Tournament",
+            killsNum,
+          );
+          if (flag) {
+            refreshFlags();
+            toast.warning(
+              `⚠️ Auto-flagged: ${team.name} has ${killsNum} kills!`,
+              {
+                description:
+                  "This team has been flagged for suspicious activity. Check the Security tab.",
+                duration: 6000,
+              },
+            );
+          }
+        }
+      }
+
       setKills("");
       setPlacement("");
     } catch (error: any) {
@@ -997,11 +1621,25 @@ function WithdrawalsTab() {
   const { data: withdrawals } = useGetWithdrawalRequests();
   const approveMutation = useApproveWithdrawal();
   const rejectMutation = useRejectWithdrawal();
+  const [detailsState, setDetailsState] = useState<WithdrawalDetail[]>(
+    getWithdrawalDetails(),
+  );
+
+  // Reload details from localStorage on render
+  const refreshDetails = () => setDetailsState(getWithdrawalDetails());
 
   const handleApprove = async (id: bigint) => {
     try {
       await approveMutation.mutateAsync(id);
-      toast.success("Withdrawal approved");
+      // Update status in localStorage details
+      const updated = getWithdrawalDetails().map((d) =>
+        d.requestId === id.toString()
+          ? { ...d, status: "approved" as const }
+          : d,
+      );
+      saveWithdrawalDetails(updated);
+      refreshDetails();
+      toast.success("Withdrawal approved and processed");
     } catch (error: any) {
       toast.error(error?.message || "Failed to approve");
     }
@@ -1010,76 +1648,370 @@ function WithdrawalsTab() {
   const handleReject = async (id: bigint) => {
     try {
       await rejectMutation.mutateAsync(id);
+      const updated = getWithdrawalDetails().map((d) =>
+        d.requestId === id.toString()
+          ? { ...d, status: "rejected" as const }
+          : d,
+      );
+      saveWithdrawalDetails(updated);
+      refreshDetails();
       toast.success("Withdrawal rejected");
     } catch (error: any) {
       toast.error(error?.message || "Failed to reject");
     }
   };
 
+  // Count duplicate UPI IDs to flag fraud
+  const upiCounts: Record<string, number> = {};
+  for (const d of detailsState) {
+    if (d.method === "upi" && d.upiId) {
+      upiCounts[d.upiId.toLowerCase()] =
+        (upiCounts[d.upiId.toLowerCase()] ?? 0) + 1;
+    }
+  }
+  const fraudUpiIds = new Set(
+    Object.entries(upiCounts)
+      .filter(([, count]) => count >= 3)
+      .map(([id]) => id),
+  );
+
+  const getDetail = (id: bigint): WithdrawalDetail | undefined =>
+    detailsState.find((d) => d.requestId === id.toString());
+
+  const methodLabel: Record<string, string> = {
+    upi: "UPI",
+    voucher: "Play Voucher",
+    bank: "Bank Transfer",
+  };
+  const methodBadgeClass: Record<string, string> = {
+    upi: "bg-blue-500/20 text-blue-300 border border-blue-500/30",
+    voucher: "bg-green-500/20 text-green-300 border border-green-500/30",
+    bank: "bg-yellow-500/20 text-yellow-300 border border-yellow-500/30",
+  };
+
+  // Pending count
+  const pendingCount =
+    withdrawals?.filter((w) => w.status === "pending").length ?? 0;
+
   return (
-    <Card>
+    <div className="space-y-4">
+      {/* Fraud alerts */}
+      {fraudUpiIds.size > 0 && (
+        <Card className="border-destructive/30 bg-destructive/5">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm text-destructive flex items-center gap-2">
+              <AlertTriangle className="h-4 w-4" />
+              Fraud Alerts — Suspicious UPI Activity
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-wrap gap-2">
+              {[...fraudUpiIds].map((upi) => (
+                <Badge
+                  key={upi}
+                  variant="destructive"
+                  className="font-mono text-xs"
+                >
+                  {upi} ({upiCounts[upi]} requests)
+                </Badge>
+              ))}
+            </div>
+            <p className="text-xs text-muted-foreground mt-2">
+              These UPI IDs have been used 3+ times. Review carefully before
+              approving.
+            </p>
+          </CardContent>
+        </Card>
+      )}
+
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                Withdrawal Requests
+                {pendingCount > 0 && (
+                  <Badge variant="secondary" className="text-xs">
+                    {pendingCount} pending
+                  </Badge>
+                )}
+              </CardTitle>
+              <CardDescription>
+                Process user withdrawal requests — UPI, Play Voucher, and Bank
+                Transfer
+              </CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>User</TableHead>
+                  <TableHead>Method</TableHead>
+                  <TableHead>Details</TableHead>
+                  <TableHead>Amount</TableHead>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {withdrawals && withdrawals.length > 0 ? (
+                  withdrawals.map((withdrawal) => {
+                    const detail = getDetail(withdrawal.id);
+                    const method = detail?.method ?? "upi";
+                    const isFraudUpi =
+                      method === "upi" &&
+                      detail?.upiId &&
+                      fraudUpiIds.has(detail.upiId.toLowerCase());
+
+                    return (
+                      <TableRow
+                        key={withdrawal.id.toString()}
+                        className={isFraudUpi ? "bg-destructive/5" : ""}
+                      >
+                        <TableCell className="font-mono text-xs">
+                          {detail?.userId
+                            ? detail.userId.slice(0, 12)
+                            : withdrawal.userId.toString().slice(0, 12)}
+                          ...
+                        </TableCell>
+                        <TableCell>
+                          {detail ? (
+                            <span
+                              className={`text-xs font-medium px-2 py-0.5 rounded ${methodBadgeClass[method] ?? ""}`}
+                            >
+                              {methodLabel[method] ?? method}
+                            </span>
+                          ) : (
+                            <span className="text-xs text-muted-foreground">
+                              —
+                            </span>
+                          )}
+                        </TableCell>
+                        <TableCell className="max-w-[180px]">
+                          {detail?.method === "upi" && (
+                            <div>
+                              <p className="font-mono text-xs truncate">
+                                {detail.upiId}
+                              </p>
+                              {isFraudUpi && (
+                                <p className="text-xs text-destructive flex items-center gap-1 mt-0.5">
+                                  <AlertTriangle className="h-3 w-3" />
+                                  Suspicious — multiple requests
+                                </p>
+                              )}
+                            </div>
+                          )}
+                          {detail?.method === "voucher" && (
+                            <div className="space-y-1">
+                              <p className="text-xs text-green-400 font-medium">
+                                Google Play Voucher
+                              </p>
+                              {detail.voucherCode && (
+                                <p className="font-mono text-xs bg-green-950/30 border border-green-500/20 px-2 py-1 rounded tracking-widest">
+                                  {detail.voucherCode}
+                                </p>
+                              )}
+                              <span className="inline-block text-[10px] bg-green-500/20 text-green-300 border border-green-500/30 px-1.5 py-0.5 rounded-full">
+                                INSTANT ⚡ Auto-Generated
+                              </span>
+                            </div>
+                          )}
+                          {detail?.method === "bank" && (
+                            <div className="text-xs space-y-0.5">
+                              <p className="font-medium truncate">
+                                {detail.accountHolderName}
+                              </p>
+                              <p className="font-mono text-muted-foreground">
+                                A/C: ****{detail.accountNumber?.slice(-4)}
+                              </p>
+                              <p className="font-mono text-muted-foreground">
+                                IFSC: {detail.ifscCode}
+                              </p>
+                            </div>
+                          )}
+                          {!detail && (
+                            <span className="text-xs text-muted-foreground">
+                              No details
+                            </span>
+                          )}
+                        </TableCell>
+                        <TableCell className="font-semibold">
+                          {formatCurrency(withdrawal.amount)}
+                        </TableCell>
+                        <TableCell className="text-xs text-muted-foreground">
+                          {formatDateTime(withdrawal.timestamp)}
+                        </TableCell>
+                        <TableCell>
+                          <Badge
+                            variant={
+                              withdrawal.status === "approved"
+                                ? "default"
+                                : withdrawal.status === "pending"
+                                  ? "secondary"
+                                  : "destructive"
+                            }
+                            className={
+                              withdrawal.status === "approved"
+                                ? "bg-success"
+                                : ""
+                            }
+                          >
+                            {withdrawal.status.toUpperCase()}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          {withdrawal.status === "pending" && (
+                            <div className="flex gap-2">
+                              <Button
+                                size="sm"
+                                onClick={() => handleApprove(withdrawal.id)}
+                                disabled={approveMutation.isPending}
+                                data-ocid="admin.withdrawals.approve_button"
+                              >
+                                <Check className="h-3 w-3 mr-1" />
+                                Approve
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                onClick={() => handleReject(withdrawal.id)}
+                                disabled={rejectMutation.isPending}
+                                data-ocid="admin.withdrawals.delete_button"
+                              >
+                                <X className="h-3 w-3 mr-1" />
+                                Reject
+                              </Button>
+                            </div>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
+                ) : (
+                  <TableRow>
+                    <TableCell
+                      colSpan={7}
+                      className="text-center text-muted-foreground py-8"
+                      data-ocid="admin.withdrawals.empty_state"
+                    >
+                      No withdrawal requests yet
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Voucher Transactions Log */}
+      <VoucherTransactionsLog />
+    </div>
+  );
+}
+
+function VoucherTransactionsLog() {
+  const allVouchers: PlayVoucher[] = getMyVouchers();
+  const voucherWithdrawals = getWithdrawalDetails().filter(
+    (d) => d.method === "voucher",
+  );
+
+  if (allVouchers.length === 0 && voucherWithdrawals.length === 0) return null;
+
+  const sorted = [...allVouchers].sort((a, b) => b.createdAt - a.createdAt);
+
+  return (
+    <Card className="border-green-500/30">
       <CardHeader>
-        <CardTitle>Withdrawal Requests</CardTitle>
-        <CardDescription>Process user withdrawal requests</CardDescription>
+        <CardTitle className="flex items-center gap-2 text-green-400">
+          <Gift className="h-5 w-5" />
+          Play Store Voucher Log
+          <Badge className="bg-green-600/20 text-green-300 border-green-500/30 text-xs font-normal ml-1">
+            {sorted.length} total
+          </Badge>
+        </CardTitle>
+        <CardDescription>
+          All auto-generated Play Store voucher codes. No admin action required
+          — these are delivered instantly.
+        </CardDescription>
       </CardHeader>
       <CardContent>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>User</TableHead>
-              <TableHead>Amount</TableHead>
-              <TableHead>Date</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {withdrawals?.map((withdrawal) => (
-              <TableRow key={withdrawal.id.toString()}>
-                <TableCell className="font-mono text-xs">
-                  {withdrawal.userId.toString().slice(0, 15)}...
-                </TableCell>
-                <TableCell>{formatCurrency(withdrawal.amount)}</TableCell>
-                <TableCell>{formatDateTime(withdrawal.timestamp)}</TableCell>
-                <TableCell>
-                  <Badge
-                    variant={
-                      withdrawal.status === "approved"
-                        ? "default"
-                        : withdrawal.status === "pending"
-                          ? "secondary"
-                          : "destructive"
-                    }
-                    className={
-                      withdrawal.status === "approved" ? "bg-success" : ""
-                    }
-                  >
-                    {withdrawal.status.toUpperCase()}
-                  </Badge>
-                </TableCell>
-                <TableCell>
-                  {withdrawal.status === "pending" && (
-                    <div className="flex gap-2">
-                      <Button
-                        size="sm"
-                        onClick={() => handleApprove(withdrawal.id)}
-                      >
-                        Approve
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="destructive"
-                        onClick={() => handleReject(withdrawal.id)}
-                      >
-                        Reject
-                      </Button>
-                    </div>
-                  )}
-                </TableCell>
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>User</TableHead>
+                <TableHead>Amount</TableHead>
+                <TableHead>Voucher Code</TableHead>
+                <TableHead>Created</TableHead>
+                <TableHead>Expires</TableHead>
+                <TableHead>Status</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {sorted.length > 0 ? (
+                sorted.map((v, idx) => (
+                  <TableRow
+                    key={v.id}
+                    data-ocid={`admin.voucher_log.row.${idx + 1}`}
+                  >
+                    <TableCell className="font-mono text-xs">
+                      {v.userId.slice(0, 12)}...
+                    </TableCell>
+                    <TableCell className="font-semibold">₹{v.amount}</TableCell>
+                    <TableCell>
+                      <span className="font-mono text-xs bg-green-950/30 border border-green-500/20 px-2 py-1 rounded tracking-widest text-green-300">
+                        {v.code}
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-xs text-muted-foreground">
+                      {new Date(v.createdAt).toLocaleDateString("en-IN")}
+                    </TableCell>
+                    <TableCell className="text-xs text-muted-foreground">
+                      {new Date(v.expiresAt).toLocaleDateString("en-IN")}
+                    </TableCell>
+                    <TableCell>
+                      <Badge
+                        variant={
+                          v.status === "used"
+                            ? "secondary"
+                            : Date.now() > v.expiresAt
+                              ? "destructive"
+                              : "default"
+                        }
+                        className={
+                          v.status === "unused" && Date.now() <= v.expiresAt
+                            ? "bg-green-600/30 text-green-300 border-green-500/40"
+                            : ""
+                        }
+                      >
+                        {v.status === "used"
+                          ? "Used"
+                          : Date.now() > v.expiresAt
+                            ? "Expired"
+                            : "Active"}
+                      </Badge>
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell
+                    colSpan={6}
+                    className="text-center text-muted-foreground py-8"
+                    data-ocid="admin.voucher_log.empty_state"
+                  >
+                    No vouchers generated yet
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </div>
       </CardContent>
     </Card>
   );
@@ -1349,6 +2281,873 @@ function RedeemRequestsTab() {
           </CardContent>
         </Card>
       )}
+    </div>
+  );
+}
+
+// ─── Ad Stats Tab ──────────────────────────────────────────────────────────────
+
+function AdStatsTab() {
+  const tokens = useTokens();
+  const stats = tokens.adStats;
+  const allTime = tokens.allTime;
+
+  const todayCards = [
+    {
+      label: "Manual Ads Today",
+      value: stats.manualAdsToday,
+      icon: Play,
+      color: "border-cyan-500/30 bg-cyan-950/20",
+      textColor: "text-cyan-400",
+    },
+    {
+      label: "Tournament Ads Today",
+      value: stats.tournamentAdsToday,
+      icon: Trophy,
+      color: "border-yellow-500/30 bg-yellow-950/20",
+      textColor: "text-yellow-400",
+    },
+    {
+      label: "Withdrawal Ads Today",
+      value: stats.withdrawalAdsToday,
+      icon: IndianRupee,
+      color: "border-green-500/30 bg-green-950/20",
+      textColor: "text-green-400",
+    },
+    {
+      label: "Total Ads Today",
+      value: stats.totalAdsToday,
+      icon: Coins,
+      color: "border-primary/30 bg-primary/5",
+      textColor: "text-primary",
+    },
+  ];
+
+  return (
+    <div className="space-y-6" data-ocid="admin.adstats.panel">
+      <Card className="border-yellow-500/30 bg-yellow-950/10">
+        <CardContent className="pt-4 pb-4">
+          <p className="text-sm text-yellow-400 flex items-center gap-2">
+            <Coins className="h-4 w-4 flex-shrink-0" />
+            Stats shown for current admin's account (localStorage-based).
+            Platform-wide stats require backend integration.
+          </p>
+        </CardContent>
+      </Card>
+
+      <div>
+        <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
+          <Play className="h-5 w-5 text-cyan-400" />
+          Today's Ad Activity
+        </h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {todayCards.map((card) => (
+            <Card key={card.label} className={`${card.color}`}>
+              <CardHeader className="pb-2">
+                <CardTitle
+                  className={`text-sm flex items-center gap-2 ${card.textColor}`}
+                >
+                  <card.icon className="h-4 w-4" />
+                  {card.label}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p
+                  className={`text-4xl font-bold font-display ${card.textColor}`}
+                >
+                  {card.value}
+                </p>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <Card className="border-yellow-500/30 bg-yellow-950/20">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm text-yellow-400 flex items-center gap-2">
+              <Coins className="h-4 w-4" />
+              Tokens Distributed Today
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-4xl font-bold font-display text-yellow-300">
+              {stats.totalTokensEarnedToday}
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">
+              Manual + Tournament bonus tokens
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="border-green-500/30 bg-green-950/20">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm text-green-400 flex items-center gap-2">
+              <IndianRupee className="h-4 w-4" />
+              Rewards Paid Today
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-4xl font-bold font-display text-green-300">
+              ₹{(stats.withdrawalAdsToday * 1.25).toFixed(2)}
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">
+              {stats.withdrawalAdsToday} × ₹1.25
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div>
+        <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
+          <Trophy className="h-5 w-5 text-primary" />
+          All-Time Statistics
+        </h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <Card className="border-cyan-500/30 bg-cyan-950/20">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-xs text-cyan-400 flex items-center gap-2">
+                <Play className="h-3.5 w-3.5" />
+                Total Ads Watched
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-3xl font-bold text-cyan-300">
+                {allTime.totalAdsWatched}
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="border-yellow-500/30 bg-yellow-950/20">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-xs text-yellow-400 flex items-center gap-2">
+                <Coins className="h-3.5 w-3.5" />
+                Total Tokens Distributed
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-3xl font-bold text-yellow-300">
+                {allTime.totalTokensDistributed}
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="border-green-500/30 bg-green-950/20">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-xs text-green-400 flex items-center gap-2">
+                <IndianRupee className="h-3.5 w-3.5" />
+                Total Withdrawals
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-3xl font-bold text-green-300">
+                {allTime.totalWithdrawals}
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="border-primary/30 bg-primary/5">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-xs text-primary flex items-center gap-2">
+                <DollarSign className="h-3.5 w-3.5" />
+                Total Rewards Paid
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-3xl font-bold text-primary">
+                ₹{allTime.totalRupeesPaid.toFixed(2)}
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
+      <Card className="border-border/50">
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <Users className="h-4 w-4" />
+            Current Admin Token Balance
+          </CardTitle>
+          <CardDescription>
+            Your personal token balance (as logged-in user)
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center gap-6 flex-wrap">
+            <div className="text-center">
+              <p className="text-xs text-muted-foreground mb-1">Balance</p>
+              <p className="text-3xl font-bold text-yellow-400">
+                {tokens.balance} 🪙
+              </p>
+            </div>
+            <div className="text-center">
+              <p className="text-xs text-muted-foreground mb-1">Total Earned</p>
+              <p className="text-3xl font-bold text-yellow-300">
+                {tokens.totalEarned}
+              </p>
+            </div>
+            <div className="text-center">
+              <p className="text-xs text-muted-foreground mb-1">
+                Total Withdrawn
+              </p>
+              <p className="text-3xl font-bold text-green-400">
+                {tokens.totalWithdrawn}
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* ── Server Load Simulation (System 3) ─────────────────────────── */}
+      <div>
+        <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
+          <Server className="h-5 w-5 text-cyan-400" />
+          Server Load Simulation
+        </h2>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+          {/* 50 users */}
+          <Card className="border-green-500/30 bg-green-950/10">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm text-green-400 flex items-center justify-between">
+                <span className="flex items-center gap-2">
+                  <Zap className="h-4 w-4" />
+                  50 Users
+                </span>
+                <Badge className="bg-green-600 text-white text-xs">Fast</Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              <Progress value={18} className="h-2" />
+              <p className="text-2xl font-bold font-display text-green-300">
+                &lt;100ms
+              </p>
+              <p className="text-xs text-muted-foreground">Response time</p>
+            </CardContent>
+          </Card>
+
+          {/* 100 users */}
+          <Card className="border-yellow-500/30 bg-yellow-950/10">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm text-yellow-400 flex items-center justify-between">
+                <span className="flex items-center gap-2">
+                  <Activity className="h-4 w-4" />
+                  100 Users
+                </span>
+                <Badge className="bg-yellow-600 text-white text-xs">Good</Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              <Progress value={38} className="h-2" />
+              <p className="text-2xl font-bold font-display text-yellow-300">
+                &lt;300ms
+              </p>
+              <p className="text-xs text-muted-foreground">Response time</p>
+            </CardContent>
+          </Card>
+
+          {/* 500 users */}
+          <Card className="border-orange-500/30 bg-orange-950/10">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm text-orange-400 flex items-center justify-between">
+                <span className="flex items-center gap-2">
+                  <Server className="h-4 w-4" />
+                  500 Users
+                </span>
+                <Badge className="bg-orange-600 text-white text-xs">
+                  Moderate
+                </Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              <Progress value={65} className="h-2" />
+              <p className="text-2xl font-bold font-display text-orange-300">
+                &lt;800ms
+              </p>
+              <p className="text-xs text-muted-foreground">Response time</p>
+            </CardContent>
+          </Card>
+        </div>
+
+        <Card className="border-cyan-500/20 bg-cyan-950/10">
+          <CardContent className="pt-4 pb-4">
+            <p className="text-sm text-cyan-300 flex items-start gap-2">
+              <Zap className="h-4 w-4 mt-0.5 flex-shrink-0 text-cyan-400" />
+              <span>
+                <span className="font-semibold">
+                  Internet Computer blockchain
+                </span>{" "}
+                scales automatically. No manual server management needed.
+                Caching, lazy loading, and query optimization are active.
+              </span>
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}
+
+// ─── Security Tab ─────────────────────────────────────────────────────────────
+
+function SecurityTab() {
+  const { flags, refresh: refreshFlags } = useGetCheaterFlags();
+  const { teams: dqTeams, refresh: refreshDqTeams } = useGetDisqualifiedTeams();
+  const { data: allTeams } = useGetTeams();
+
+  const activeFlagCount = flags.filter((f) => f.status === "flagged").length;
+
+  const handleBanAndDisqualify = (flagId: string) => {
+    // Mark the flag as banned in localStorage
+    banFlaggedPlayer(flagId);
+
+    const flag = flags.find((f) => f.id === flagId);
+    if (flag) {
+      // Disqualify the team associated with this player
+      const team = allTeams?.find((t) =>
+        t.members.some((m) => m.freeFireId === flag.ffId),
+      );
+      if (team) {
+        disqualifyTeam(
+          team.id.toString(),
+          team.name,
+          flag.tournamentId,
+          flag.tournamentName,
+          `Auto-ban: ${flag.reason}`,
+        );
+        refreshDqTeams();
+      }
+
+      toast.error("Player disqualified and banned. No refund issued.", {
+        description: `${flag.playerName} (${flag.ffId}) has been banned from the platform.`,
+        duration: 5000,
+      });
+    }
+
+    refreshFlags();
+  };
+
+  const handleDisqualifyTeamOnly = (flagId: string) => {
+    const flag = flags.find((f) => f.id === flagId);
+    if (!flag) return;
+
+    const team = allTeams?.find((t) =>
+      t.members.some((m) => m.freeFireId === flag.ffId),
+    );
+    if (team) {
+      disqualifyTeam(
+        team.id.toString(),
+        team.name,
+        flag.tournamentId,
+        flag.tournamentName,
+        `Disqualified: ${flag.reason}`,
+      );
+      refreshDqTeams();
+      toast.warning(`Team "${team.name}" has been disqualified.`);
+    } else {
+      toast.error("Could not find the team for this player.");
+    }
+  };
+
+  const handleClearFlag = (flagId: string) => {
+    clearFlag(flagId);
+    refreshFlags();
+    toast.success("Flag cleared successfully.");
+  };
+
+  return (
+    <div className="space-y-6" data-ocid="admin.security.panel">
+      {/* Summary header */}
+      <div className="flex items-center gap-4 flex-wrap">
+        <div
+          className="flex items-center gap-3 px-4 py-3 rounded-xl"
+          style={{
+            background: "rgba(220,0,0,0.08)",
+            border: "1px solid rgba(220,0,0,0.2)",
+          }}
+        >
+          <ShieldAlert className="h-6 w-6 text-destructive" />
+          <div>
+            <p className="text-xl font-bold font-display text-destructive">
+              {activeFlagCount}
+            </p>
+            <p className="text-xs text-muted-foreground">Active Flags</p>
+          </div>
+        </div>
+        <div
+          className="flex items-center gap-3 px-4 py-3 rounded-xl"
+          style={{
+            background: "rgba(255,130,0,0.08)",
+            border: "1px solid rgba(255,130,0,0.2)",
+          }}
+        >
+          <AlertTriangle className="h-6 w-6 text-orange-400" />
+          <div>
+            <p className="text-xl font-bold font-display text-orange-400">
+              {dqTeams.length}
+            </p>
+            <p className="text-xs text-muted-foreground">Disqualified Teams</p>
+          </div>
+        </div>
+        <div
+          className="flex items-center gap-3 px-4 py-3 rounded-xl"
+          style={{
+            background: "rgba(50,50,50,0.3)",
+            border: "1px solid rgba(100,100,100,0.2)",
+          }}
+        >
+          <Shield className="h-6 w-6 text-muted-foreground" />
+          <div>
+            <p className="text-xl font-bold font-display">
+              {flags.filter((f) => f.status === "banned").length}
+            </p>
+            <p className="text-xs text-muted-foreground">Total Bans</p>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Auto-Flagged Players ────────────────────────────────────── */}
+      <Card
+        style={{ border: "1px solid rgba(220,0,0,0.3)" }}
+        data-ocid="admin.security.card"
+      >
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-destructive">
+            <ShieldAlert className="h-5 w-5" />
+            Auto-Flagged Players
+            {activeFlagCount > 0 && (
+              <Badge variant="destructive" className="ml-2">
+                {activeFlagCount} Pending
+              </Badge>
+            )}
+          </CardTitle>
+          <CardDescription>
+            Players automatically flagged for suspicious kill counts (15+).
+            Review and take action.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Table data-ocid="admin.security.table">
+            <TableHeader>
+              <TableRow>
+                <TableHead>Player</TableHead>
+                <TableHead>FF ID</TableHead>
+                <TableHead>Tournament</TableHead>
+                <TableHead>Kills</TableHead>
+                <TableHead>Reason</TableHead>
+                <TableHead>Time</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {flags.length > 0 ? (
+                flags.map((flag, idx) => (
+                  <TableRow
+                    key={flag.id}
+                    data-ocid={`admin.security.row.${idx + 1}`}
+                    style={
+                      flag.status === "flagged"
+                        ? { background: "rgba(220,0,0,0.04)" }
+                        : {}
+                    }
+                  >
+                    <TableCell className="font-semibold">
+                      {flag.playerName}
+                    </TableCell>
+                    <TableCell className="font-mono text-xs">
+                      {flag.ffId}
+                    </TableCell>
+                    <TableCell className="text-sm text-muted-foreground max-w-[120px] truncate">
+                      {flag.tournamentName}
+                    </TableCell>
+                    <TableCell>
+                      <span
+                        className={`font-bold ${flag.kills >= 15 ? "text-destructive" : ""}`}
+                      >
+                        {flag.kills}
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-xs text-muted-foreground max-w-[150px]">
+                      {flag.reason}
+                    </TableCell>
+                    <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
+                      {new Date(flag.timestamp).toLocaleString("en-IN", {
+                        day: "2-digit",
+                        month: "short",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </TableCell>
+                    <TableCell>
+                      <Badge
+                        variant={
+                          flag.status === "flagged"
+                            ? "destructive"
+                            : flag.status === "banned"
+                              ? "outline"
+                              : "secondary"
+                        }
+                        className={
+                          flag.status === "cleared"
+                            ? "border-green-500/40 text-green-400"
+                            : flag.status === "banned"
+                              ? "border-orange-500/40 text-orange-400"
+                              : ""
+                        }
+                      >
+                        {flag.status.toUpperCase()}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      {flag.status === "flagged" && (
+                        <div className="flex flex-wrap gap-1">
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            className="text-xs h-7 px-2"
+                            data-ocid={`admin.security.delete_button.${idx + 1}`}
+                            onClick={() => handleBanAndDisqualify(flag.id)}
+                          >
+                            Ban + DQ
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="text-xs h-7 px-2 border-orange-500/40 text-orange-400 hover:bg-orange-950/20"
+                            data-ocid={`admin.security.secondary_button.${idx + 1}`}
+                            onClick={() => handleDisqualifyTeamOnly(flag.id)}
+                          >
+                            DQ Team
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="text-xs h-7 px-2 text-muted-foreground"
+                            data-ocid={`admin.security.cancel_button.${idx + 1}`}
+                            onClick={() => handleClearFlag(flag.id)}
+                          >
+                            Clear
+                          </Button>
+                        </div>
+                      )}
+                      {flag.status !== "flagged" && (
+                        <span className="text-xs text-muted-foreground">
+                          {flag.status === "banned" ? "Banned ✓" : "Cleared ✓"}
+                        </span>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell
+                    colSpan={8}
+                    className="text-center py-12 text-muted-foreground"
+                    data-ocid="admin.security.empty_state"
+                  >
+                    <div className="flex flex-col items-center gap-2">
+                      <Shield className="h-8 w-8 opacity-30" />
+                      <p>No suspicious activity detected</p>
+                      <p className="text-xs">
+                        Players with 15+ kills will be auto-flagged here
+                      </p>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+
+      {/* ── Disqualified Teams ────────────────────────────────────────── */}
+      <Card
+        style={{ border: "1px solid rgba(255,130,0,0.3)" }}
+        data-ocid="admin.security.dq.card"
+      >
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-orange-400">
+            <AlertTriangle className="h-5 w-5" />
+            Disqualified Teams
+          </CardTitle>
+          <CardDescription>
+            Teams that have been disqualified from tournaments. No refunds are
+            issued.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Team Name</TableHead>
+                <TableHead>Tournament</TableHead>
+                <TableHead>Reason</TableHead>
+                <TableHead>Date</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {dqTeams.length > 0 ? (
+                dqTeams.map((team, idx) => (
+                  <TableRow
+                    key={team.id}
+                    data-ocid={`admin.security.dq.row.${idx + 1}`}
+                    style={{ background: "rgba(255,130,0,0.04)" }}
+                  >
+                    <TableCell className="font-semibold">
+                      {team.teamName}
+                    </TableCell>
+                    <TableCell className="text-sm text-muted-foreground">
+                      {team.tournamentName}
+                    </TableCell>
+                    <TableCell className="text-xs text-muted-foreground">
+                      {team.reason}
+                    </TableCell>
+                    <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
+                      {new Date(team.timestamp).toLocaleString("en-IN", {
+                        day: "2-digit",
+                        month: "short",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell
+                    colSpan={4}
+                    className="text-center py-8 text-muted-foreground"
+                    data-ocid="admin.security.dq.empty_state"
+                  >
+                    No teams disqualified yet
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+
+      {/* Fair play reminder */}
+      <Card className="border-primary/20 bg-primary/5">
+        <CardContent className="pt-4 pb-4">
+          <p className="text-sm text-muted-foreground flex items-start gap-2">
+            <Shield className="h-4 w-4 mt-0.5 flex-shrink-0 text-primary" />
+            <span>
+              <span className="font-semibold text-foreground">
+                Fair Play Policy:{" "}
+              </span>
+              Hackers aur cheat users ko{" "}
+              <span className="text-destructive font-semibold">
+                permanently ban
+              </span>{" "}
+              kiya jayega with{" "}
+              <span className="text-destructive font-semibold">no refund</span>.
+              Har match mein fair play mandatory hai.
+            </span>
+          </p>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+// ── Referrals Tab ─────────────────────────────────────────────────────────────
+
+function ReferralsTab() {
+  const stats = getReferralStats();
+  const fraudOnly = stats.allReferrals.filter((r) => r.status === "fraud");
+
+  const maskName = (name: string) => {
+    if (!name || name.length < 2) return "****";
+    return `${name.slice(0, 2)}****`;
+  };
+
+  const formatDate = (ts: number) => {
+    return new Date(ts).toLocaleString("en-IN", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card className="border-green-500/30 bg-green-950/20">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm text-muted-foreground flex items-center gap-2">
+              <Gift className="h-4 w-4 text-green-400" />
+              Total Successful Referrals
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-3xl font-bold text-green-400">
+              {stats.totalReferrals}
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="border-yellow-500/30 bg-yellow-950/20">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm text-muted-foreground flex items-center gap-2">
+              <IndianRupee className="h-4 w-4 text-yellow-400" />
+              Total Rewards Paid
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-3xl font-bold text-yellow-400">
+              ₹{stats.totalEarnings.toFixed(2)}
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="border-destructive/30 bg-destructive/5">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm text-muted-foreground flex items-center gap-2">
+              <ShieldAlert className="h-4 w-4 text-destructive" />
+              Fraud Attempts Blocked
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-3xl font-bold text-destructive">
+              {stats.fraudAttempts}
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Fraud Alerts */}
+      {fraudOnly.length > 0 && (
+        <Card className="border-yellow-500/40 bg-yellow-950/20">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-yellow-400">
+              <AlertTriangle className="h-5 w-5" />
+              Fraud Alerts ({fraudOnly.length})
+            </CardTitle>
+            <CardDescription className="text-yellow-400/70">
+              These registrations were blocked due to same device/IP detection
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Referrer ID</TableHead>
+                  <TableHead>Friend</TableHead>
+                  <TableHead>Device Fingerprint</TableHead>
+                  <TableHead>Date</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {fraudOnly.map((r) => (
+                  <TableRow
+                    key={r.id}
+                    className="border-yellow-500/10 bg-yellow-950/10"
+                  >
+                    <TableCell className="font-mono text-xs text-muted-foreground max-w-24 truncate">
+                      {r.referrerId.slice(0, 16)}...
+                    </TableCell>
+                    <TableCell className="font-medium">
+                      {maskName(r.newUserName)}
+                    </TableCell>
+                    <TableCell className="font-mono text-xs text-muted-foreground">
+                      {r.deviceFingerprint}
+                    </TableCell>
+                    <TableCell className="text-xs text-muted-foreground">
+                      {formatDate(r.timestamp)}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Referral Logs Table */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Users className="h-5 w-5 text-primary" />
+            Referral Logs
+          </CardTitle>
+          <CardDescription>
+            All referral attempts sorted by newest first
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {stats.allReferrals.length === 0 ? (
+            <div
+              className="text-center py-10 text-muted-foreground"
+              data-ocid="admin.referrals.empty_state"
+            >
+              <Gift className="h-10 w-10 mx-auto mb-3 opacity-30" />
+              <p>No referrals yet</p>
+            </div>
+          ) : (
+            <Table data-ocid="admin.referrals.table">
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Referrer Code</TableHead>
+                  <TableHead>Friend</TableHead>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Amount</TableHead>
+                  <TableHead>Status</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {stats.allReferrals.map((r: ReferralRecord, idx: number) => (
+                  <TableRow
+                    key={r.id}
+                    data-ocid={`admin.referrals.row.${idx + 1}`}
+                  >
+                    <TableCell className="font-mono font-semibold text-primary">
+                      {r.referrerCode}
+                    </TableCell>
+                    <TableCell className="font-medium">
+                      {maskName(r.newUserName)}
+                    </TableCell>
+                    <TableCell className="text-xs text-muted-foreground">
+                      {formatDate(r.timestamp)}
+                    </TableCell>
+                    <TableCell>
+                      {r.status === "success" ? (
+                        <span className="text-yellow-400 font-semibold">
+                          ₹{r.rewardAmount.toFixed(2)}
+                        </span>
+                      ) : (
+                        <span className="text-muted-foreground">₹0</span>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {r.status === "success" ? (
+                        <Badge className="bg-green-700/30 text-green-300 border-green-500/30 flex items-center gap-1 w-fit">
+                          <CheckCircle2 className="h-3 w-3" />
+                          Success
+                        </Badge>
+                      ) : (
+                        <Badge
+                          variant="destructive"
+                          className="flex items-center gap-1 w-fit opacity-80"
+                        >
+                          <XCircle className="h-3 w-3" />
+                          Fraud
+                        </Badge>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }
