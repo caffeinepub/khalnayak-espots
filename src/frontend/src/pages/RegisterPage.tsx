@@ -10,6 +10,12 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
   getUserByReferralCode,
   isEmailTaken,
   isPhoneTaken,
@@ -22,6 +28,7 @@ import {
   Eye,
   EyeOff,
   Gift,
+  Info,
   Loader2,
   Trophy,
   UserPlus,
@@ -344,6 +351,16 @@ export function RegisterPage() {
                   <span className="text-muted-foreground font-normal">
                     (Optional)
                   </span>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Info className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground cursor-help ml-0.5" />
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Enter friend's referral code to earn ₹2 bonus!</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                 </Label>
                 <div className="relative">
                   <Input

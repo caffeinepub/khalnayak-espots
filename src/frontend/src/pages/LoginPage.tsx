@@ -28,7 +28,7 @@ import {
 } from "@/hooks/useLocalAuth";
 import { Link, useRouter } from "@tanstack/react-router";
 import { Eye, EyeOff, Loader2, Phone, Shield, Trophy } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 // ─── Login Page ────────────────────────────────────────────────────────────────
@@ -363,6 +363,26 @@ function PhoneLoginForm() {
   const [isSendingOtp, setIsSendingOtp] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // OTP countdown timer
+  const [timer, setTimer] = useState(60);
+  const [timerActive, setTimerActive] = useState(false);
+
+  useEffect(() => {
+    if (!timerActive) return;
+    setTimer(60);
+    const interval = setInterval(() => {
+      setTimer((prev) => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          setTimerActive(false);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [timerActive]);
+
   const handleSendOtp = () => {
     if (!phone || phone.replace(/\s+/g, "").length < 10) {
       setError("Please enter a valid phone number (at least 10 digits).");
@@ -375,6 +395,7 @@ function PhoneLoginForm() {
       const generatedOtp = sendOtp(phone);
       setOtpSent(true);
       setIsSendingOtp(false);
+      setTimerActive(true);
       toast.success(`OTP sent to ${phone}`, {
         description: `Demo mode — OTP: ${generatedOtp}`,
         duration: 8000,
@@ -539,14 +560,16 @@ function PhoneLoginForm() {
               type="button"
               variant="outline"
               onClick={handleSendOtp}
-              disabled={isSendingOtp || otpSent}
-              className="whitespace-nowrap border-primary/40 hover:border-primary"
+              disabled={isSendingOtp || timerActive}
+              className="whitespace-nowrap border-primary/40 hover:border-primary min-w-[110px]"
               data-ocid="login.secondary_button"
             >
               {isSendingOtp ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
+              ) : timerActive ? (
+                `Resend in ${timer}s`
               ) : otpSent ? (
-                "Resend"
+                "Resend OTP"
               ) : (
                 "Send OTP"
               )}
@@ -554,8 +577,7 @@ function PhoneLoginForm() {
           </div>
           {otpSent && (
             <p className="text-xs text-success">
-              ✓ OTP sent to {phone}. Check the toast notification for the demo
-              code.
+              ✓ OTP sent to {phone}. Check the toast for demo code.
             </p>
           )}
         </div>

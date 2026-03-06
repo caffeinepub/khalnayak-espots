@@ -325,6 +325,74 @@ export function HomePage() {
         </div>
       </section>
 
+      {/* Referral Guide Section */}
+      <section className="py-14 bg-gradient-to-br from-green-950/20 via-background to-background border-y border-green-500/20">
+        <div className="container">
+          <div className="text-center mb-8">
+            <h2
+              className="text-3xl font-bold font-display text-green-400"
+              style={{ textShadow: "0 0 16px rgba(74,222,128,0.4)" }}
+            >
+              Refer &amp; Earn ₹2
+            </h2>
+            <p className="text-muted-foreground mt-2">
+              Share your code, friend joins, you earn instantly!
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-3xl mx-auto mb-8">
+            {[
+              {
+                step: "1",
+                icon: "🔑",
+                title: "Get Your Code",
+                desc: "Find your unique referral code on your Profile page",
+              },
+              {
+                step: "2",
+                icon: "📤",
+                title: "Share It",
+                desc: "Share via WhatsApp, Facebook, Instagram, or Email",
+              },
+              {
+                step: "3",
+                icon: "👤",
+                title: "Friend Registers",
+                desc: "Your friend signs up using your referral code",
+              },
+              {
+                step: "4",
+                icon: "💰",
+                title: "Earn ₹2!",
+                desc: "₹2 credited to your wallet instantly!",
+              },
+            ].map((item) => (
+              <div
+                key={item.step}
+                className="rounded-xl border border-green-500/20 bg-green-950/20 p-4 text-center space-y-2"
+              >
+                <div className="text-2xl">{item.icon}</div>
+                <div className="w-6 h-6 rounded-full bg-green-500/20 border border-green-500/40 text-green-400 text-xs font-bold flex items-center justify-center mx-auto">
+                  {item.step}
+                </div>
+                <p className="text-sm font-semibold">{item.title}</p>
+                <p className="text-xs text-muted-foreground">{item.desc}</p>
+              </div>
+            ))}
+          </div>
+
+          <div className="text-center">
+            <Button
+              asChild
+              className="bg-green-600 hover:bg-green-500 text-white font-bold"
+              data-ocid="home.referral.primary_button"
+            >
+              <Link to="/profile">Get My Referral Code</Link>
+            </Button>
+          </div>
+        </div>
+      </section>
+
       {/* Ongoing Tournaments */}
       {ongoingTournaments.length > 0 && (
         <section className="py-16">

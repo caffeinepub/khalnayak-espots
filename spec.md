@@ -1,48 +1,42 @@
 # Khalnayak Espots
 
 ## Current State
-App has a sticky top Header with desktop nav links and a mobile hamburger sheet menu. Footer exists at the bottom. No bottom navigation bar exists. Colors use CSS variables (primary = cyan). Gaming fonts Orbitron/Rajdhani are loaded.
+- Local auth system (localStorage-based) with email + phone login
+- Phone OTP flow exists but has no timer or resend functionality — "Send OTP" button stays disabled after sending, no countdown
+- Internet Identity login works but username is auto-set to random `Player_XXXXXXXX` without giving the user a proper choice of name
+- Profile page shows "Not set" for email when no email — no "Add Email" button
+- ReferAndEarnCard on profile page only has WhatsApp and Telegram share buttons
+- No social share buttons for Facebook, Instagram, Email, or Copy Link
+- Share message is generic, not the specified format
+- No "How to Use Referral Code" step-by-step guide on home page or profile page
+- Registration form referral code field has no info tooltip (ⓘ icon)
 
 ## Requested Changes (Diff)
 
 ### Add
-- New `BottomNavBar` component: fixed at bottom of screen, sits above footer on mobile/tablet, hidden on desktop (≥900px).
-- Four nav items with outline-style lucide icons + labels:
-  - Home (House icon) → "/"
-  - Tournaments (Trophy icon) → "/tournaments"
-  - Earn (Coins icon) → "/earn"
-  - Profile (User icon) → "/profile"
-- Active item: neon green color (#00FF88) with glow/neon text-shadow effect
-- Inactive item: gray (#888888)
-- Background: #0A0A0A (dark)
-- Icons: 24-28px, outline style (stroke, no fill)
-- Labels: 12px below icon
-- Smooth color transition on active change
-- Add bottom padding to `<main>` on mobile so content isn't hidden behind bottom bar
-- Color scheme upgrade: swap primary neon color to #00FF88 (neon green) in CSS variables and update card glow effects to match
-- Cards & containers: glow effect with `box-shadow: 0 4px 15px rgba(0,255,136,0.2)`, border-radius 12px
-- Gradient buttons: subtle neon green gradient on primary buttons
-- Add `data-ocid` markers to all BottomNavBar items
+- OTP timer (60 seconds countdown) in PhoneLoginForm after OTP is sent
+- "Resend OTP" button that becomes active after 60 seconds
+- Facebook, Instagram, Email, and Copy Link share buttons in ReferAndEarnCard
+- Standardized share message: "Join me on Khalnayak Espots! Use my referral code [CODE] and get ₹2 bonus. Register here: [LINK]"
+- "How to Use Referral Code" step-by-step guide section in ProfilePage (4 steps)
+- Info icon (ⓘ) tooltip on referral code field in RegisterPage: "Enter friend's referral code to earn ₹2 bonus!"
+- "Add Email" button on profile when email is blank (for II-only users)
+- Phone field in ProfileSetupCard for II users who want to add phone number
 
 ### Modify
-- `App.tsx`: render `<BottomNavBar />` inside root layout, above `<Footer />`
-- `index.css` / tailwind config: update `--primary` CSS variable to #00FF88, update glow utilities
-- `Footer.tsx`: add `pb-16 md:pb-0` bottom padding compensation or handle via main padding
-- Main layout `<main>`: add `pb-16 md:pb-0` so content not hidden behind bottom bar on mobile
+- PhoneLoginForm: OTP section — after sending, show 60s countdown timer; "Resend" button active only when timer expires; allow re-sending OTP when resend is clicked (reset timer)
+- ProfileSetupCard (Internet Identity flow): pre-fill username from local auth if available but let user edit freely; add phone number optional field; use better default placeholder (not random `Player_XXXXXXXX`) — show "Choose your username" placeholder
+- LocalProfileView + main ProfilePage: if email is blank/empty, show "Add Email" button instead of blank text; same for phone
+- ReferAndEarnCard: replace existing 2 share buttons with full 5 share buttons (WhatsApp, Facebook, Instagram, Email, Copy Link); update share message to specified format
 
 ### Remove
 - Nothing removed
 
 ## Implementation Plan
-1. Create `src/frontend/src/components/BottomNavBar.tsx` with:
-   - useRouter / Link from @tanstack/react-router for active detection
-   - 4 nav items (Home/Tournaments/Earn/Profile)
-   - CSS: `fixed bottom-0 left-0 right-0 z-40 md:hidden` (hidden on desktop ≥768px, or use lg:hidden for ≥1024px; use md:hidden to match 900px intent)
-   - Active item: style with neon green + drop-shadow glow
-   - Inactive: gray
-   - Background: bg-[#0A0A0A] border-t border-[#00FF88]/20
-   - Smooth transition via CSS transition property
-   - data-ocid markers on each tab
-2. Update `App.tsx` rootRoute component to include `<BottomNavBar />` and add `pb-16 md:pb-0` to `<main>`
-3. Update `src/frontend/src/index.css`: change `--primary` hsl value to map to #00FF88 (neon green), update glow utilities
-4. Validate with typecheck + build
+1. **LoginPage.tsx — PhoneLoginForm**: Add `timer` state (60), `timerActive` state. When OTP sent, start 60s countdown using `setInterval`. Show countdown "Resend in 58s..." while active. When timer hits 0, show "Resend OTP" button (active). On resend click, re-call `handleSendOtp`, reset timer to 60.
+2. **ProfilePage.tsx — ProfileSetupCard**: Add phone field (optional). Change default username placeholder to empty or "Your name" — not random. Allow user to freely type username.
+3. **ProfilePage.tsx — player info sections**: When email is null/empty, show "Add Email" button (opens inline edit or links to edit form). When phone is null/empty for II users, show "Add Phone" button.
+4. **ProfilePage.tsx — ReferAndEarnCard**: Replace 2-button share row with 5 buttons: WhatsApp, Facebook, Instagram, Email, Copy Link. Share message = "Join me on Khalnayak Espots! Use my referral code [CODE] and get ₹2 bonus. Register here: [LINK]". Instagram opens instagram.com (can't deep-link to share from web). Email uses `mailto:` with pre-filled body.
+5. **ProfilePage.tsx — ReferAndEarnCard**: Add "How to Use Referral Code" steps section (4 steps) below the existing "How It Works" section.
+6. **RegisterPage.tsx**: Add info icon (ⓘ) next to the referral code label with a Tooltip showing "Enter friend's referral code to earn ₹2 bonus!".
+7. **HomePage.tsx**: Add a "How to Use Referral Code" prominent section — 4 steps with icons, styled with neon green, mobile-first.

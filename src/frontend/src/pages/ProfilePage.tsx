@@ -50,6 +50,7 @@ import {
   Gift,
   Loader2,
   LogIn,
+  Mail,
   MessageCircle,
   Phone,
   Send,
@@ -65,6 +66,9 @@ import {
 import { useState } from "react";
 import { toast } from "sonner";
 
+// Social share icons via react-icons
+import { SiFacebook, SiInstagram, SiWhatsapp } from "react-icons/si";
+
 export function ProfilePage() {
   const { identity } = useInternetIdentity();
   const localUser = useCurrentUser();
@@ -76,6 +80,14 @@ export function ProfilePage() {
   const { data: teams } = useGetTeams();
   const { data: wallet } = useGetCallerWallet();
   const tokens = useTokens();
+
+  // Inline email/phone edit states
+  const [showEmailEdit, setShowEmailEdit] = useState(false);
+  const [showPhoneEdit, setShowPhoneEdit] = useState(false);
+  const [editEmail, setEditEmail] = useState("");
+  const [editPhone, setEditPhone] = useState("");
+  const [savedEmail, setSavedEmail] = useState<string | null>(null);
+  const [savedPhone, setSavedPhone] = useState<string | null>(null);
 
   // Get the full local user to access referralCode
   const localUserFull = localUser
@@ -185,25 +197,104 @@ export function ProfilePage() {
                 {localUser?.fullName || profile?.username || "Not set"}
               </p>
             </div>
-            {/* Email — prefer local auth */}
-            <div>
-              <p className="text-sm text-muted-foreground">Email</p>
-              <p className="text-base font-medium break-all">
-                {localUser?.email || profile?.email || "Not set"}
-              </p>
-            </div>
-            {/* Phone — from local auth only */}
-            {localUser?.phone && (
-              <div className="flex items-center gap-2">
-                <div className="flex-1">
-                  <p className="text-sm text-muted-foreground">Phone</p>
-                  <p className="text-base font-medium flex items-center gap-1.5">
-                    <Phone className="h-4 w-4 text-muted-foreground" />
-                    {localUser.phone}
-                  </p>
-                </div>
+            {/* Player ID */}
+            {identity && (
+              <div>
+                <p className="text-sm text-muted-foreground">Player ID</p>
+                <p className="text-xs font-mono text-primary/80 break-all">
+                  player_{identity.getPrincipal().toString().slice(0, 8)}
+                </p>
               </div>
             )}
+            {/* Email — prefer local auth, show Add Email if missing */}
+            <div>
+              <p className="text-sm text-muted-foreground">Email</p>
+              {savedEmail || localUser?.email || profile?.email ? (
+                <p className="text-base font-medium break-all">
+                  {savedEmail || localUser?.email || profile?.email}
+                </p>
+              ) : showEmailEdit ? (
+                <div className="flex gap-2 mt-1">
+                  <Input
+                    type="email"
+                    value={editEmail}
+                    onChange={(e) => setEditEmail(e.target.value)}
+                    placeholder="your@email.com"
+                    className="h-8 text-sm"
+                    data-ocid="profile.input"
+                  />
+                  <Button
+                    size="sm"
+                    className="h-8 px-3 bg-primary hover:bg-primary/90 text-xs"
+                    onClick={() => {
+                      if (editEmail) {
+                        setSavedEmail(editEmail);
+                        setShowEmailEdit(false);
+                        toast.success("Email saved!");
+                      }
+                    }}
+                    data-ocid="profile.save_button"
+                  >
+                    Save
+                  </Button>
+                </div>
+              ) : (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 px-2 text-xs text-primary hover:text-primary/80 -ml-2"
+                  onClick={() => setShowEmailEdit(true)}
+                  data-ocid="profile.edit_button"
+                >
+                  + Add Email
+                </Button>
+              )}
+            </div>
+            {/* Phone — from local auth only, show Add Phone if missing */}
+            <div>
+              <p className="text-sm text-muted-foreground">Phone</p>
+              {savedPhone || localUser?.phone ? (
+                <p className="text-base font-medium flex items-center gap-1.5">
+                  <Phone className="h-4 w-4 text-muted-foreground" />
+                  {savedPhone || localUser?.phone}
+                </p>
+              ) : showPhoneEdit ? (
+                <div className="flex gap-2 mt-1">
+                  <Input
+                    type="tel"
+                    value={editPhone}
+                    onChange={(e) => setEditPhone(e.target.value)}
+                    placeholder="+91XXXXXXXXXX"
+                    className="h-8 text-sm"
+                    data-ocid="profile.input"
+                  />
+                  <Button
+                    size="sm"
+                    className="h-8 px-3 bg-primary hover:bg-primary/90 text-xs"
+                    onClick={() => {
+                      if (editPhone) {
+                        setSavedPhone(editPhone);
+                        setShowPhoneEdit(false);
+                        toast.success("Phone number saved!");
+                      }
+                    }}
+                    data-ocid="profile.save_button"
+                  >
+                    Save
+                  </Button>
+                </div>
+              ) : (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 px-2 text-xs text-primary hover:text-primary/80 -ml-2"
+                  onClick={() => setShowPhoneEdit(true)}
+                  data-ocid="profile.edit_button"
+                >
+                  + Add Phone
+                </Button>
+              )}
+            </div>
             {/* Role */}
             {profile && (
               <div>
@@ -452,6 +543,14 @@ function LocalProfileView({ localUser }: { localUser: LocalSession }) {
     (u) => u.id === localUser.userId,
   );
 
+  // Inline edit states for missing email/phone
+  const [showEmailEdit, setShowEmailEdit] = useState(false);
+  const [showPhoneEdit, setShowPhoneEdit] = useState(false);
+  const [editEmail, setEditEmail] = useState("");
+  const [editPhone, setEditPhone] = useState("");
+  const [savedEmail, setSavedEmail] = useState<string | null>(null);
+  const [savedPhone, setSavedPhone] = useState<string | null>(null);
+
   return (
     <div className="container py-12 space-y-8">
       <div>
@@ -473,21 +572,95 @@ function LocalProfileView({ localUser }: { localUser: LocalSession }) {
               <p className="text-sm text-muted-foreground">Full Name</p>
               <p className="text-lg font-semibold">{localUser.fullName}</p>
             </div>
+            {/* Email with Add Email button if missing */}
             <div>
               <p className="text-sm text-muted-foreground">Email</p>
-              <p className="text-base font-medium break-all">
-                {localUser.email}
-              </p>
+              {savedEmail || localUser.email ? (
+                <p className="text-base font-medium break-all">
+                  {savedEmail || localUser.email}
+                </p>
+              ) : showEmailEdit ? (
+                <div className="flex gap-2 mt-1">
+                  <Input
+                    type="email"
+                    value={editEmail}
+                    onChange={(e) => setEditEmail(e.target.value)}
+                    placeholder="your@email.com"
+                    className="h-8 text-sm"
+                    data-ocid="profile.input"
+                  />
+                  <Button
+                    size="sm"
+                    className="h-8 px-3 bg-primary hover:bg-primary/90 text-xs"
+                    onClick={() => {
+                      if (editEmail) {
+                        setSavedEmail(editEmail);
+                        setShowEmailEdit(false);
+                        toast.success("Email saved!");
+                      }
+                    }}
+                    data-ocid="profile.save_button"
+                  >
+                    Save
+                  </Button>
+                </div>
+              ) : (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 px-2 text-xs text-primary hover:text-primary/80 -ml-2"
+                  onClick={() => setShowEmailEdit(true)}
+                  data-ocid="profile.edit_button"
+                >
+                  + Add Email
+                </Button>
+              )}
             </div>
-            {localUser.phone && (
-              <div>
-                <p className="text-sm text-muted-foreground">Phone</p>
+            {/* Phone with Add Phone button if missing */}
+            <div>
+              <p className="text-sm text-muted-foreground">Phone</p>
+              {savedPhone || localUser.phone ? (
                 <p className="text-base font-medium flex items-center gap-1.5">
                   <Phone className="h-4 w-4 text-muted-foreground" />
-                  {localUser.phone}
+                  {savedPhone || localUser.phone}
                 </p>
-              </div>
-            )}
+              ) : showPhoneEdit ? (
+                <div className="flex gap-2 mt-1">
+                  <Input
+                    type="tel"
+                    value={editPhone}
+                    onChange={(e) => setEditPhone(e.target.value)}
+                    placeholder="+91XXXXXXXXXX"
+                    className="h-8 text-sm"
+                    data-ocid="profile.input"
+                  />
+                  <Button
+                    size="sm"
+                    className="h-8 px-3 bg-primary hover:bg-primary/90 text-xs"
+                    onClick={() => {
+                      if (editPhone) {
+                        setSavedPhone(editPhone);
+                        setShowPhoneEdit(false);
+                        toast.success("Phone number saved!");
+                      }
+                    }}
+                    data-ocid="profile.save_button"
+                  >
+                    Save
+                  </Button>
+                </div>
+              ) : (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 px-2 text-xs text-primary hover:text-primary/80 -ml-2"
+                  onClick={() => setShowPhoneEdit(true)}
+                  data-ocid="profile.edit_button"
+                >
+                  + Add Phone
+                </Button>
+              )}
+            </div>
             <div>
               <p className="text-sm text-muted-foreground">Role</p>
               <Badge variant="secondary">PLAYER</Badge>
@@ -559,12 +732,17 @@ function ProfileSetupCard() {
   const localUser = useCurrentUser();
   const saveProfileMutation = useSaveUserProfile();
   const [username, setUsername] = useState(() => {
-    // Pre-fill from local auth if available
+    // Pre-fill from local auth if available, otherwise empty so user types freely
     if (localUser?.fullName) return localUser.fullName;
-    if (!identity) return "";
-    return `Player_${identity.getPrincipal().toString().slice(0, 8)}`;
+    return "";
   });
   const [email, setEmail] = useState(() => localUser?.email || "");
+  const [phone, setPhone] = useState(() => localUser?.phone || "");
+
+  // Show player ID for reference
+  const playerId = identity
+    ? `player_${identity.getPrincipal().toString().slice(0, 8)}`
+    : null;
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -607,18 +785,23 @@ function ProfileSetupCard() {
           <CardDescription>
             Set up your player profile to get a wallet and join tournaments.
           </CardDescription>
+          {playerId && (
+            <p className="text-xs text-muted-foreground mt-2 font-mono">
+              Player ID: <span className="text-primary/80">{playerId}</span>
+            </p>
+          )}
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSave} className="space-y-5">
             <div className="space-y-2">
               <Label htmlFor="setup-username">
-                Username <span className="text-destructive">*</span>
+                Your Name <span className="text-destructive">*</span>
               </Label>
               <Input
                 id="setup-username"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                placeholder="Enter your username"
+                placeholder="Enter your name"
                 required
                 minLength={3}
                 data-ocid="profile.input"
@@ -632,6 +815,17 @@ function ProfileSetupCard() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="your@email.com"
+                data-ocid="profile.input"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="setup-phone">Phone Number (optional)</Label>
+              <Input
+                id="setup-phone"
+                type="tel"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                placeholder="+91XXXXXXXXXX"
                 data-ocid="profile.input"
               />
             </div>
@@ -893,6 +1087,7 @@ function ReferAndEarnCard({
   referralCode: string;
 }) {
   const [copied, setCopied] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
   const stats: ReferralStats = userId
     ? getUserReferralStats(userId)
     : { totalReferrals: 0, totalEarnings: 0, fraudAttempts: 0, referrals: [] };
@@ -901,7 +1096,8 @@ function ReferAndEarnCard({
     typeof window !== "undefined"
       ? window.location.origin
       : "https://khalnayak.app";
-  const shareText = `Join Khalnayak Espots - India's Best Free Fire Tournament Platform! Use my referral code ${referralCode} to register and win prizes! 🎮🔥 Register here: ${appUrl}`;
+  const registerUrl = `${appUrl}/register`;
+  const shareMessage = `Join me on Khalnayak Espots! Use my referral code ${referralCode} and get ₹2 bonus. Register here: ${registerUrl}`;
 
   const handleCopy = async () => {
     try {
@@ -917,13 +1113,53 @@ function ReferAndEarnCard({
   };
 
   const handleWhatsApp = () => {
-    const url = `https://wa.me/?text=${encodeURIComponent(shareText)}`;
-    window.open(url, "_blank", "noopener,noreferrer");
+    window.open(
+      `https://wa.me/?text=${encodeURIComponent(shareMessage)}`,
+      "_blank",
+      "noopener,noreferrer",
+    );
   };
 
-  const handleTelegram = () => {
-    const url = `https://t.me/share/url?url=${encodeURIComponent(appUrl)}&text=${encodeURIComponent(`Join Khalnayak Espots! Use referral code ${referralCode} when registering 🎮`)}`;
-    window.open(url, "_blank", "noopener,noreferrer");
+  const handleFacebook = () => {
+    window.open(
+      `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(registerUrl)}&quote=${encodeURIComponent(shareMessage)}`,
+      "_blank",
+      "noopener,noreferrer",
+    );
+  };
+
+  const handleInstagram = () => {
+    // Instagram web doesn't support deep-link sharing; copy code and open Instagram
+    navigator.clipboard
+      .writeText(shareMessage)
+      .then(() => {
+        toast.info("Message copied!", {
+          description: "Copy your code and paste it in Instagram story/post!",
+        });
+      })
+      .catch(() => {});
+    window.open("https://www.instagram.com/", "_blank", "noopener,noreferrer");
+  };
+
+  const handleEmail = () => {
+    window.open(
+      `mailto:?subject=Join%20Khalnayak%20Espots!&body=${encodeURIComponent(shareMessage)}`,
+      "_blank",
+      "noopener,noreferrer",
+    );
+  };
+
+  const handleCopyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(shareMessage);
+      setLinkCopied(true);
+      toast.success("Share message copied!", {
+        description: "Paste it anywhere to share.",
+      });
+      setTimeout(() => setLinkCopied(false), 2500);
+    } catch {
+      toast.error("Could not copy. Please copy manually.");
+    }
   };
 
   const maskName = (name: string) => {
@@ -991,31 +1227,90 @@ function ReferAndEarnCard({
           </div>
         </div>
 
-        {/* Share Buttons */}
+        {/* Share Buttons — 5-button grid */}
         <div className="space-y-2">
           <p className="text-xs text-muted-foreground uppercase tracking-wider">
             Share Via
           </p>
-          <div className="flex gap-3">
+          <div className="grid grid-cols-3 gap-2">
+            {/* WhatsApp */}
             <Button
               onClick={handleWhatsApp}
-              className="flex-1 bg-[#25D366]/20 hover:bg-[#25D366]/30 border border-[#25D366]/40 text-[#25D366] font-semibold"
               size="sm"
+              className="bg-[#25D366]/20 hover:bg-[#25D366]/35 border border-[#25D366]/40 text-[#25D366] font-semibold flex items-center gap-1.5"
               data-ocid="referral.whatsapp_button"
             >
-              <MessageCircle className="h-4 w-4 mr-2" />
-              WhatsApp
+              <SiWhatsapp className="h-4 w-4 shrink-0" />
+              <span className="hidden xs:inline">WhatsApp</span>
+              <span className="xs:hidden">WA</span>
             </Button>
+            {/* Facebook */}
             <Button
-              onClick={handleTelegram}
-              className="flex-1 bg-[#229ED9]/20 hover:bg-[#229ED9]/30 border border-[#229ED9]/40 text-[#229ED9] font-semibold"
+              onClick={handleFacebook}
               size="sm"
-              data-ocid="referral.telegram_button"
+              className="bg-[#1877F2]/20 hover:bg-[#1877F2]/35 border border-[#1877F2]/40 text-[#1877F2] font-semibold flex items-center gap-1.5"
+              data-ocid="referral.facebook_button"
             >
-              <Send className="h-4 w-4 mr-2" />
-              Telegram
+              <SiFacebook className="h-4 w-4 shrink-0" />
+              <span className="hidden xs:inline">Facebook</span>
+              <span className="xs:hidden">FB</span>
+            </Button>
+            {/* Instagram */}
+            <Button
+              onClick={handleInstagram}
+              size="sm"
+              className="font-semibold flex items-center gap-1.5 border"
+              style={{
+                background:
+                  "linear-gradient(135deg, rgba(253,92,99,0.2) 0%, rgba(162,59,189,0.2) 100%)",
+                borderColor: "rgba(162,59,189,0.4)",
+                color: "#e879f9",
+              }}
+              data-ocid="referral.instagram_button"
+            >
+              <SiInstagram className="h-4 w-4 shrink-0" />
+              <span className="hidden xs:inline">Instagram</span>
+              <span className="xs:hidden">IG</span>
+            </Button>
+            {/* Email */}
+            <Button
+              onClick={handleEmail}
+              size="sm"
+              className="bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-400 font-semibold flex items-center gap-1.5"
+              data-ocid="referral.email_button"
+            >
+              <Mail className="h-4 w-4 shrink-0" />
+              Email
+            </Button>
+            {/* Copy Link */}
+            <Button
+              onClick={handleCopyLink}
+              size="sm"
+              className={`col-span-2 font-semibold flex items-center gap-1.5 transition-all ${
+                linkCopied
+                  ? "bg-primary/30 border-primary/60 text-primary"
+                  : "bg-primary/20 hover:bg-primary/30 border border-primary/40 text-primary"
+              }`}
+              data-ocid="referral.copylink_button"
+            >
+              {linkCopied ? (
+                <>
+                  <CheckCircle2 className="h-4 w-4 shrink-0" />
+                  Message Copied!
+                </>
+              ) : (
+                <>
+                  <Copy className="h-4 w-4 shrink-0" />
+                  Copy Share Message
+                </>
+              )}
             </Button>
           </div>
+          <p className="text-xs text-muted-foreground/70 italic">
+            Message: "Join me on Khalnayak Espots! Use my referral code{" "}
+            <span className="font-mono text-green-400">{referralCode}</span> and
+            get ₹2 bonus."
+          </p>
         </div>
 
         {/* Stats Row */}
@@ -1035,9 +1330,6 @@ function ReferAndEarnCard({
             <p className="text-xs text-muted-foreground mt-0.5">Earnings</p>
           </div>
           <div className="rounded-lg border border-border/30 bg-muted/10 p-3 text-center">
-            <div className="flex items-center justify-center gap-1">
-              <Users className="h-4 w-4 text-muted-foreground" />
-            </div>
             <p className="text-2xl font-bold text-foreground">
               ₹{(stats.totalReferrals * 2).toFixed(0)}
             </p>
@@ -1114,17 +1406,17 @@ function ReferAndEarnCard({
           )}
         </div>
 
-        {/* How it works */}
+        {/* How It Works */}
         <div className="rounded-lg border border-border/30 bg-muted/5 p-3 space-y-1.5">
           <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
             How It Works
           </p>
           {[
             "Share your unique referral code with friends",
-            "Friend registers using your code",
+            "Friend registers using your code at signup",
             "You instantly earn ₹2 in your wallet",
           ].map((step, i) => (
-            // biome-ignore lint/suspicious/noArrayIndexKey: static list, order never changes
+            // biome-ignore lint/suspicious/noArrayIndexKey: static list
             <p key={i} className="text-xs text-muted-foreground flex gap-2">
               <span className="text-green-400 font-bold shrink-0">
                 {i + 1}.
@@ -1132,6 +1424,59 @@ function ReferAndEarnCard({
               {step}
             </p>
           ))}
+        </div>
+
+        {/* Step-by-step Referral Guide */}
+        <div className="rounded-lg border border-green-500/20 bg-green-950/10 p-4 space-y-3">
+          <p className="text-xs font-semibold text-green-400 uppercase tracking-wide">
+            📖 How to Use Referral Code
+          </p>
+          <div className="grid grid-cols-2 gap-2">
+            {[
+              {
+                step: "1",
+                icon: "🔑",
+                title: "Get Your Code",
+                desc: "Copy your unique code from above",
+              },
+              {
+                step: "2",
+                icon: "📤",
+                title: "Share It",
+                desc: "Send via WhatsApp, Facebook, or Email",
+              },
+              {
+                step: "3",
+                icon: "👤",
+                title: "Friend Registers",
+                desc: "Friend signs up using your code",
+              },
+              {
+                step: "4",
+                icon: "💰",
+                title: "Earn ₹2!",
+                desc: "₹2 credited to your wallet instantly!",
+              },
+            ].map((item) => (
+              <div
+                key={item.step}
+                className="rounded-lg border border-green-500/15 bg-green-950/15 p-2.5 space-y-1"
+              >
+                <div className="flex items-center gap-1.5">
+                  <span className="text-base">{item.icon}</span>
+                  <span className="w-5 h-5 rounded-full bg-green-500/20 border border-green-500/40 text-green-400 text-[10px] font-bold flex items-center justify-center shrink-0">
+                    {item.step}
+                  </span>
+                </div>
+                <p className="text-xs font-semibold text-foreground">
+                  {item.title}
+                </p>
+                <p className="text-[11px] text-muted-foreground leading-tight">
+                  {item.desc}
+                </p>
+              </div>
+            ))}
+          </div>
         </div>
       </CardContent>
     </Card>
