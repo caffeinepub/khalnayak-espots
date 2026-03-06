@@ -9,6 +9,7 @@ import {
 import { Loader2 } from "lucide-react";
 import React, { Suspense } from "react";
 import { BanNotification } from "./components/BanNotification";
+import { BottomNavBar } from "./components/BottomNavBar";
 import { Footer } from "./components/Footer";
 import { Header } from "./components/Header";
 import { InstallPrompt } from "./components/InstallPrompt";
@@ -105,12 +106,13 @@ const rootRoute = createRootRoute({
   component: () => (
     <div className="flex flex-col min-h-screen">
       <Header />
-      <main className="flex-1">
+      <main className="flex-1 pb-16 md:pb-0">
         <Suspense fallback={<PageLoadingSpinner />}>
           <Outlet />
         </Suspense>
       </main>
       <Footer />
+      <BottomNavBar />
     </div>
   ),
 });

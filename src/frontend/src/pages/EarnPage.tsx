@@ -9,12 +9,14 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+import { useAdMob } from "@/hooks/useAdMob";
 import { useInternetIdentity } from "@/hooks/useInternetIdentity";
 import { useTokens } from "@/hooks/useTokens";
 import { Link } from "@tanstack/react-router";
 import {
   Coins,
   IndianRupee,
+  Loader2,
   LogIn,
   Play,
   TrendingUp,
@@ -240,8 +242,12 @@ function TokenBalanceCard({
 // ─── Watch Ad Section ──────────────────────────────────────────────────────────
 
 function WatchAdSection({ onAdComplete }: { onAdComplete: () => void }) {
+  // AdModal fallback state
   const [adOpen, setAdOpen] = useState(false);
+  // AdMob web integration
+  const { showRewardedAd, rewardedAdStatus, isTestMode } = useAdMob();
 
+  /** Called when the ad (real or simulated) completes successfully */
   const handleComplete = useCallback(() => {
     setAdOpen(false);
     onAdComplete();
@@ -254,8 +260,21 @@ function WatchAdSection({ onAdComplete }: { onAdComplete: () => void }) {
     setAdOpen(false);
   }, []);
 
+  /** Main button handler — tries real AdMob first, falls back to AdModal */
+  const handleWatchAd = useCallback(() => {
+    // showRewardedAd calls onFailed() if the real ad isn't available,
+    // which triggers the AdModal simulation fallback.
+    showRewardedAd(
+      /* onRewarded */ handleComplete,
+      /* onFailed   */ () => setAdOpen(true),
+    );
+  }, [showRewardedAd, handleComplete]);
+
+  const isLoading = rewardedAdStatus === "loading";
+
   return (
     <>
+      {/* AdModal simulation fallback */}
       <AdModal
         isOpen={adOpen}
         onComplete={handleComplete}
@@ -280,30 +299,52 @@ function WatchAdSection({ onAdComplete }: { onAdComplete: () => void }) {
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="text-center space-y-4">
-            {/* Ad Placeholder Banner */}
-            <div className="w-full h-40 rounded-xl border-2 border-dashed border-yellow-500/40 bg-yellow-950/20 flex items-center justify-center">
-              <div className="text-center space-y-2">
-                <Play className="h-10 w-10 text-yellow-500/60 mx-auto" />
-                <p className="text-sm text-muted-foreground">
-                  Advertisement will play here
-                </p>
-                <Badge
-                  variant="outline"
-                  className="border-yellow-500/50 text-yellow-400"
-                >
-                  30 sec ad
-                </Badge>
+            {/* Ad Area */}
+            <div className="w-full h-40 rounded-xl border-2 border-dashed border-yellow-500/40 bg-yellow-950/20 flex items-center justify-center relative overflow-hidden">
+              {/* AdSense slot for display ads in the earn section */}
+              <ins
+                className="adsbygoogle"
+                style={{ display: "block", width: "100%", height: "100%" }}
+                data-ad-client="ca-pub-9216368060577966"
+                data-ad-slot="2950149540"
+                data-ad-format="auto"
+                data-full-width-responsive="true"
+                {...(isTestMode ? { "data-adtest": "on" } : {})}
+              />
+              {/* Overlay hint so ad area feels intentional */}
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <div className="text-center space-y-2 opacity-40">
+                  <Play className="h-10 w-10 text-yellow-500 mx-auto" />
+                  <p className="text-sm text-muted-foreground">Advertisement</p>
+                  <Badge
+                    variant="outline"
+                    className="border-yellow-500/50 text-yellow-400"
+                  >
+                    30 sec ad
+                  </Badge>
+                </div>
               </div>
             </div>
+
+            {/* Watch Ad button — always active, never disabled */}
             <Button
-              onClick={() => setAdOpen(true)}
+              onClick={handleWatchAd}
               size="lg"
               className="bg-yellow-500 hover:bg-yellow-400 text-black font-bold px-10 text-lg shadow-lg"
               style={{ boxShadow: "0 0 20px rgba(234,179,8,0.4)" }}
               data-ocid="earn.primary_button"
             >
-              <Play className="mr-2 h-5 w-5" />
-              Watch Ad & Earn 1 Token
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                  Loading Ad…
+                </>
+              ) : (
+                <>
+                  <Play className="mr-2 h-5 w-5" />
+                  Watch Ad & Earn 1 Token
+                </>
+              )}
             </Button>
             <p className="text-xs text-muted-foreground">
               Unlimited ads available • 1 Token per ad • 30 sec ad

@@ -1,87 +1,48 @@
 # Khalnayak Espots
 
 ## Current State
-
-The application has a complete frontend UI with:
-- 10 pages: Home, Tournaments, Tournament Details, Wallet, Profile, Rules, Support, Admin Panel
-- Mock data for tournaments, users, and leaderboards
-- Dark gaming theme with neon accents
-- Wallet system UI with transaction history
-- Team registration forms
-- Real-time leaderboard displays (UI only)
-- Admin panel with 7 management tabs
-
-Backend has not been generated yet - all data is currently mock/local state.
+App has a sticky top Header with desktop nav links and a mobile hamburger sheet menu. Footer exists at the bottom. No bottom navigation bar exists. Colors use CSS variables (primary = cyan). Gaming fonts Orbitron/Rajdhani are loaded.
 
 ## Requested Changes (Diff)
 
 ### Add
-- **Backend Motoko canister** with full data persistence
-  - User management (registration, authentication, profiles)
-  - Tournament CRUD operations (create, read, update, delete)
-  - Team registration system with Free Fire IDs
-  - Wallet system (deposits, withdrawals, balances, transactions)
-  - Real-time leaderboard scoring and updates
-  - Admin operations (approve entries, update scores, manage users)
-  - Payment processing and prize distribution logic
-- **Frontend-backend integration**
-  - Replace all mock data with backend API calls
-  - Connect authentication to Internet Identity
-  - Wire wallet operations to backend balance management
-  - Connect tournament registration to backend persistence
-  - Integrate leaderboard updates with backend scoring API
-  - Connect admin panel to backend management endpoints
+- New `BottomNavBar` component: fixed at bottom of screen, sits above footer on mobile/tablet, hidden on desktop (≥900px).
+- Four nav items with outline-style lucide icons + labels:
+  - Home (House icon) → "/"
+  - Tournaments (Trophy icon) → "/tournaments"
+  - Earn (Coins icon) → "/earn"
+  - Profile (User icon) → "/profile"
+- Active item: neon green color (#00FF88) with glow/neon text-shadow effect
+- Inactive item: gray (#888888)
+- Background: #0A0A0A (dark)
+- Icons: 24-28px, outline style (stroke, no fill)
+- Labels: 12px below icon
+- Smooth color transition on active change
+- Add bottom padding to `<main>` on mobile so content isn't hidden behind bottom bar
+- Color scheme upgrade: swap primary neon color to #00FF88 (neon green) in CSS variables and update card glow effects to match
+- Cards & containers: glow effect with `box-shadow: 0 4px 15px rgba(0,255,136,0.2)`, border-radius 12px
+- Gradient buttons: subtle neon green gradient on primary buttons
+- Add `data-ocid` markers to all BottomNavBar items
 
 ### Modify
-- Frontend components to use backend API calls instead of local state
-- Authentication flow to use Internet Identity
-- Wallet page to fetch and update backend balances
-- Tournament pages to load data from backend
-- Leaderboard to poll backend for real-time updates
-- Admin panel to perform actual backend operations
+- `App.tsx`: render `<BottomNavBar />` inside root layout, above `<Footer />`
+- `index.css` / tailwind config: update `--primary` CSS variable to #00FF88, update glow utilities
+- `Footer.tsx`: add `pb-16 md:pb-0` bottom padding compensation or handle via main padding
+- Main layout `<main>`: add `pb-16 md:pb-0` so content not hidden behind bottom bar on mobile
 
 ### Remove
-- Mock data arrays and local state management
-- Simulated wallet transactions
-- Fake tournament data
-- Hardcoded leaderboard entries
+- Nothing removed
 
 ## Implementation Plan
-
-1. **Generate Motoko backend** with functional requirements:
-   - User system with profiles, wallet balances, transaction history
-   - Tournament management with two modes (Battle Ground 48-player, 4vs4 Custom)
-   - Team registration with 4 players + substitute
-   - Wallet operations (deposit, withdraw, transfer for entry fees)
-   - Scoring system (kills + placement points)
-   - Prize distribution (30/70 split, winner percentages)
-   - Admin operations (create tournaments, update scores, approve teams, ban users)
-   - Real-time leaderboard data access
-   - Referral system tracking
-
-2. **Frontend integration** (delegate to frontend subagent):
-   - Integrate Internet Identity authentication
-   - Connect all pages to backend APIs from `backend.d.ts`
-   - Replace mock data with API calls
-   - Add loading states and error handling
-   - Implement real-time polling for leaderboards
-   - Wire admin panel to backend management functions
-   - Add wallet deposit/withdrawal integration (UPI/PhonePe placeholder UI)
-   - Connect tournament registration to backend with validation
-   - Implement prize auto-distribution on score updates
-
-3. **Validation**:
-   - TypeScript compilation
-   - ESLint checks
-   - Build verification
-   - Test key user flows (registration, tournament entry, leaderboard updates)
-
-## UX Notes
-
-- Use Internet Identity for secure blockchain authentication (replaces email/password)
-- Show loading spinners during backend calls
-- Display friendly error messages if backend operations fail
-- Keep leaderboard auto-refresh every 10 seconds for real-time feel
-- Admin panel should show success/error toasts after operations
-- Wallet transactions should reflect immediately in UI after backend confirmation
-- Tournament registration should validate Free Fire IDs before submission
+1. Create `src/frontend/src/components/BottomNavBar.tsx` with:
+   - useRouter / Link from @tanstack/react-router for active detection
+   - 4 nav items (Home/Tournaments/Earn/Profile)
+   - CSS: `fixed bottom-0 left-0 right-0 z-40 md:hidden` (hidden on desktop ≥768px, or use lg:hidden for ≥1024px; use md:hidden to match 900px intent)
+   - Active item: style with neon green + drop-shadow glow
+   - Inactive: gray
+   - Background: bg-[#0A0A0A] border-t border-[#00FF88]/20
+   - Smooth transition via CSS transition property
+   - data-ocid markers on each tab
+2. Update `App.tsx` rootRoute component to include `<BottomNavBar />` and add `pb-16 md:pb-0` to `<main>`
+3. Update `src/frontend/src/index.css`: change `--primary` hsl value to map to #00FF88 (neon green), update glow utilities
+4. Validate with typecheck + build

@@ -45,6 +45,8 @@
     --neon-cyan: 0.75 0.18 195;
     --neon-pink: 0.62 0.25 345;
     --neon-purple: 0.65 0.22 285;
+    /* Neon Green (#00FF88) — primary action color */
+    --neon-green: 0.87 0.22 152;
     --success: 0.70 0.20 160;
     --warning: 0.68 0.23 50;
   }
@@ -85,6 +87,7 @@
     --neon-cyan: 0.75 0.18 195;
     --neon-pink: 0.62 0.25 345;
     --neon-purple: 0.65 0.22 285;
+    --neon-green: 0.87 0.22 152;
     --success: 0.70 0.20 160;
     --warning: 0.68 0.23 50;
   }
@@ -107,6 +110,22 @@
   .glow-purple {
     text-shadow: 0 0 20px oklch(var(--neon-purple) / 0.8), 0 0 40px oklch(var(--neon-purple) / 0.5);
   }
+  /* Neon Green glow utilities */
+  .glow-green {
+    text-shadow: 0 0 10px rgba(0, 255, 136, 0.8), 0 0 20px rgba(0, 255, 136, 0.5), 0 0 40px rgba(0, 255, 136, 0.3);
+  }
+  .border-glow-green {
+    box-shadow: 0 0 10px rgba(0, 255, 136, 0.5), inset 0 0 10px rgba(0, 255, 136, 0.08);
+  }
+  /* Card glow effect for tournament cards */
+  .card-glow {
+    box-shadow: 0 4px 15px rgba(0, 255, 136, 0.2);
+    border-radius: 12px;
+  }
+  .card-glow-purple {
+    box-shadow: 0 4px 15px rgba(157, 78, 221, 0.25);
+    border-radius: 12px;
+  }
   .border-glow-cyan {
     box-shadow: 0 0 10px oklch(var(--neon-cyan) / 0.5), inset 0 0 10px oklch(var(--neon-cyan) / 0.1);
   }
@@ -115,6 +134,10 @@
   }
   .border-glow-purple {
     box-shadow: 0 0 10px oklch(var(--neon-purple) / 0.5), inset 0 0 10px oklch(var(--neon-purple) / 0.1);
+  }
+  /* Safe area bottom padding for bottom nav */
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
   }
 }
 

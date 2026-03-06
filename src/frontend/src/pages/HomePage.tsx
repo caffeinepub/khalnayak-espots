@@ -1,3 +1,4 @@
+import { AdMobBanner } from "@/components/AdMobBanner";
 import { CountdownTimer } from "@/components/CountdownTimer";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -511,6 +512,11 @@ export function HomePage() {
           </div>
         </section>
       )}
+
+      {/* Banner Ad — softly placed above footer, non-intrusive */}
+      <section className="mt-auto pb-1">
+        <AdMobBanner />
+      </section>
     </div>
   );
 }

@@ -1,4 +1,5 @@
 import type { Player } from "@/backend";
+import { InterstitialOverlay } from "@/components/AdMobBanner";
 import { AdModal } from "@/components/AdModal";
 import { CheaterAutoFlagBanner } from "@/components/CheaterAutoFlagBanner";
 import { CountdownTimer } from "@/components/CountdownTimer";
@@ -544,6 +545,8 @@ function RegistrationDialog({
 }: { tournament: any; walletBalance: bigint }) {
   const [open, setOpen] = useState(false);
   const [flowState, setFlowState] = useState<RegFlowState>("idle");
+  // Post-registration interstitial state
+  const [showInterstitial, setShowInterstitial] = useState(false);
   const [teamName, setTeamName] = useState("");
   const requiredPlayers = getRequiredPlayers(tournament.tournamentType);
   const [players, setPlayers] = useState<Player[]>(
@@ -614,9 +617,8 @@ function RegistrationDialog({
       setOpen(false);
       setFlowState("idle");
 
-      setTimeout(() => {
-        navigate({ to: "/profile" });
-      }, 500);
+      // Show post-registration interstitial ad (optional — user can skip)
+      setShowInterstitial(true);
     } catch (error: any) {
       console.error("Registration error:", error);
       setFlowState("idle");
@@ -641,6 +643,14 @@ function RegistrationDialog({
     }
   };
 
+  /** Called when user dismisses the post-registration interstitial */
+  const handleInterstitialDismiss = () => {
+    setShowInterstitial(false);
+    setTimeout(() => {
+      navigate({ to: "/profile" });
+    }, 100);
+  };
+
   // Ad cancelled → cancel registration
   const handleAdCancel = () => {
     setFlowState("idle");
@@ -659,6 +669,12 @@ function RegistrationDialog({
         duration={30}
         title="Watch Ad to Register"
         rewardLabel="+1 Token Bonus"
+      />
+
+      {/* Post-registration interstitial ad — optional, user can skip */}
+      <InterstitialOverlay
+        isOpen={showInterstitial}
+        onDismiss={handleInterstitialDismiss}
       />
 
       <Dialog
