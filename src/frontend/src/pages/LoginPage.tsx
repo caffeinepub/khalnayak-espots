@@ -35,7 +35,7 @@ import { toast } from "sonner";
 
 export function LoginPage() {
   return (
-    <div className="min-h-screen flex items-center justify-center py-12 px-4">
+    <div className="min-h-screen flex items-center justify-center py-6 px-4">
       {/* Background grid effect */}
       <div
         className="fixed inset-0 pointer-events-none opacity-5"
@@ -48,7 +48,7 @@ export function LoginPage() {
         }}
       />
 
-      <div className="w-full max-w-md space-y-6 relative z-10">
+      <div className="w-full max-w-md space-y-4 relative z-10">
         {/* Header */}
         <div className="text-center space-y-2">
           <div className="flex items-center justify-center gap-2 mb-4">

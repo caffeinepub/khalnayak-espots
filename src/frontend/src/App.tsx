@@ -106,7 +106,7 @@ const rootRoute = createRootRoute({
   component: () => (
     <div className="flex flex-col min-h-screen">
       <Header />
-      <main className="flex-1 pb-16 md:pb-0">
+      <main className="flex-1 pb-16 md:pb-0 overflow-x-hidden">
         <Suspense fallback={<PageLoadingSpinner />}>
           <Outlet />
         </Suspense>

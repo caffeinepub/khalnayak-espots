@@ -1,31 +1,14 @@
 import type { Tournament } from "@/backend";
 import { CountdownTimer } from "@/components/CountdownTimer";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useGetTournaments } from "@/hooks/useQueries";
 import {
   formatCurrency,
   getTournamentPlayerInfo,
-  getTournamentStatusLabel,
   getTournamentTypeLabel,
 } from "@/utils/format";
 import { Link } from "@tanstack/react-router";
-import { Calendar, Users } from "lucide-react";
+import { Calendar, SlidersHorizontal, Users } from "lucide-react";
 import { useState } from "react";
 
 export function TournamentsPage() {
@@ -41,171 +24,365 @@ export function TournamentsPage() {
       return matchesType && matchesStatus;
     }) || [];
 
-  const getTournamentStatusColor = (status: string) => {
-    switch (status) {
-      case "ongoing":
-        return "bg-destructive";
-      case "upcoming":
-        return "bg-secondary";
-      case "completed":
-        return "bg-muted";
-      default:
-        return "bg-muted";
-    }
-  };
-
   return (
-    <div className="container py-12 space-y-8">
-      {/* Header */}
-      <div>
-        <h1 className="text-4xl font-bold font-display mb-2">
-          All Tournaments
-        </h1>
-        <p className="text-muted-foreground">
-          Browse and register for Free Fire tournaments
-        </p>
-      </div>
-
-      {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-4">
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-full sm:w-48">
-            <SelectValue placeholder="Filter by status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Status</SelectItem>
-            <SelectItem value="upcoming">Upcoming</SelectItem>
-            <SelectItem value="ongoing">Live</SelectItem>
-            <SelectItem value="completed">Completed</SelectItem>
-          </SelectContent>
-        </Select>
-
-        <Select value={typeFilter} onValueChange={setTypeFilter}>
-          <SelectTrigger className="w-full sm:w-48">
-            <SelectValue placeholder="Filter by type" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Types</SelectItem>
-            <SelectItem value="battleground">Battle Ground</SelectItem>
-            <SelectItem value="custom4v4">4vs4 Custom</SelectItem>
-            <SelectItem value="custom1v1">1vs1 Custom</SelectItem>
-            <SelectItem value="custom2v2">2vs2 Custom</SelectItem>
-          </SelectContent>
-        </Select>
-
-        <div className="ml-auto text-sm text-muted-foreground flex items-center">
-          {filteredTournaments.length} tournament
-          {filteredTournaments.length !== 1 ? "s" : ""} found
-        </div>
-      </div>
-
-      {/* Tournament Grid */}
-      {isLoading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {[1, 2, 3, 4, 5, 6].map((i) => (
-            <Skeleton key={i} className="h-96" />
-          ))}
-        </div>
-      ) : filteredTournaments.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredTournaments.map((tournament) => (
-            <TournamentCard
-              key={tournament.id.toString()}
-              tournament={tournament}
-              statusColor={getTournamentStatusColor(tournament.status)}
+    <div className="min-h-screen pb-24" style={{ background: "#0A0A0A" }}>
+      <div className="container py-8 space-y-6 px-4 md:px-6">
+        {/* Header */}
+        <div className="space-y-1">
+          <div className="flex items-center gap-3">
+            <div
+              style={{
+                borderLeft: "3px solid #00FF88",
+                paddingLeft: 12,
+              }}
+            >
+              <h1
+                className="text-4xl font-bold font-display"
+                style={{
+                  borderBottom: "2px solid rgba(0,255,136,0.4)",
+                  paddingBottom: 4,
+                }}
+              >
+                All Tournaments
+              </h1>
+            </div>
+            <SlidersHorizontal
+              className="md:hidden"
+              style={{ width: 20, height: 20, color: "#00FF88", flexShrink: 0 }}
             />
-          ))}
-        </div>
-      ) : (
-        <Card className="p-12">
-          <div className="text-center text-muted-foreground">
-            <p>No tournaments found matching your filters.</p>
           </div>
-        </Card>
-      )}
+          <p
+            className="pl-4 md:pl-0"
+            style={{ color: "rgba(255,255,255,0.5)" }}
+          >
+            Browse and register for Free Fire tournaments
+          </p>
+        </div>
+
+        {/* Filter chips — Type */}
+        <div className="space-y-3">
+          <div
+            className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide"
+            data-ocid="tournaments.type_filter.panel"
+          >
+            {[
+              { value: "all", label: "All" },
+              { value: "battleground", label: "⚔️ Battle Ground" },
+              { value: "custom4v4", label: "🎮 4vs4" },
+              { value: "custom1v1", label: "🥇 1vs1" },
+              { value: "custom2v2", label: "🥈 2vs2" },
+            ].map((chip) => (
+              <button
+                key={chip.value}
+                type="button"
+                onClick={() => setTypeFilter(chip.value)}
+                className="flex-shrink-0 px-4 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wide transition-all"
+                style={{
+                  background:
+                    typeFilter === chip.value
+                      ? "#00FF88"
+                      : "rgba(22,33,62,0.6)",
+                  color:
+                    typeFilter === chip.value
+                      ? "#0A0A0A"
+                      : "rgba(255,255,255,0.6)",
+                  border:
+                    typeFilter === chip.value
+                      ? "1px solid #00FF88"
+                      : "1px solid rgba(0,255,136,0.2)",
+                  boxShadow:
+                    typeFilter === chip.value
+                      ? "0 0 12px rgba(0,255,136,0.5)"
+                      : "none",
+                }}
+                data-ocid="tournaments.type_filter.tab"
+              >
+                {chip.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Filter chips — Status */}
+          <div
+            className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide"
+            data-ocid="tournaments.status_filter.panel"
+          >
+            {[
+              { value: "all", label: "All Status" },
+              { value: "upcoming", label: "⏰ Upcoming" },
+              { value: "ongoing", label: "🔴 Live" },
+              { value: "completed", label: "✅ Done" },
+            ].map((chip) => (
+              <button
+                key={chip.value}
+                type="button"
+                onClick={() => setStatusFilter(chip.value)}
+                className="flex-shrink-0 px-4 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wide transition-all"
+                style={{
+                  background:
+                    statusFilter === chip.value
+                      ? "#9d4edd"
+                      : "rgba(22,33,62,0.6)",
+                  color:
+                    statusFilter === chip.value
+                      ? "#fff"
+                      : "rgba(255,255,255,0.6)",
+                  border:
+                    statusFilter === chip.value
+                      ? "1px solid rgba(157,78,221,0.8)"
+                      : "1px solid rgba(157,78,221,0.2)",
+                  boxShadow:
+                    statusFilter === chip.value
+                      ? "0 0 12px rgba(157,78,221,0.5)"
+                      : "none",
+                }}
+                data-ocid="tournaments.status_filter.tab"
+              >
+                {chip.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Result count */}
+          <div className="text-sm" style={{ color: "rgba(255,255,255,0.4)" }}>
+            {filteredTournaments.length} tournament
+            {filteredTournaments.length !== 1 ? "s" : ""} found
+          </div>
+        </div>
+
+        {/* Tournament Grid */}
+        {isLoading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <Skeleton
+                key={i}
+                className="h-96 rounded-[12px]"
+                style={{ background: "rgba(22,33,62,0.4)" }}
+              />
+            ))}
+          </div>
+        ) : filteredTournaments.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {filteredTournaments.map((tournament) => (
+              <TournamentCard
+                key={tournament.id.toString()}
+                tournament={tournament}
+              />
+            ))}
+          </div>
+        ) : (
+          <div
+            className="p-12 rounded-[12px] text-center"
+            style={{
+              background: "rgba(22,33,62,0.4)",
+              border: "1px solid rgba(0,255,136,0.12)",
+            }}
+            data-ocid="tournaments.empty_state"
+          >
+            <p style={{ color: "rgba(255,255,255,0.5)" }}>
+              No tournaments found matching your filters.
+            </p>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
 
-function TournamentCard({
-  tournament,
-  statusColor,
-}: { tournament: Tournament; statusColor: string }) {
+function TournamentCard({ tournament }: { tournament: Tournament }) {
   const isUpcoming = tournament.status === "upcoming";
   const isOngoing = tournament.status === "ongoing";
+  const isCompleted = tournament.status === "completed";
+
+  const modeIcon =
+    tournament.tournamentType === "battleground"
+      ? "⚔️"
+      : tournament.tournamentType === "custom4v4"
+        ? "🎮"
+        : tournament.tournamentType === "custom1v1"
+          ? "🥇"
+          : "🥈";
 
   return (
-    <Card
-      className={`border-primary/30 hover:border-primary/50 transition-all hover:shadow-glow ${isOngoing ? "border-destructive/50" : ""}`}
+    <div
+      className="rounded-[12px] overflow-hidden transition-all duration-200"
+      style={{
+        background: "rgba(16,24,48,0.85)",
+        backdropFilter: "blur(12px)",
+        WebkitBackdropFilter: "blur(12px)",
+        border: isOngoing
+          ? "1px solid rgba(239,68,68,0.5)"
+          : "1px solid rgba(0,255,136,0.18)",
+        boxShadow: isOngoing
+          ? "0 4px 24px rgba(239,68,68,0.2)"
+          : "0 4px 20px rgba(0,0,0,0.5)",
+      }}
+      onMouseEnter={(e) => {
+        const el = e.currentTarget as HTMLElement;
+        el.style.boxShadow = isOngoing
+          ? "0 8px 32px rgba(239,68,68,0.3)"
+          : "0 8px 32px rgba(0,255,136,0.15), 0 4px 20px rgba(0,0,0,0.5)";
+        el.style.borderColor = isOngoing
+          ? "rgba(239,68,68,0.8)"
+          : "rgba(0,255,136,0.4)";
+      }}
+      onMouseLeave={(e) => {
+        const el = e.currentTarget as HTMLElement;
+        el.style.boxShadow = isOngoing
+          ? "0 4px 24px rgba(239,68,68,0.2)"
+          : "0 4px 20px rgba(0,0,0,0.5)";
+        el.style.borderColor = isOngoing
+          ? "rgba(239,68,68,0.5)"
+          : "rgba(0,255,136,0.18)";
+      }}
     >
-      <CardHeader>
-        <div className="flex items-start justify-between mb-2">
-          <Badge className={statusColor}>
-            {getTournamentStatusLabel(tournament.status)}
-          </Badge>
-          <Badge variant="outline">
-            {getTournamentTypeLabel(tournament.tournamentType)}
-          </Badge>
+      {/* Top gradient accent bar */}
+      <div
+        className="h-1 w-full"
+        style={{
+          background: isOngoing
+            ? "linear-gradient(90deg, #ef4444, #ff6b6b)"
+            : isCompleted
+              ? "linear-gradient(90deg, #555, #777)"
+              : "linear-gradient(90deg, #00FF88, #9d4edd)",
+        }}
+      />
+
+      <div className="p-4 space-y-3">
+        {/* Badges row */}
+        <div className="flex items-center justify-between">
+          <span
+            className="text-xs font-bold uppercase px-2 py-0.5 rounded-full"
+            style={{
+              background: isOngoing
+                ? "rgba(239,68,68,0.2)"
+                : isCompleted
+                  ? "rgba(100,100,100,0.2)"
+                  : "rgba(0,255,136,0.12)",
+              color: isOngoing ? "#ff6b6b" : isCompleted ? "#888" : "#00FF88",
+              border: `1px solid ${
+                isOngoing
+                  ? "rgba(239,68,68,0.4)"
+                  : isCompleted
+                    ? "rgba(100,100,100,0.3)"
+                    : "rgba(0,255,136,0.3)"
+              }`,
+            }}
+          >
+            {isOngoing ? "🔴 LIVE" : isCompleted ? "✅ DONE" : "⏰ UPCOMING"}
+          </span>
+          <span
+            className="text-xs font-medium px-2 py-0.5 rounded-full"
+            style={{
+              background: "rgba(157,78,221,0.15)",
+              color: "#c084fc",
+              border: "1px solid rgba(157,78,221,0.3)",
+            }}
+          >
+            {modeIcon} {getTournamentTypeLabel(tournament.tournamentType)}
+          </span>
         </div>
-        <CardTitle className="text-xl">{tournament.name}</CardTitle>
-        <CardDescription>
+
+        {/* Tournament name */}
+        <h3
+          className="font-display font-bold text-white leading-tight"
+          style={{ fontSize: "clamp(1rem, 4vw, 1.15rem)" }}
+        >
+          {tournament.name}
+        </h3>
+
+        {/* Player info */}
+        <p className="text-xs" style={{ color: "rgba(255,255,255,0.45)" }}>
           {getTournamentPlayerInfo(tournament.tournamentType).description}
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
+        </p>
+
+        {/* Countdown / Live indicator */}
         {isUpcoming && (
-          <div>
-            <p className="text-xs text-muted-foreground mb-2 flex items-center gap-1">
-              <Calendar className="h-3 w-3" /> Starts in:
-            </p>
+          <div
+            className="flex items-center gap-1.5 text-xs"
+            style={{ color: "#FFD700" }}
+          >
+            <Calendar className="h-3 w-3" />
+            <span>Starts in: </span>
             <CountdownTimer targetTime={tournament.startTime} compact />
           </div>
         )}
-
         {isOngoing && (
-          <div className="flex items-center gap-2 text-sm font-medium text-destructive">
-            <div className="h-2 w-2 rounded-full bg-destructive animate-pulse" />
+          <div
+            className="flex items-center gap-2 text-sm font-semibold"
+            style={{ color: "#ef4444" }}
+          >
+            <div className="h-2 w-2 rounded-full bg-red-500 animate-pulse" />
             Tournament is Live!
           </div>
         )}
 
-        <div className="space-y-2 border-t border-border pt-3">
+        {/* Stats row */}
+        <div
+          className="rounded-lg p-3 space-y-2"
+          style={{
+            background: "rgba(255,255,255,0.04)",
+            border: "1px solid rgba(255,255,255,0.07)",
+          }}
+        >
           <div className="flex justify-between text-sm">
-            <span className="text-muted-foreground">Entry Fee</span>
-            <span className="font-semibold">
+            <span style={{ color: "rgba(255,255,255,0.5)" }}>Entry Fee</span>
+            <span className="font-bold text-white">
               {formatCurrency(tournament.entryFee)}
             </span>
           </div>
           <div className="flex justify-between text-sm">
-            <span className="text-muted-foreground">Prize Pool</span>
-            <span className="font-semibold text-primary">
+            <span style={{ color: "rgba(255,255,255,0.5)" }}>Prize Pool</span>
+            <span className="font-bold" style={{ color: "#00FF88" }}>
               {formatCurrency(tournament.prizePool)}
             </span>
           </div>
           <div className="flex justify-between text-sm">
-            <span className="text-muted-foreground flex items-center gap-1">
+            <span
+              className="flex items-center gap-1"
+              style={{ color: "rgba(255,255,255,0.5)" }}
+            >
               <Users className="h-3 w-3" /> Slots
             </span>
-            <span className="font-semibold">
+            <span className="font-bold text-white">
               {tournament.maxTeams.toString()} teams
             </span>
           </div>
         </div>
 
-        <Button
-          asChild
-          className="w-full"
-          variant={isOngoing ? "default" : isUpcoming ? "default" : "outline"}
-        >
-          <Link to="/tournament/$id" params={{ id: tournament.id.toString() }}>
-            {isOngoing
-              ? "View Live"
+        {/* CTA Button */}
+        <Link
+          to="/tournament/$id"
+          params={{ id: tournament.id.toString() }}
+          className="block w-full text-center py-2.5 rounded-lg font-bold text-sm uppercase tracking-wide transition-all"
+          style={
+            isOngoing
+              ? {
+                  background: "linear-gradient(135deg, #ef4444, #dc2626)",
+                  color: "#fff",
+                  boxShadow: "0 0 16px rgba(239,68,68,0.4)",
+                }
               : isUpcoming
-                ? "Register Now"
-                : "View Details"}
-          </Link>
-        </Button>
-      </CardContent>
-    </Card>
+                ? {
+                    background: "linear-gradient(135deg, #00FF88, #00cc6a)",
+                    color: "#0A0A0A",
+                    boxShadow: "0 0 16px rgba(0,255,136,0.4)",
+                  }
+                : {
+                    background: "rgba(255,255,255,0.07)",
+                    color: "rgba(255,255,255,0.6)",
+                    border: "1px solid rgba(255,255,255,0.15)",
+                  }
+          }
+          data-ocid="tournaments.register.button"
+        >
+          {isOngoing
+            ? "View Live"
+            : isUpcoming
+              ? "⚡ Register Now"
+              : "View Details"}
+        </Link>
+      </div>
+    </div>
   );
 }

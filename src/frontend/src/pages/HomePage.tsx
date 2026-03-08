@@ -1,590 +1,575 @@
-import { AdMobBanner } from "@/components/AdMobBanner";
-import { CountdownTimer } from "@/components/CountdownTimer";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
-import { Skeleton } from "@/components/ui/skeleton";
 import { useInternetIdentity } from "@/hooks/useInternetIdentity";
-import { useGetPlatformStats, useGetTournaments } from "@/hooks/useQueries";
-import { useTokens } from "@/hooks/useTokens";
-import {
-  formatCurrency,
-  getTournamentStatusLabel,
-  getTournamentTypeLabel,
-} from "@/utils/format";
+import { useLocalAuth } from "@/hooks/useLocalAuth";
+import { useGetTournaments } from "@/hooks/useQueries";
+import { decodeTournament, formatCurrency } from "@/utils/format";
 import { Link } from "@tanstack/react-router";
-import {
-  ArrowRight,
-  Calendar,
-  Coins,
-  DollarSign,
-  IndianRupee,
-  Trophy,
-  Users,
-  Zap,
-} from "lucide-react";
+import { Bell, User, Users, Zap } from "lucide-react";
+import { toast } from "sonner";
 
-export function HomePage() {
-  const { identity, login } = useInternetIdentity();
-  const { data: tournaments, isLoading: tournamentsLoading } =
-    useGetTournaments();
-  const { data: stats, isLoading: statsLoading } = useGetPlatformStats();
-  const tokens = useTokens();
-  const upcomingTournaments =
-    tournaments?.filter((t) => t.status === "upcoming").slice(0, 3) || [];
-  const ongoingTournaments =
-    tournaments?.filter((t) => t.status === "ongoing").slice(0, 3) || [];
+// ─── Top Bar ──────────────────────────────────────────────────────────────────
+
+function TopBar() {
+  const { identity } = useInternetIdentity();
+  const { isLoggedIn } = useLocalAuth();
 
   return (
-    <div className="flex flex-col min-h-screen">
-      {/* Hero Section */}
-      <section className="relative py-20 md:py-32 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-secondary/5 to-accent/5" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,_var(--tw-gradient-stops))] from-primary/20 via-transparent to-transparent" />
+    <header
+      className="sticky top-0 z-50 flex items-center justify-between px-4"
+      style={{
+        height: 60,
+        background: "rgba(10,10,10,0.92)",
+        backdropFilter: "blur(20px)",
+        WebkitBackdropFilter: "blur(20px)",
+        borderBottom: "1px solid rgba(0,255,136,0.15)",
+      }}
+      data-ocid="home.topbar.panel"
+    >
+      {/* Left: Logo text */}
+      <Link
+        to="/"
+        className="flex items-center gap-2"
+        data-ocid="home.topbar.logo.link"
+        style={{ textDecoration: "none" }}
+      >
+        <span
+          style={{
+            fontFamily: "'Orbitron', 'Rajdhani', sans-serif",
+            fontWeight: 900,
+            fontSize: "clamp(14px, 4vw, 18px)",
+            letterSpacing: "0.06em",
+            textTransform: "uppercase",
+          }}
+        >
+          <span
+            style={{
+              background: "linear-gradient(90deg, #00FF88, #00cc66)",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              backgroundClip: "text",
+              textShadow: "none",
+              filter: "drop-shadow(0 0 10px rgba(0,255,136,0.7))",
+            }}
+          >
+            ⚔️ KHALNAYAK
+          </span>{" "}
+          <span
+            style={{
+              background: "linear-gradient(90deg, #9d4edd, #c77dff)",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              backgroundClip: "text",
+              filter: "drop-shadow(0 0 10px rgba(157,78,221,0.7))",
+            }}
+          >
+            ESPOTS
+          </span>
+        </span>
+      </Link>
 
-        <div className="container relative z-10">
-          <div className="max-w-3xl mx-auto text-center space-y-8">
-            <div className="space-y-6">
-              {/* Shield Logo */}
-              <div className="flex justify-center">
-                <img
-                  src="/assets/generated/khalnayak-espots-logo.dim_512x512.png"
-                  alt="Khalnayak Espots"
-                  className="w-32 h-32 md:w-44 md:h-44 object-contain"
-                  style={{
-                    filter:
-                      "drop-shadow(0 0 24px rgba(0,245,255,0.6)) drop-shadow(0 0 48px rgba(0,245,255,0.25))",
-                    animation: "hero-logo-float 4s ease-in-out infinite",
-                  }}
+      {/* Right: Notification + Profile */}
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          aria-label="Notifications"
+          onClick={() => toast.info("No new notifications")}
+          data-ocid="home.topbar.notifications.button"
+          style={{
+            background: "rgba(255,255,255,0.06)",
+            border: "1px solid rgba(255,255,255,0.1)",
+            borderRadius: 10,
+            padding: 8,
+            color: "#888",
+            cursor: "pointer",
+            transition: "all 0.2s",
+            lineHeight: 0,
+          }}
+          onMouseEnter={(e) => {
+            const el = e.currentTarget as HTMLElement;
+            el.style.color = "#00FF88";
+            el.style.borderColor = "rgba(0,255,136,0.5)";
+            el.style.boxShadow = "0 0 12px rgba(0,255,136,0.3)";
+          }}
+          onMouseLeave={(e) => {
+            const el = e.currentTarget as HTMLElement;
+            el.style.color = "#888";
+            el.style.borderColor = "rgba(255,255,255,0.1)";
+            el.style.boxShadow = "none";
+          }}
+        >
+          <Bell strokeWidth={1.5} style={{ width: 20, height: 20 }} />
+        </button>
+
+        <Link
+          to={identity || isLoggedIn ? "/profile" : "/login"}
+          aria-label="Profile"
+          data-ocid="home.topbar.profile.link"
+          style={{
+            background: "rgba(255,255,255,0.06)",
+            border: "1px solid rgba(255,255,255,0.1)",
+            borderRadius: 10,
+            padding: 8,
+            color: "#888",
+            cursor: "pointer",
+            transition: "all 0.2s",
+            lineHeight: 0,
+            display: "inline-flex",
+          }}
+          onMouseEnter={(e) => {
+            const el = e.currentTarget as HTMLElement;
+            el.style.color = "#00FF88";
+            el.style.borderColor = "rgba(0,255,136,0.5)";
+            el.style.boxShadow = "0 0 12px rgba(0,255,136,0.3)";
+          }}
+          onMouseLeave={(e) => {
+            const el = e.currentTarget as HTMLElement;
+            el.style.color = "#888";
+            el.style.borderColor = "rgba(255,255,255,0.1)";
+            el.style.boxShadow = "none";
+          }}
+        >
+          <User strokeWidth={1.5} style={{ width: 20, height: 20 }} />
+        </Link>
+      </div>
+    </header>
+  );
+}
+
+// ─── Hero Section ─────────────────────────────────────────────────────────────
+
+function HeroSection() {
+  return (
+    <section
+      className="relative px-4 py-12 flex flex-col items-center text-center overflow-hidden"
+      style={{
+        background:
+          "linear-gradient(180deg, rgba(0,255,136,0.04) 0%, rgba(10,10,10,0) 60%)",
+        minHeight: 260,
+      }}
+    >
+      {/* Background glow blobs */}
+      <div
+        aria-hidden="true"
+        style={{
+          position: "absolute",
+          top: -40,
+          left: "50%",
+          transform: "translateX(-50%)",
+          width: 280,
+          height: 180,
+          background:
+            "radial-gradient(ellipse, rgba(0,255,136,0.12) 0%, transparent 70%)",
+          pointerEvents: "none",
+        }}
+      />
+      <div
+        aria-hidden="true"
+        style={{
+          position: "absolute",
+          bottom: 0,
+          right: -30,
+          width: 160,
+          height: 160,
+          background:
+            "radial-gradient(ellipse, rgba(157,78,221,0.1) 0%, transparent 70%)",
+          pointerEvents: "none",
+        }}
+      />
+
+      {/* Main heading */}
+      <h1
+        style={{
+          fontFamily: "'Orbitron', 'Rajdhani', sans-serif",
+          fontWeight: 900,
+          fontSize: "clamp(1.5rem, 7vw, 2.8rem)",
+          lineHeight: 1.1,
+          textTransform: "uppercase",
+          letterSpacing: "0.04em",
+          color: "#FFFFFF",
+          textShadow: "0 0 30px rgba(0,255,136,0.4), 0 2px 8px rgba(0,0,0,0.8)",
+          marginBottom: 12,
+          position: "relative",
+          zIndex: 1,
+        }}
+        data-ocid="home.hero.heading"
+      >
+        🔥 DOMINATE THE
+        <br />
+        <span
+          style={{
+            background:
+              "linear-gradient(90deg, #00FF88 0%, #00cc66 50%, #9d4edd 100%)",
+            WebkitBackgroundClip: "text",
+            WebkitTextFillColor: "transparent",
+            backgroundClip: "text",
+            filter: "drop-shadow(0 0 20px rgba(0,255,136,0.6))",
+          }}
+        >
+          BATTLEGROUND
+        </span>
+      </h1>
+
+      {/* Subtext */}
+      <p
+        style={{
+          fontFamily: "'Rajdhani', sans-serif",
+          fontSize: "clamp(13px, 3.5vw, 16px)",
+          color: "rgba(255,255,255,0.6)",
+          letterSpacing: "0.08em",
+          textTransform: "uppercase",
+          marginBottom: 28,
+          position: "relative",
+          zIndex: 1,
+        }}
+        data-ocid="home.hero.subtext"
+      >
+        India's Premier Free Fire Platform
+      </p>
+
+      {/* CTA Buttons */}
+      <div
+        className="flex items-center justify-center gap-3 w-full"
+        style={{ maxWidth: 400, position: "relative", zIndex: 1 }}
+      >
+        <Link
+          to="/register"
+          data-ocid="home.hero.get_started.primary_button"
+          style={{ flex: 1 }}
+        >
+          <button
+            type="button"
+            style={{
+              width: "100%",
+              fontFamily: "'Orbitron', 'Rajdhani', sans-serif",
+              fontWeight: 800,
+              fontSize: "clamp(11px, 2.8vw, 13px)",
+              textTransform: "uppercase",
+              letterSpacing: "0.06em",
+              padding: "12px 16px",
+              borderRadius: 12,
+              border: "none",
+              cursor: "pointer",
+              background: "linear-gradient(135deg, #00FF88 0%, #00cc66 100%)",
+              color: "#0A0A0A",
+              boxShadow:
+                "0 0 20px rgba(0,255,136,0.5), 0 4px 16px rgba(0,0,0,0.4)",
+              transition: "all 0.25s ease",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 6,
+              whiteSpace: "nowrap",
+            }}
+            onMouseEnter={(e) => {
+              const el = e.currentTarget as HTMLElement;
+              el.style.boxShadow =
+                "0 0 32px rgba(0,255,136,0.8), 0 4px 20px rgba(0,0,0,0.5)";
+              el.style.transform = "translateY(-2px)";
+            }}
+            onMouseLeave={(e) => {
+              const el = e.currentTarget as HTMLElement;
+              el.style.boxShadow =
+                "0 0 20px rgba(0,255,136,0.5), 0 4px 16px rgba(0,0,0,0.4)";
+              el.style.transform = "translateY(0)";
+            }}
+          >
+            <Zap style={{ width: 14, height: 14 }} />
+            GET STARTED
+          </button>
+        </Link>
+
+        <Link
+          to="/rules"
+          data-ocid="home.hero.learn.secondary_button"
+          style={{ flex: 1 }}
+        >
+          <button
+            type="button"
+            style={{
+              width: "100%",
+              fontFamily: "'Orbitron', 'Rajdhani', sans-serif",
+              fontWeight: 800,
+              fontSize: "clamp(11px, 2.8vw, 13px)",
+              textTransform: "uppercase",
+              letterSpacing: "0.06em",
+              padding: "12px 16px",
+              borderRadius: 12,
+              cursor: "pointer",
+              background: "transparent",
+              color: "#00FF88",
+              border: "2px solid rgba(0,255,136,0.5)",
+              boxShadow:
+                "0 0 12px rgba(0,255,136,0.15), inset 0 0 12px rgba(0,255,136,0.05)",
+              transition: "all 0.25s ease",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 6,
+              whiteSpace: "nowrap",
+            }}
+            onMouseEnter={(e) => {
+              const el = e.currentTarget as HTMLElement;
+              el.style.background = "rgba(0,255,136,0.1)";
+              el.style.borderColor = "#00FF88";
+              el.style.boxShadow =
+                "0 0 24px rgba(0,255,136,0.4), inset 0 0 20px rgba(0,255,136,0.08)";
+              el.style.transform = "translateY(-2px)";
+            }}
+            onMouseLeave={(e) => {
+              const el = e.currentTarget as HTMLElement;
+              el.style.background = "transparent";
+              el.style.borderColor = "rgba(0,255,136,0.5)";
+              el.style.boxShadow =
+                "0 0 12px rgba(0,255,136,0.15), inset 0 0 12px rgba(0,255,136,0.05)";
+              el.style.transform = "translateY(0)";
+            }}
+          >
+            📖 LEARN HOW
+          </button>
+        </Link>
+      </div>
+    </section>
+  );
+}
+
+// ─── Upcoming Tournaments ──────────────────────────────────────────────────────
+
+const STATIC_UPCOMING = [
+  {
+    name: "Friday Night Showdown",
+    schedule: "Today • 8:00 PM",
+    entry: "₹50 Entry",
+    teams: "8/16 Teams",
+    to: "/tournaments",
+  },
+  {
+    name: "Solo Battle",
+    schedule: "Tomorrow • 10:00 AM",
+    entry: "₹20 Entry",
+    teams: "4/16 Players",
+    to: "/tournaments",
+  },
+];
+
+function UpcomingTournamentsSection() {
+  const { data: tournaments } = useGetTournaments();
+
+  const upcoming = tournaments
+    ?.filter((t) => t.status === "upcoming")
+    .map((t) => ({ ...t, ...decodeTournament(t) }))
+    .slice(0, 2);
+
+  const hasReal = upcoming && upcoming.length > 0;
+
+  return (
+    <section className="px-4 pb-6" data-ocid="home.upcoming.section">
+      {/* Section title */}
+      <div className="flex items-center justify-between mb-4">
+        <h2
+          style={{
+            fontFamily: "'Orbitron', 'Rajdhani', sans-serif",
+            fontWeight: 900,
+            fontSize: "clamp(13px, 3.5vw, 16px)",
+            textTransform: "uppercase",
+            letterSpacing: "0.1em",
+            color: "#FFFFFF",
+          }}
+          data-ocid="home.upcoming.heading"
+        >
+          📅 UPCOMING TOURNAMENTS
+        </h2>
+        <Link
+          to="/tournaments"
+          data-ocid="home.upcoming.view_all.link"
+          style={{
+            fontFamily: "'Rajdhani', sans-serif",
+            fontSize: 12,
+            fontWeight: 700,
+            color: "#00FF88",
+            textDecoration: "none",
+            letterSpacing: "0.06em",
+            textTransform: "uppercase",
+          }}
+        >
+          View All →
+        </Link>
+      </div>
+
+      {/* Cards */}
+      <div className="space-y-3">
+        {hasReal
+          ? upcoming!.map((t, idx) => {
+              const idxNum = idx + 1;
+              const entryFee = formatCurrency(t.entryFee);
+              const maxTeams = Number(t.maxTeams);
+              return (
+                <TournamentCard
+                  key={t.id.toString()}
+                  name={t.name}
+                  schedule={`${entryFee} Entry`}
+                  entry={entryFee}
+                  teams={`0/${maxTeams} Teams`}
+                  to={`/tournament/${t.id.toString()}`}
+                  idx={idxNum}
                 />
-              </div>
-              <h1 className="text-5xl md:text-7xl font-bold font-display">
-                <span className="glow-cyan">DOMINATE</span>
-                <br />
-                <span className="text-secondary glow-pink">
-                  THE BATTLEGROUND
-                </span>
-              </h1>
-              <p className="text-xl md:text-2xl text-muted-foreground">
-                Join India's most competitive Free Fire tournament platform.
-                Battle, conquer, and claim your victory.
-              </p>
-            </div>
-
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              {identity ? (
-                <Button
-                  asChild
-                  size="lg"
-                  className="bg-primary hover:bg-primary/90 text-lg px-8 shadow-glow"
-                >
-                  <Link to="/tournaments">
-                    Browse Tournaments <ArrowRight className="ml-2 h-5 w-5" />
-                  </Link>
-                </Button>
-              ) : (
-                <Button
-                  onClick={login}
-                  size="lg"
-                  className="bg-primary hover:bg-primary/90 text-lg px-8 shadow-glow"
-                >
-                  Get Started <ArrowRight className="ml-2 h-5 w-5" />
-                </Button>
-              )}
-              <Button
-                asChild
-                variant="outline"
-                size="lg"
-                className="text-lg px-8 border-primary/30"
-              >
-                <Link to="/rules">Learn How It Works</Link>
-              </Button>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Stats Section */}
-      <section className="py-12 bg-card/50 border-y border-primary/20">
-        <div className="container">
-          {statsLoading ? (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {[1, 2, 3].map((i) => (
-                <Skeleton key={i} className="h-32" />
-              ))}
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <Card className="border-primary/20 bg-card/80 backdrop-blur">
-                <CardHeader className="pb-3">
-                  <CardTitle className="flex items-center gap-2 text-primary">
-                    <Users className="h-5 w-5" />
-                    Total Players
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-4xl font-bold font-display">
-                    {stats?.totalPlayers.toString() || "0"}
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card className="border-secondary/20 bg-card/80 backdrop-blur">
-                <CardHeader className="pb-3">
-                  <CardTitle className="flex items-center gap-2 text-secondary">
-                    <Trophy className="h-5 w-5" />
-                    Total Tournaments
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-4xl font-bold font-display">
-                    {stats?.totalTournaments.toString() || "0"}
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card className="border-accent/20 bg-card/80 backdrop-blur">
-                <CardHeader className="pb-3">
-                  <CardTitle className="flex items-center gap-2 text-accent">
-                    <DollarSign className="h-5 w-5" />
-                    Prize Distributed
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-4xl font-bold font-display">
-                    {stats ? formatCurrency(stats.totalPrizeDistributed) : "₹0"}
-                  </p>
-                </CardContent>
-              </Card>
-            </div>
-          )}
-        </div>
-      </section>
-
-      {/* Earn Tokens Section */}
-      <section className="py-14 bg-gradient-to-br from-yellow-950/30 via-background to-background border-y border-yellow-500/20">
-        <div className="container">
-          <div className="flex flex-col md:flex-row items-center gap-8">
-            {/* Left: CTA */}
-            <div className="flex-1 space-y-4">
-              <div className="flex items-center gap-3">
-                <div className="rounded-full bg-yellow-500/20 p-3 border border-yellow-500/30">
-                  <Coins className="h-7 w-7 text-yellow-400" />
-                </div>
-                <div>
-                  <h2 className="text-3xl font-bold font-display text-yellow-400">
-                    Earn Real Money
-                  </h2>
-                  <p className="text-muted-foreground text-sm">
-                    Watch Ads → Tokens Kamao → ₹ Withdraw Karo
-                  </p>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                {[
-                  {
-                    icon: "▶️",
-                    label: "Watch Ad → 1 Token",
-                    sub: "Unlimited • No daily limit",
-                    color: "border-yellow-500/20 bg-yellow-950/20",
-                  },
-                  {
-                    icon: "🎮",
-                    label: "Register Tournament → +1 Token Bonus",
-                    sub: "Extra token on every tournament join",
-                    color: "border-cyan-500/20 bg-cyan-950/20",
-                  },
-                  {
-                    icon: "💰",
-                    label: "25 Tokens → Watch Ad → ₹1.25",
-                    sub: "Multiple withdrawals allowed",
-                    color: "border-green-500/20 bg-green-950/20",
-                  },
-                ].map((item) => (
-                  <div
-                    key={item.label}
-                    className={`flex items-center gap-3 rounded-xl border px-4 py-2.5 ${item.color}`}
-                  >
-                    <span className="text-xl flex-shrink-0">{item.icon}</span>
-                    <div className="min-w-0">
-                      <p className="text-xs font-bold leading-tight">
-                        {item.label}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {item.sub}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <div className="flex flex-col sm:flex-row gap-3">
-                <Button
-                  asChild
-                  size="lg"
-                  className="bg-yellow-500 hover:bg-yellow-400 text-black font-bold px-8"
-                  style={{ boxShadow: "0 0 20px rgba(234,179,8,0.4)" }}
-                  data-ocid="home.primary_button"
-                >
-                  <Link to="/earn">
-                    <Zap className="mr-2 h-5 w-5" />
-                    Watch Ad Now
-                    <ArrowRight className="ml-2 h-5 w-5" />
-                  </Link>
-                </Button>
-                <Button
-                  asChild
-                  variant="outline"
-                  size="lg"
-                  className="border-yellow-500/40 text-yellow-400 hover:bg-yellow-950/30"
-                >
-                  <Link to="/earn">Start Earning</Link>
-                </Button>
-              </div>
-            </div>
-
-            {/* Right: Token Status (if logged in) */}
-            {identity ? (
-              <div className="w-full md:w-80 rounded-2xl border border-yellow-500/30 bg-yellow-950/20 p-6 space-y-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-yellow-400 font-medium">
-                    Your Tokens
-                  </span>
-                  <Badge
-                    variant="outline"
-                    className="border-yellow-500/50 text-yellow-400"
-                  >
-                    {tokens.canWithdraw ? "Withdraw Ready!" : "Earning..."}
-                  </Badge>
-                </div>
-                <div className="text-center py-2">
-                  <p
-                    className="text-6xl font-bold font-display text-yellow-300"
-                    style={{ textShadow: "0 0 16px rgba(253,224,71,0.5)" }}
-                  >
-                    {tokens.balance}
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    🪙 Tokens
-                  </p>
-                </div>
-                <div className="space-y-1">
-                  <div className="flex justify-between text-xs text-muted-foreground">
-                    <span>{tokens.tokensForNextWithdrawal}/25</span>
-                    <span>
-                      {tokens.canWithdraw
-                        ? "₹1.25 ready!"
-                        : `${tokens.tokensNeeded} more needed`}
-                    </span>
-                  </div>
-                  <Progress value={tokens.progressPct} className="h-2" />
-                </div>
-                {tokens.canWithdraw ? (
-                  <Button
-                    asChild
-                    className="w-full bg-green-500 hover:bg-green-400 text-black font-bold"
-                  >
-                    <Link to="/earn">
-                      <IndianRupee className="mr-2 h-4 w-4" />
-                      Withdraw ₹1.25
-                    </Link>
-                  </Button>
-                ) : (
-                  <Button
-                    asChild
-                    variant="outline"
-                    className="w-full border-yellow-500/40 text-yellow-400 hover:bg-yellow-950/30"
-                  >
-                    <Link to="/earn">Watch Ads to Earn More</Link>
-                  </Button>
-                )}
-              </div>
-            ) : (
-              <div className="w-full md:w-80 rounded-2xl border border-yellow-500/30 bg-yellow-950/20 p-6 text-center space-y-4">
-                <Coins className="h-12 w-12 text-yellow-400/50 mx-auto" />
-                <p className="text-muted-foreground text-sm">
-                  Login karke earning shuru karo
-                </p>
-                <Button
-                  onClick={login}
-                  className="bg-yellow-500 hover:bg-yellow-400 text-black font-bold w-full"
-                >
-                  Login & Earn
-                </Button>
-              </div>
-            )}
-          </div>
-        </div>
-      </section>
-
-      {/* Referral Guide Section */}
-      <section className="py-14 bg-gradient-to-br from-green-950/20 via-background to-background border-y border-green-500/20">
-        <div className="container">
-          <div className="text-center mb-8">
-            <h2
-              className="text-3xl font-bold font-display text-green-400"
-              style={{ textShadow: "0 0 16px rgba(74,222,128,0.4)" }}
-            >
-              Refer &amp; Earn ₹2
-            </h2>
-            <p className="text-muted-foreground mt-2">
-              Share your code, friend joins, you earn instantly!
-            </p>
-          </div>
-
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-3xl mx-auto mb-8">
-            {[
-              {
-                step: "1",
-                icon: "🔑",
-                title: "Get Your Code",
-                desc: "Find your unique referral code on your Profile page",
-              },
-              {
-                step: "2",
-                icon: "📤",
-                title: "Share It",
-                desc: "Share via WhatsApp, Facebook, Instagram, or Email",
-              },
-              {
-                step: "3",
-                icon: "👤",
-                title: "Friend Registers",
-                desc: "Your friend signs up using your referral code",
-              },
-              {
-                step: "4",
-                icon: "💰",
-                title: "Earn ₹2!",
-                desc: "₹2 credited to your wallet instantly!",
-              },
-            ].map((item) => (
-              <div
-                key={item.step}
-                className="rounded-xl border border-green-500/20 bg-green-950/20 p-4 text-center space-y-2"
-              >
-                <div className="text-2xl">{item.icon}</div>
-                <div className="w-6 h-6 rounded-full bg-green-500/20 border border-green-500/40 text-green-400 text-xs font-bold flex items-center justify-center mx-auto">
-                  {item.step}
-                </div>
-                <p className="text-sm font-semibold">{item.title}</p>
-                <p className="text-xs text-muted-foreground">{item.desc}</p>
-              </div>
+              );
+            })
+          : STATIC_UPCOMING.map((item, idx) => (
+              <TournamentCard
+                key={item.name}
+                name={item.name}
+                schedule={item.schedule}
+                entry={item.entry}
+                teams={item.teams}
+                to={item.to}
+                idx={idx + 1}
+              />
             ))}
-          </div>
+      </div>
+    </section>
+  );
+}
 
-          <div className="text-center">
-            <Button
-              asChild
-              className="bg-green-600 hover:bg-green-500 text-white font-bold"
-              data-ocid="home.referral.primary_button"
+function TournamentCard({
+  name,
+  schedule,
+  entry,
+  teams,
+  to,
+  idx,
+}: {
+  name: string;
+  schedule: string;
+  entry: string;
+  teams: string;
+  to: string;
+  idx: number;
+}) {
+  return (
+    <div
+      className="rounded-[12px] p-4 transition-all duration-200"
+      style={{
+        background: "rgba(22,33,62,0.75)",
+        backdropFilter: "blur(16px)",
+        WebkitBackdropFilter: "blur(16px)",
+        border: "1px solid rgba(0,255,136,0.2)",
+        boxShadow: "0 4px 20px rgba(0,0,0,0.5)",
+      }}
+      data-ocid={`home.upcoming.item.${idx}`}
+      onMouseEnter={(e) => {
+        const el = e.currentTarget as HTMLElement;
+        el.style.boxShadow =
+          "0 4px 28px rgba(0,255,136,0.2), 0 0 0 1px rgba(0,255,136,0.35)";
+        el.style.borderColor = "rgba(0,255,136,0.4)";
+        el.style.transform = "translateY(-1px)";
+      }}
+      onMouseLeave={(e) => {
+        const el = e.currentTarget as HTMLElement;
+        el.style.boxShadow = "0 4px 20px rgba(0,0,0,0.5)";
+        el.style.borderColor = "rgba(0,255,136,0.2)";
+        el.style.transform = "translateY(0)";
+      }}
+    >
+      <div className="flex items-start justify-between gap-3">
+        {/* Left: info */}
+        <div className="flex-1 min-w-0">
+          <p
+            style={{
+              fontFamily: "'Orbitron', 'Rajdhani', sans-serif",
+              fontWeight: 800,
+              fontSize: "clamp(13px, 3.5vw, 15px)",
+              color: "#FFFFFF",
+              textTransform: "uppercase",
+              letterSpacing: "0.03em",
+              marginBottom: 6,
+              lineHeight: 1.3,
+            }}
+          >
+            {name}
+          </p>
+          <p
+            style={{
+              fontFamily: "'Rajdhani', sans-serif",
+              fontSize: 12,
+              color: "rgba(255,255,255,0.55)",
+              letterSpacing: "0.04em",
+              marginBottom: 8,
+            }}
+          >
+            {schedule} • {entry}
+          </p>
+          <div className="flex items-center gap-1">
+            <Users style={{ width: 12, height: 12, color: "#9d4edd" }} />
+            <span
+              style={{
+                fontFamily: "'Rajdhani', sans-serif",
+                fontSize: 12,
+                color: "#9d4edd",
+                fontWeight: 700,
+              }}
             >
-              <Link to="/profile">Get My Referral Code</Link>
-            </Button>
+              {teams}
+            </span>
           </div>
         </div>
-      </section>
 
-      {/* Ongoing Tournaments */}
-      {ongoingTournaments.length > 0 && (
-        <section className="py-16">
-          <div className="container">
-            <div className="flex items-center justify-between mb-8">
-              <div>
-                <h2 className="text-3xl font-bold font-display text-primary">
-                  🔴 Live Tournaments
-                </h2>
-                <p className="text-muted-foreground mt-2">
-                  Battles happening right now
-                </p>
-              </div>
-              <Button asChild variant="ghost" className="hidden sm:flex">
-                <Link to="/tournaments">
-                  View All <ArrowRight className="ml-2 h-4 w-4" />
-                </Link>
-              </Button>
-            </div>
+        {/* Right: Register button */}
+        <Link
+          to={to}
+          data-ocid={`home.upcoming.register.${idx}.primary_button`}
+          style={{ flexShrink: 0, alignSelf: "center" }}
+        >
+          <button
+            type="button"
+            style={{
+              fontFamily: "'Orbitron', 'Rajdhani', sans-serif",
+              fontWeight: 800,
+              fontSize: 11,
+              textTransform: "uppercase",
+              letterSpacing: "0.05em",
+              padding: "9px 14px",
+              borderRadius: 10,
+              border: "none",
+              cursor: "pointer",
+              background: "linear-gradient(135deg, #00FF88 0%, #00cc66 100%)",
+              color: "#0A0A0A",
+              boxShadow: "0 0 16px rgba(0,255,136,0.45)",
+              transition: "all 0.2s ease",
+              display: "flex",
+              alignItems: "center",
+              gap: 4,
+              whiteSpace: "nowrap",
+            }}
+            onMouseEnter={(e) => {
+              const el = e.currentTarget as HTMLElement;
+              el.style.boxShadow = "0 0 28px rgba(0,255,136,0.8)";
+              el.style.transform = "scale(1.05)";
+            }}
+            onMouseLeave={(e) => {
+              const el = e.currentTarget as HTMLElement;
+              el.style.boxShadow = "0 0 16px rgba(0,255,136,0.45)";
+              el.style.transform = "scale(1)";
+            }}
+          >
+            <Zap style={{ width: 12, height: 12 }} />
+            REGISTER
+          </button>
+        </Link>
+      </div>
+    </div>
+  );
+}
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {ongoingTournaments.map((tournament) => (
-                <Card
-                  key={tournament.id.toString()}
-                  className="border-primary/30 hover:border-primary/50 transition-all"
-                >
-                  <CardHeader>
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <Badge
-                          variant="default"
-                          className="mb-2 bg-destructive"
-                        >
-                          {getTournamentStatusLabel(tournament.status)}
-                        </Badge>
-                        <CardTitle className="text-xl">
-                          {tournament.name}
-                        </CardTitle>
-                      </div>
-                    </div>
-                    <CardDescription>
-                      {getTournamentTypeLabel(tournament.tournamentType)}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Entry Fee</span>
-                      <span className="font-semibold">
-                        {formatCurrency(tournament.entryFee)}
-                      </span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Prize Pool</span>
-                      <span className="font-semibold text-primary">
-                        {formatCurrency(tournament.prizePool)}
-                      </span>
-                    </div>
-                    <Button asChild className="w-full" variant="outline">
-                      <Link
-                        to="/tournament/$id"
-                        params={{ id: tournament.id.toString() }}
-                      >
-                        View Details
-                      </Link>
-                    </Button>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
+// ─── Home Page ─────────────────────────────────────────────────────────────────
 
-      {/* Upcoming Tournaments */}
-      <section className="py-16 bg-card/30">
-        <div className="container">
-          <div className="flex items-center justify-between mb-8">
-            <div>
-              <h2 className="text-3xl font-bold font-display">
-                Upcoming Tournaments
-              </h2>
-              <p className="text-muted-foreground mt-2">
-                Register now and secure your spot
-              </p>
-            </div>
-            <Button asChild variant="ghost" className="hidden sm:flex">
-              <Link to="/tournaments">
-                View All <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
-            </Button>
-          </div>
-
-          {tournamentsLoading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {[1, 2, 3].map((i) => (
-                <Skeleton key={i} className="h-80" />
-              ))}
-            </div>
-          ) : upcomingTournaments.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {upcomingTournaments.map((tournament) => (
-                <Card
-                  key={tournament.id.toString()}
-                  className="border-accent/30 hover:border-accent/50 transition-all hover:shadow-glow-purple"
-                >
-                  <CardHeader>
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <Badge variant="secondary" className="mb-2">
-                          {getTournamentStatusLabel(tournament.status)}
-                        </Badge>
-                        <CardTitle className="text-xl">
-                          {tournament.name}
-                        </CardTitle>
-                      </div>
-                    </div>
-                    <CardDescription>
-                      {getTournamentTypeLabel(tournament.tournamentType)}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Calendar className="h-4 w-4" />
-                      <span>Starts in:</span>
-                    </div>
-                    <CountdownTimer targetTime={tournament.startTime} compact />
-                    <div className="flex justify-between text-sm border-t border-border pt-3">
-                      <span className="text-muted-foreground">Entry Fee</span>
-                      <span className="font-semibold">
-                        {formatCurrency(tournament.entryFee)}
-                      </span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Prize Pool</span>
-                      <span className="font-semibold text-primary">
-                        {formatCurrency(tournament.prizePool)}
-                      </span>
-                    </div>
-                    <Button
-                      asChild
-                      className="w-full bg-accent hover:bg-accent/90"
-                    >
-                      <Link
-                        to="/tournament/$id"
-                        params={{ id: tournament.id.toString() }}
-                      >
-                        Register Now
-                      </Link>
-                    </Button>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          ) : (
-            <Card className="p-12">
-              <div className="text-center text-muted-foreground">
-                <Trophy className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p>No upcoming tournaments at the moment. Check back soon!</p>
-              </div>
-            </Card>
-          )}
-        </div>
-      </section>
-
-      {/* CTA Section */}
-      {!identity && (
-        <section className="py-20 bg-gradient-to-br from-primary/10 via-secondary/10 to-accent/10">
-          <div className="container">
-            <div className="max-w-2xl mx-auto text-center space-y-6">
-              <h2 className="text-4xl font-bold font-display">
-                Ready to Compete?
-              </h2>
-              <p className="text-xl text-muted-foreground">
-                Join thousands of players competing in daily tournaments. Start
-                your journey to become a champion.
-              </p>
-              <Button
-                onClick={login}
-                size="lg"
-                className="bg-secondary hover:bg-secondary/90 text-lg px-8"
-              >
-                Create Account
-              </Button>
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* Banner Ad — softly placed above footer, non-intrusive */}
-      <section className="mt-auto pb-1">
-        <AdMobBanner />
-      </section>
+export function HomePage() {
+  return (
+    <div
+      className="min-h-screen overflow-x-hidden"
+      style={{ background: "#0A0A0A", paddingBottom: 80 }}
+    >
+      <TopBar />
+      <HeroSection />
+      <UpcomingTournamentsSection />
     </div>
   );
 }
