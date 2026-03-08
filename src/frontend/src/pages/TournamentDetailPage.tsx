@@ -46,6 +46,7 @@ import {
 import { Link, useNavigate, useParams } from "@tanstack/react-router";
 import {
   Calendar,
+  CheckCircle2,
   Coins,
   DollarSign,
   Info,
@@ -537,7 +538,7 @@ function getTeamNameLabel(tournamentType: string): string {
   }
 }
 
-type RegFlowState = "idle" | "adPlaying" | "registering" | "done";
+type RegFlowState = "idle" | "watchAd" | "adPlaying" | "registering" | "done";
 
 function RegistrationDialog({
   tournament,
@@ -548,6 +549,9 @@ function RegistrationDialog({
   // Post-registration interstitial state
   const [showInterstitial, setShowInterstitial] = useState(false);
   const [teamName, setTeamName] = useState("");
+  const [formTouched, setFormTouched] = useState(false);
+  const [showWatchAdModal, setShowWatchAdModal] = useState(false);
+  const [tokenEarned, setTokenEarned] = useState(false);
   const requiredPlayers = getRequiredPlayers(tournament.tournamentType);
   const [players, setPlayers] = useState<Player[]>(
     Array.from({ length: requiredPlayers }, () => ({
@@ -579,10 +583,59 @@ function RegistrationDialog({
     agreedToTerms &&
     sufficientBalance;
 
+  // Watch Ad button handler (standalone — earn token before registering)
+  const handleWatchAdClick = () => {
+    setShowWatchAdModal(true);
+  };
+
+  // Standalone Watch Ad complete → +1 token
+  const handleStandaloneAdComplete = () => {
+    setShowWatchAdModal(false);
+    tokens.earnToken();
+    setTokenEarned(true);
+    toast.success("🪙 +1 Token credited!", {
+      description: "Token aapke wallet mein add ho gaya!",
+    });
+  };
+
+  const handleStandaloneAdCancel = () => {
+    setShowWatchAdModal(false);
+    toast.error("Ad pura nahi dekha", {
+      description: "Token earn karne ke liye poora ad dekho.",
+    });
+  };
+
   // When form is submitted, show ad first
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!canSubmit) return;
+    setFormTouched(true);
+    if (!canSubmit) {
+      if (!teamName.trim()) {
+        toast.error("Team name required", {
+          description: "Apni team ka naam enter karo.",
+        });
+        return;
+      }
+      if (!allPlayersFilled) {
+        toast.error("Player details incomplete", {
+          description: "Sab players ke naam aur Free Fire ID bharo.",
+        });
+        return;
+      }
+      if (!sufficientBalance) {
+        toast.error("Insufficient Balance", {
+          description: "Wallet mein paisa add karo. Deposits section mein jao.",
+        });
+        return;
+      }
+      if (!agreedToTerms) {
+        toast.error("Terms agree karo", {
+          description: '"I agree to tournament rules" checkbox tick karo.',
+        });
+        return;
+      }
+      return;
+    }
     // Start the ad-gate flow
     setFlowState("adPlaying");
   };
@@ -647,7 +700,7 @@ function RegistrationDialog({
   const handleInterstitialDismiss = () => {
     setShowInterstitial(false);
     setTimeout(() => {
-      navigate({ to: "/profile" });
+      navigate({ to: "/my-matches" });
     }, 100);
   };
 
@@ -661,6 +714,16 @@ function RegistrationDialog({
 
   return (
     <>
+      {/* Standalone Watch Ad modal (earn token before registering) */}
+      <AdModal
+        isOpen={showWatchAdModal}
+        onComplete={handleStandaloneAdComplete}
+        onCancel={handleStandaloneAdCancel}
+        duration={30}
+        title="Watch Ad to Earn Token"
+        rewardLabel="+1 Token"
+      />
+
       {/* Ad modal renders outside dialog for proper z-index */}
       <AdModal
         isOpen={flowState === "adPlaying"}
@@ -702,19 +765,40 @@ function RegistrationDialog({
             </DialogDescription>
           </DialogHeader>
 
-          {/* Token bonus banner */}
-          <div className="flex items-center gap-3 rounded-lg border border-yellow-500/40 bg-yellow-950/20 px-4 py-3">
-            <Coins className="h-5 w-5 text-yellow-400 flex-shrink-0" />
-            <div className="flex-1 text-sm">
-              <p className="font-semibold text-yellow-300">
-                🪙 Watch Ad & Get +1 Token Bonus
-              </p>
-              <p className="text-xs text-muted-foreground">
-                Ek 30-second rewarded video ad dikhega. Ad complete karne par +1
-                bonus token milega. Agar ad skip karo to registration cancel ho
-                jayega.
-              </p>
+          {/* Standalone Watch Ad section */}
+          <div className="rounded-lg border border-yellow-500/40 bg-yellow-950/20 px-4 py-3 space-y-2">
+            <div className="flex items-center gap-3">
+              <Coins className="h-5 w-5 text-yellow-400 flex-shrink-0" />
+              <div className="flex-1 text-sm">
+                <p className="font-semibold text-yellow-300">
+                  🪙 Watch Ad & Earn +1 Token
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Registration ke saath ek 30-second rewarded ad milega. Pehle
+                  "Watch Ad" click karo ya seedha Register karo.
+                </p>
+              </div>
             </div>
+            {tokenEarned ? (
+              <div className="flex items-center gap-2 text-green-400 text-sm font-semibold">
+                <CheckCircle2 className="h-4 w-4" />
+                +1 Token credited! Ab register karo.
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={handleWatchAdClick}
+                className="w-full py-2 rounded-lg text-sm font-bold transition-all active:scale-95 flex items-center justify-center gap-2"
+                style={{
+                  background: "linear-gradient(135deg, #eab308, #f59e0b)",
+                  color: "#000",
+                  boxShadow: "0 0 12px rgba(234,179,8,0.4)",
+                }}
+                data-ocid="tournament.secondary_button"
+              >
+                📺 Watch Ad (+1 Token)
+              </button>
+            )}
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -769,8 +853,16 @@ function RegistrationDialog({
                   is1v1 ? "Enter your player name" : "Enter your team name"
                 }
                 required
+                className={
+                  formTouched && !teamName.trim()
+                    ? "border-red-500 focus:border-red-500"
+                    : ""
+                }
                 data-ocid="tournament.input"
               />
+              {formTouched && !teamName.trim() && (
+                <p className="text-xs text-red-400">Team name required hai.</p>
+              )}
             </div>
 
             <div className="space-y-4">
@@ -886,25 +978,40 @@ function RegistrationDialog({
                 required
                 data-ocid="tournament.checkbox"
               />
-              <Label htmlFor="terms" className="text-sm cursor-pointer">
-                I agree to the tournament rules and understand that entry fee
-                will be deducted from my wallet
-              </Label>
+              <div className="space-y-0.5">
+                <Label htmlFor="terms" className="text-sm cursor-pointer">
+                  I agree to the tournament rules and understand that entry fee
+                  will be deducted from my wallet
+                </Label>
+                {formTouched && !agreedToTerms && (
+                  <p className="text-xs text-red-400">
+                    Tournament rules agree karna zaroori hai.
+                  </p>
+                )}
+              </div>
             </div>
 
             <Button
               type="submit"
-              className="w-full bg-primary hover:bg-primary/90"
+              onClick={() => setFormTouched(true)}
+              className="w-full font-bold text-base py-6 transition-all"
+              style={{
+                background: canSubmit
+                  ? "linear-gradient(135deg, #00FF88, #00cc6a)"
+                  : undefined,
+                color: canSubmit ? "#000" : undefined,
+                boxShadow: canSubmit
+                  ? "0 0 20px rgba(0,255,136,0.4)"
+                  : undefined,
+              }}
               disabled={
-                !canSubmit ||
-                registerMutation.isPending ||
-                flowState === "registering"
+                registerMutation.isPending || flowState === "registering"
               }
               data-ocid="tournament.submit_button"
             >
               {flowState === "registering"
-                ? "Registering..."
-                : "Register → Watch Ad → Get +1 Token"}
+                ? "⏳ Registering..."
+                : "⚡ REGISTER → Watch Ad → Get +1 Token"}
             </Button>
           </form>
         </DialogContent>

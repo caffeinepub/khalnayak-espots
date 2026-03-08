@@ -141,93 +141,110 @@ export function AdminPage() {
       </div>
 
       <Tabs defaultValue="matches" className="space-y-6">
-        <div className="overflow-x-auto">
-          <TabsList className="inline-flex w-max min-w-full h-auto flex-wrap gap-1 p-1">
-            <TabsTrigger
-              value="matches"
-              data-ocid="admin.matches.tab"
-              className="flex-shrink-0"
-            >
-              ⚔️ Manage Matches
-            </TabsTrigger>
-            <TabsTrigger
-              value="overview"
-              data-ocid="admin.overview.tab"
-              className="flex-shrink-0"
-            >
-              Overview
-            </TabsTrigger>
-            <TabsTrigger
-              value="registrations"
-              data-ocid="admin.registrations.tab"
-              className="flex-shrink-0"
-            >
-              Registrations
-            </TabsTrigger>
-            <TabsTrigger
-              value="tournaments"
-              data-ocid="admin.tournaments.tab"
-              className="flex-shrink-0"
-            >
-              Tournaments
-            </TabsTrigger>
-            <TabsTrigger
-              value="scores"
-              data-ocid="admin.scores.tab"
-              className="flex-shrink-0"
-            >
-              Scores
-            </TabsTrigger>
-            <TabsTrigger
-              value="deposits"
-              data-ocid="admin.deposits.tab"
-              className="flex-shrink-0"
-            >
-              Deposits
-            </TabsTrigger>
-            <TabsTrigger
-              value="withdrawals"
-              data-ocid="admin.withdrawals.tab"
-              className="flex-shrink-0"
-            >
-              Withdrawals
-            </TabsTrigger>
-            <TabsTrigger
-              value="users"
-              data-ocid="admin.users.tab"
-              className="flex-shrink-0"
-            >
-              Users
-            </TabsTrigger>
-            <TabsTrigger
-              value="redeem"
-              data-ocid="admin.redeem.tab"
-              className="flex-shrink-0"
-            >
-              Redeem Requests
-            </TabsTrigger>
-            <TabsTrigger
-              value="adstats"
-              data-ocid="admin.adstats.tab"
-              className="flex-shrink-0"
-            >
-              Ad Stats
-            </TabsTrigger>
-            <TabsTrigger
-              value="referrals"
-              data-ocid="admin.referrals.tab"
-              className="flex-shrink-0"
-            >
-              🎁 Referrals
-            </TabsTrigger>
-            <TabsTrigger
-              value="security"
-              data-ocid="admin.security.tab"
-              className="flex-shrink-0"
-            >
-              🛡️ Security
-            </TabsTrigger>
-          </TabsList>
+        {/* Admin Nav — Neon Gaming Design */}
+        <div className="admin-nav-wrapper">
+          <div className="admin-nav-scroll">
+            <TabsList className="admin-nav-tabs">
+              <TabsTrigger
+                value="matches"
+                data-ocid="admin.matches.tab"
+                className="admin-nav-trigger"
+              >
+                <span className="admin-nav-icon">⚔️</span>
+                <span>Manage Matches</span>
+              </TabsTrigger>
+              <TabsTrigger
+                value="overview"
+                data-ocid="admin.overview.tab"
+                className="admin-nav-trigger"
+              >
+                <span className="admin-nav-icon">📊</span>
+                <span>Overview</span>
+              </TabsTrigger>
+              <TabsTrigger
+                value="registrations"
+                data-ocid="admin.registrations.tab"
+                className="admin-nav-trigger"
+              >
+                <span className="admin-nav-icon">📝</span>
+                <span>Registrations</span>
+              </TabsTrigger>
+              <TabsTrigger
+                value="tournaments"
+                data-ocid="admin.tournaments.tab"
+                className="admin-nav-trigger"
+              >
+                <span className="admin-nav-icon">🎮</span>
+                <span>Tournaments</span>
+              </TabsTrigger>
+              <TabsTrigger
+                value="scores"
+                data-ocid="admin.scores.tab"
+                className="admin-nav-trigger"
+              >
+                <span className="admin-nav-icon">📈</span>
+                <span>Scores</span>
+              </TabsTrigger>
+              <TabsTrigger
+                value="deposits"
+                data-ocid="admin.deposits.tab"
+                className="admin-nav-trigger"
+              >
+                <span className="admin-nav-icon">💰</span>
+                <span>Deposits</span>
+              </TabsTrigger>
+              <TabsTrigger
+                value="withdrawals"
+                data-ocid="admin.withdrawals.tab"
+                className="admin-nav-trigger"
+              >
+                <span className="admin-nav-icon">💸</span>
+                <span>Withdrawals</span>
+              </TabsTrigger>
+              <TabsTrigger
+                value="users"
+                data-ocid="admin.users.tab"
+                className="admin-nav-trigger"
+              >
+                <span className="admin-nav-icon">👥</span>
+                <span>Users</span>
+              </TabsTrigger>
+              <TabsTrigger
+                value="redeem"
+                data-ocid="admin.redeem.tab"
+                className="admin-nav-trigger"
+              >
+                <span className="admin-nav-icon">🎟️</span>
+                <span>Redeem Requests</span>
+              </TabsTrigger>
+              <TabsTrigger
+                value="adstats"
+                data-ocid="admin.adstats.tab"
+                className="admin-nav-trigger"
+              >
+                <span className="admin-nav-icon">📺</span>
+                <span>Ad Stats</span>
+              </TabsTrigger>
+              <TabsTrigger
+                value="referrals"
+                data-ocid="admin.referrals.tab"
+                className="admin-nav-trigger"
+              >
+                <span className="admin-nav-icon">🎁</span>
+                <span>Referrals</span>
+              </TabsTrigger>
+              <TabsTrigger
+                value="security"
+                data-ocid="admin.security.tab"
+                className="admin-nav-trigger"
+              >
+                <span className="admin-nav-icon">🛡️</span>
+                <span>Security</span>
+              </TabsTrigger>
+            </TabsList>
+          </div>
+          {/* Scroll fade indicator on the right */}
+          <div className="admin-nav-fade-right" aria-hidden="true" />
         </div>
 
         <TabsContent value="matches">

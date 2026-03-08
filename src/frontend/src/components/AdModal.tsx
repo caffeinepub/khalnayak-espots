@@ -10,6 +10,7 @@
  */
 
 import { Progress } from "@/components/ui/progress";
+import { ADMOB_CONFIG, getAdUnitId } from "@/config/admob";
 import { CheckCircle2, Play, Tv } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
@@ -88,6 +89,8 @@ export function AdModal({
   if (!isOpen) return null;
 
   const progressPct = Math.round(((duration - countdown) / duration) * 100);
+  const isTestMode = ADMOB_CONFIG.TEST_MODE;
+  const rewardedAdId = getAdUnitId("rewarded");
 
   // Gradient colors that shift while ad plays
   const gradientAngle = (progressPct * 3.6) % 360;
@@ -106,6 +109,11 @@ export function AdModal({
             <span className="text-sm font-semibold text-yellow-400 uppercase tracking-wider">
               {title}
             </span>
+            {isTestMode && (
+              <span className="text-[10px] bg-yellow-500/20 border border-yellow-500/40 text-yellow-300 px-1.5 py-0.5 rounded font-mono uppercase tracking-wide">
+                Test Ad
+              </span>
+            )}
           </div>
           <div className="flex items-center gap-2">
             {phase === "playing" && (
@@ -241,6 +249,13 @@ export function AdModal({
             >
               🪙 Claim {rewardLabel}
             </button>
+          )}
+
+          {/* AdMob ID info (test mode only) */}
+          {isTestMode && (
+            <p className="text-[9px] text-zinc-600 text-center font-mono truncate">
+              Unit: {rewardedAdId}
+            </p>
           )}
         </div>
       </div>
