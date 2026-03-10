@@ -593,7 +593,7 @@ function RegistrationDialog({
     setShowWatchAdModal(false);
     tokens.earnToken();
     setTokenEarned(true);
-    toast.success("🪙 +1 Token credited!", {
+    toast.success("✅ +1 Token credited!", {
       description: "Token aapke wallet mein add ho gaya!",
     });
   };
@@ -663,8 +663,8 @@ function RegistrationDialog({
 
       setFlowState("done");
 
-      toast.success("Registration Successful! +1 Token Bonus Credited", {
-        description: `Your team "${teamName}" has been registered for the tournament.`,
+      toast.success("✅ Team registered successfully!", {
+        description: `Team "${teamName}" tournament mein register ho gayi!`,
       });
 
       setOpen(false);
@@ -751,10 +751,15 @@ function RegistrationDialog({
         <DialogTrigger asChild>
           <Button
             size="lg"
-            className="bg-primary hover:bg-primary/90"
+            className="font-bold uppercase tracking-wider"
+            style={{
+              background: "linear-gradient(135deg, #9d4edd, #7b2fbf)",
+              color: "#fff",
+              boxShadow: "0 0 20px rgba(157,78,221,0.5)",
+            }}
             data-ocid="tournament.open_modal_button"
           >
-            Register → Watch Ad → Get +1 Token
+            ⚡ REGISTER
           </Button>
         </DialogTrigger>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -764,42 +769,6 @@ function RegistrationDialog({
               Fill in your team details to register for the tournament
             </DialogDescription>
           </DialogHeader>
-
-          {/* Standalone Watch Ad section */}
-          <div className="rounded-lg border border-yellow-500/40 bg-yellow-950/20 px-4 py-3 space-y-2">
-            <div className="flex items-center gap-3">
-              <Coins className="h-5 w-5 text-yellow-400 flex-shrink-0" />
-              <div className="flex-1 text-sm">
-                <p className="font-semibold text-yellow-300">
-                  🪙 Watch Ad & Earn +1 Token
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  Registration ke saath ek 30-second rewarded ad milega. Pehle
-                  "Watch Ad" click karo ya seedha Register karo.
-                </p>
-              </div>
-            </div>
-            {tokenEarned ? (
-              <div className="flex items-center gap-2 text-green-400 text-sm font-semibold">
-                <CheckCircle2 className="h-4 w-4" />
-                +1 Token credited! Ab register karo.
-              </div>
-            ) : (
-              <button
-                type="button"
-                onClick={handleWatchAdClick}
-                className="w-full py-2 rounded-lg text-sm font-bold transition-all active:scale-95 flex items-center justify-center gap-2"
-                style={{
-                  background: "linear-gradient(135deg, #eab308, #f59e0b)",
-                  color: "#000",
-                  boxShadow: "0 0 12px rgba(234,179,8,0.4)",
-                }}
-                data-ocid="tournament.secondary_button"
-              >
-                📺 Watch Ad (+1 Token)
-              </button>
-            )}
-          </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
             {!sufficientBalance && (
@@ -902,6 +871,11 @@ function RegistrationDialog({
                   />
                 </div>
               ))}
+              {formTouched && !allPlayersFilled && (
+                <p className="text-xs text-red-400 mt-1">
+                  ❌ All player fields are required
+                </p>
+              )}
             </div>
 
             {!is1v1 && (
@@ -991,18 +965,47 @@ function RegistrationDialog({
               </div>
             </div>
 
+            {/* Watch Ad Button — neon green, above Register */}
+            <div className="space-y-1">
+              {tokenEarned ? (
+                <div
+                  className="flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-semibold"
+                  style={{
+                    background: "rgba(0,255,136,0.1)",
+                    border: "1px solid rgba(0,255,136,0.3)",
+                  }}
+                >
+                  <CheckCircle2 className="h-4 w-4 text-green-400" />
+                  <span className="text-green-400">✅ +1 Token credited!</span>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleWatchAdClick}
+                  className="w-full py-3 rounded-lg text-sm font-bold uppercase tracking-wider transition-all active:scale-95 flex items-center justify-center gap-2"
+                  style={{
+                    background: "linear-gradient(135deg, #00FF88, #00cc6a)",
+                    color: "#000",
+                    boxShadow: "0 0 16px rgba(0,255,136,0.4)",
+                    fontFamily: "'Orbitron', sans-serif",
+                  }}
+                  data-ocid="tournament.secondary_button"
+                >
+                  📺 WATCH AD (+1 TOKEN)
+                </button>
+              )}
+            </div>
+
+            {/* Register Button — neon purple */}
             <Button
               type="submit"
               onClick={() => setFormTouched(true)}
-              className="w-full font-bold text-base py-6 transition-all"
+              className="w-full font-bold text-base py-6 uppercase tracking-wider transition-all"
               style={{
-                background: canSubmit
-                  ? "linear-gradient(135deg, #00FF88, #00cc6a)"
-                  : undefined,
-                color: canSubmit ? "#000" : undefined,
-                boxShadow: canSubmit
-                  ? "0 0 20px rgba(0,255,136,0.4)"
-                  : undefined,
+                background: "linear-gradient(135deg, #9d4edd, #7b2fbf)",
+                color: "#fff",
+                boxShadow: "0 0 20px rgba(157,78,221,0.5)",
+                fontFamily: "'Orbitron', sans-serif",
               }}
               disabled={
                 registerMutation.isPending || flowState === "registering"
@@ -1011,7 +1014,7 @@ function RegistrationDialog({
             >
               {flowState === "registering"
                 ? "⏳ Registering..."
-                : "⚡ REGISTER → Watch Ad → Get +1 Token"}
+                : "⚡ REGISTER"}
             </Button>
           </form>
         </DialogContent>
