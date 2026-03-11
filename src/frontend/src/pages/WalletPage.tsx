@@ -1507,7 +1507,7 @@ function WithdrawDialog({
               id="upiId"
               value={upiId}
               onChange={(e) => setUpiId(e.target.value)}
-              placeholder="e.g., 9898161760@okhdfcbank"
+              placeholder="e.g., ajay123@gmail.com"
               required
               data-ocid="wallet.withdraw.upi_id.input"
               className="font-mono"
