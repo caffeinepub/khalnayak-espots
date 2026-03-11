@@ -304,9 +304,6 @@ export function WalletPage() {
       {/* Google Play Redeem Code */}
       <RedeemCodeSection profile={profile} />
 
-      {/* x402 Demo Payment */}
-      <X402PaymentSection />
-
       {/* Referral Card */}
       {profile?.referralCode && (
         <Card className="border-secondary/30">
@@ -692,152 +689,6 @@ function RedeemCodeSection({
               {submitting ? "Submitting..." : "Submit Redeem Request"}
             </Button>
           </form>
-        )}
-      </CardContent>
-    </Card>
-  );
-}
-
-// ──────────────────────────────────────────────────────────────
-// x402 Demo Payment Section — instant wallet top-up (no admin approval needed)
-// ──────────────────────────────────────────────────────────────
-const X402_AMOUNTS = [10, 20, 50, 100, 500, 1000];
-
-function X402PaymentSection() {
-  const depositMutation = useDeposit();
-  const approveDepositMutation = useApproveDeposit();
-  const queryClient = useQueryClient();
-  const [selectedAmount, setSelectedAmount] = useState<number | null>(null);
-  const [processing, setProcessing] = useState(false);
-  const [success, setSuccess] = useState<number | null>(null);
-
-  const handlePay = async () => {
-    if (!selectedAmount) {
-      toast.error("Please select an amount");
-      return;
-    }
-    setProcessing(true);
-    try {
-      // Step 1: Create deposit request in backend
-      const amountInPaise = BigInt(Math.round(selectedAmount * 100));
-      const depositReq = await depositMutation.mutateAsync(amountInPaise);
-
-      // Step 2: Immediately auto-approve it (demo mode — no real payment gateway)
-      if (depositReq?.id !== undefined) {
-        await approveDepositMutation.mutateAsync(depositReq.id);
-      }
-
-      // Step 3: Refresh wallet + transactions
-      await queryClient.invalidateQueries({ queryKey: ["callerWallet"] });
-      await queryClient.invalidateQueries({ queryKey: ["callerTransactions"] });
-
-      setSuccess(selectedAmount);
-      setSelectedAmount(null);
-      toast.success(`₹${selectedAmount} added to your wallet instantly!`);
-    } catch (err: any) {
-      toast.error(err?.message || "Payment failed. Please try again.");
-    } finally {
-      setProcessing(false);
-    }
-  };
-
-  return (
-    <Card className="border-purple-500/30 bg-gradient-to-br from-purple-950/20 to-blue-900/10">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-purple-400">
-          <Zap className="h-5 w-5" />
-          x402 Instant Payment
-          <span className="text-xs font-normal bg-purple-500/20 text-purple-300 px-2 py-0.5 rounded-full border border-purple-500/30">
-            Demo Mode
-          </span>
-        </CardTitle>
-        <CardDescription>
-          Instant wallet top-up — no admin approval needed (simulated payment)
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        {success !== null ? (
-          <div
-            className="flex flex-col items-center gap-3 py-6 text-center"
-            data-ocid="wallet.x402.success_state"
-          >
-            <div className="rounded-full bg-green-500/20 p-4">
-              <CheckCircle2 className="h-8 w-8 text-green-400" />
-            </div>
-            <p className="text-lg font-semibold text-green-300">
-              ₹{success} Added Successfully!
-            </p>
-            <p className="text-sm text-muted-foreground max-w-xs">
-              Your wallet has been updated instantly. Check your balance above.
-            </p>
-            <Button
-              variant="outline"
-              size="sm"
-              className="mt-2 border-purple-500/30"
-              onClick={() => setSuccess(null)}
-              data-ocid="wallet.x402.secondary_button"
-            >
-              Add More
-            </Button>
-          </div>
-        ) : (
-          <div className="space-y-5">
-            <div className="space-y-2">
-              <Label>Select Amount (₹)</Label>
-              <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
-                {X402_AMOUNTS.map((amt) => (
-                  <Button
-                    key={amt}
-                    type="button"
-                    variant={selectedAmount === amt ? "default" : "outline"}
-                    size="sm"
-                    className={
-                      selectedAmount === amt
-                        ? "bg-purple-600 hover:bg-purple-700 border-purple-500 font-bold"
-                        : "border-purple-500/30 hover:border-purple-400/60 hover:bg-purple-950/40"
-                    }
-                    onClick={() => setSelectedAmount(amt)}
-                    data-ocid={`wallet.x402.amount_button.${amt}`}
-                  >
-                    ₹{amt}
-                  </Button>
-                ))}
-              </div>
-            </div>
-
-            {selectedAmount && (
-              <div className="p-3 rounded-lg bg-purple-500/10 border border-purple-500/20 flex items-center gap-3">
-                <CreditCard className="h-4 w-4 text-purple-400 flex-shrink-0" />
-                <p className="text-sm text-purple-300">
-                  <span className="font-semibold">₹{selectedAmount}</span> will
-                  be added to your wallet instantly via x402 demo payment
-                </p>
-              </div>
-            )}
-
-            <Button
-              className="w-full bg-purple-600 hover:bg-purple-700"
-              onClick={handlePay}
-              disabled={processing || !selectedAmount}
-              data-ocid="wallet.x402.submit_button"
-            >
-              {processing ? (
-                <span className="flex items-center gap-2">
-                  <span className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  Processing...
-                </span>
-              ) : (
-                <span className="flex items-center gap-2">
-                  <Zap className="h-4 w-4" />
-                  Pay Instantly{selectedAmount ? ` ₹${selectedAmount}` : ""}
-                </span>
-              )}
-            </Button>
-
-            <p className="text-xs text-muted-foreground text-center">
-              This is a demo payment — no real money is transferred
-            </p>
-          </div>
         )}
       </CardContent>
     </Card>
@@ -1507,7 +1358,7 @@ function WithdrawDialog({
               id="upiId"
               value={upiId}
               onChange={(e) => setUpiId(e.target.value)}
-              placeholder="e.g., ajay123@gmail.com"
+              placeholder="yourname@oksbi"
               required
               data-ocid="wallet.withdraw.upi_id.input"
               className="font-mono"

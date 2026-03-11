@@ -20,7 +20,6 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -46,14 +45,11 @@ import {
 import { Link, useNavigate, useParams } from "@tanstack/react-router";
 import {
   Calendar,
-  CheckCircle2,
-  Coins,
   DollarSign,
   Info,
   Shield,
   Trophy,
   Users,
-  Wallet,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -73,7 +69,6 @@ export function TournamentDetailPage() {
   const navigate = useNavigate();
   const { isVpnDetected } = useVpnStatus();
 
-  // VPN mid-match disconnect
   useEffect(() => {
     if (tournament?.status === "ongoing" && isVpnDetected) {
       toast.error("VPN detected! You have been disconnected from the match.", {
@@ -119,6 +114,7 @@ export function TournamentDetailPage() {
 
   const hasWallet = wallet !== null && wallet !== undefined;
   const canRegister = tournament.status === "upcoming" && !isUserRegistered;
+  const isFree = tournament.entryFee === 0n;
   const showRoomCredentials =
     tournament.status === "ongoing" &&
     isUserRegistered &&
@@ -142,6 +138,17 @@ export function TournamentDetailPage() {
           <Badge variant="outline">
             {getTournamentTypeLabel(tournament.tournamentType)}
           </Badge>
+          {isFree && (
+            <Badge
+              style={{
+                background: "linear-gradient(135deg, #00FF88, #00cc6a)",
+                color: "#000",
+                fontWeight: 700,
+              }}
+            >
+              🎟️ FREE ENTRY
+            </Badge>
+          )}
         </div>
         <h1 className="text-4xl font-bold font-display mb-2">
           {tournament.name}
@@ -181,7 +188,11 @@ export function TournamentDetailPage() {
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-bold font-display">
-              {formatCurrency(tournament.entryFee)}
+              {isFree ? (
+                <span style={{ color: "#00FF88" }}>FREE</span>
+              ) : (
+                formatCurrency(tournament.entryFee)
+              )}
             </p>
           </CardContent>
         </Card>
@@ -194,9 +205,15 @@ export function TournamentDetailPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold font-display text-primary">
-              {formatCurrency(tournament.prizePool)}
-            </p>
+            {isFree ? (
+              <p className="text-lg font-bold" style={{ color: "#ffd700" }}>
+                🥇🥈🥉 Badges
+              </p>
+            ) : (
+              <p className="text-2xl font-bold font-display text-primary">
+                {formatCurrency(tournament.prizePool)}
+              </p>
+            )}
           </CardContent>
         </Card>
 
@@ -215,7 +232,7 @@ export function TournamentDetailPage() {
         </Card>
       </div>
 
-      {/* Room Credentials (for registered users in ongoing tournaments) */}
+      {/* Room Credentials */}
       {showRoomCredentials && (
         <Card className="border-destructive/50 bg-destructive/5">
           <CardHeader>
@@ -279,52 +296,89 @@ export function TournamentDetailPage() {
               </div>
               <div>
                 <h3 className="font-semibold mb-3">Prize Distribution</h3>
-                {(() => {
-                  const prizeInfo = getTournamentPrizeInfo(
-                    tournament.tournamentType,
-                  );
-                  return (
-                    <div className="space-y-3">
-                      <div className="flex gap-4 text-sm">
-                        <span className="text-destructive font-medium">
-                          Platform Commission: {prizeInfo.commissionPct}%
-                        </span>
-                        <span className="text-primary font-medium">
-                          Prize Pool: {prizeInfo.prizePct}%
-                        </span>
-                      </div>
-                      {prizeInfo.prizeBreakdown.length > 0 && (
-                        <div className="rounded-lg border border-primary/30 overflow-hidden">
-                          <div className="bg-primary/10 px-3 py-2 text-xs font-semibold text-primary uppercase tracking-wide">
-                            Prize Breakdown
-                          </div>
-                          <div className="divide-y divide-border">
-                            {prizeInfo.prizeBreakdown.map((item) => (
-                              <div
-                                key={item.label}
-                                className="flex items-center justify-between px-3 py-2 text-sm"
-                              >
-                                <div>
-                                  <span className="font-medium">
-                                    {item.label}
-                                  </span>
-                                  {item.note && (
-                                    <span className="ml-2 text-xs text-muted-foreground">
-                                      ({item.note})
-                                    </span>
-                                  )}
-                                </div>
-                                <span className="font-bold text-primary">
-                                  {item.pct}%
-                                </span>
-                              </div>
-                            ))}
-                          </div>
+                {isFree ? (
+                  <div
+                    className="rounded-lg p-4 text-center space-y-2"
+                    style={{
+                      background: "rgba(255,215,0,0.08)",
+                      border: "1px solid rgba(255,215,0,0.3)",
+                    }}
+                  >
+                    <p className="font-bold text-yellow-400 text-lg">
+                      🏆 Free Tournament — Winners Get Badges!
+                    </p>
+                    <div className="flex justify-center gap-6 text-2xl mt-2">
+                      <div className="text-center">
+                        <div>🥇</div>
+                        <div className="text-xs text-muted-foreground mt-1">
+                          1st Place
                         </div>
-                      )}
+                      </div>
+                      <div className="text-center">
+                        <div>🥈</div>
+                        <div className="text-xs text-muted-foreground mt-1">
+                          2nd Place
+                        </div>
+                      </div>
+                      <div className="text-center">
+                        <div>🥉</div>
+                        <div className="text-xs text-muted-foreground mt-1">
+                          3rd Place
+                        </div>
+                      </div>
                     </div>
-                  );
-                })()}
+                    <p className="text-xs text-muted-foreground">
+                      ₹0 prize pool — Play for glory and exclusive badges!
+                    </p>
+                  </div>
+                ) : (
+                  (() => {
+                    const prizeInfo = getTournamentPrizeInfo(
+                      tournament.tournamentType,
+                    );
+                    return (
+                      <div className="space-y-3">
+                        <div className="flex gap-4 text-sm">
+                          <span className="text-destructive font-medium">
+                            Platform Commission: {prizeInfo.commissionPct}%
+                          </span>
+                          <span className="text-primary font-medium">
+                            Prize Pool: {prizeInfo.prizePct}%
+                          </span>
+                        </div>
+                        {prizeInfo.prizeBreakdown.length > 0 && (
+                          <div className="rounded-lg border border-primary/30 overflow-hidden">
+                            <div className="bg-primary/10 px-3 py-2 text-xs font-semibold text-primary uppercase tracking-wide">
+                              Prize Breakdown
+                            </div>
+                            <div className="divide-y divide-border">
+                              {prizeInfo.prizeBreakdown.map((item) => (
+                                <div
+                                  key={item.label}
+                                  className="flex items-center justify-between px-3 py-2 text-sm"
+                                >
+                                  <div>
+                                    <span className="font-medium">
+                                      {item.label}
+                                    </span>
+                                    {item.note && (
+                                      <span className="ml-2 text-xs text-muted-foreground">
+                                        ({item.note})
+                                      </span>
+                                    )}
+                                  </div>
+                                  <span className="font-bold text-primary">
+                                    {item.pct}%
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()
+                )}
               </div>
               {(tournament.tournamentType === "battleground" ||
                 tournament.tournamentType === "custom4v4") && (
@@ -376,7 +430,10 @@ export function TournamentDetailPage() {
                   ))}
                 </div>
               ) : (
-                <p className="text-center text-muted-foreground py-8">
+                <p
+                  className="text-center text-muted-foreground py-8"
+                  data-ocid="teams.empty_state"
+                >
                   No teams registered yet
                 </p>
               )}
@@ -385,7 +442,6 @@ export function TournamentDetailPage() {
         </TabsContent>
 
         <TabsContent value="leaderboard">
-          {/* Auto-cheat banner — shown when a player in this tournament is flagged */}
           <CheaterAutoFlagBanner tournamentId={id} />
 
           <Card className="mt-4">
@@ -411,7 +467,9 @@ export function TournamentDetailPage() {
                       >
                         <div className="flex items-center gap-3">
                           <span
-                            className={`font-bold font-display text-xl ${idx === 0 ? "text-primary" : ""}`}
+                            className={`font-bold font-display text-xl ${
+                              idx === 0 ? "text-primary" : ""
+                            }`}
                           >
                             #{idx + 1}
                           </span>
@@ -455,17 +513,24 @@ export function TournamentDetailPage() {
 
       {/* Registration CTA */}
       {canRegister && (
-        <Card className="border-primary/50 bg-primary/5">
+        <Card
+          style={{
+            border: "1px solid rgba(0,255,136,0.3)",
+            background: "rgba(0,255,136,0.04)",
+          }}
+        >
           <CardContent className="pt-6">
             <div className="flex flex-col md:flex-row items-center justify-between gap-4">
               <div>
                 <h3 className="text-xl font-bold mb-1">Ready to compete?</h3>
                 <p className="text-sm text-muted-foreground">
-                  {hasWallet
-                    ? `Your wallet balance: ${formatCurrency(wallet!.balance)}`
-                    : identity
-                      ? "Set up your profile to create a wallet"
-                      : "Login to register"}
+                  {isFree
+                    ? "Free entry! Watch a short ad and join instantly."
+                    : hasWallet
+                      ? `Your wallet balance: ${formatCurrency(wallet!.balance)}`
+                      : identity
+                        ? "Set up your profile to create a wallet"
+                        : "Login to register"}
                 </p>
               </div>
               {identity ? (
@@ -499,10 +564,16 @@ export function TournamentDetailPage() {
                 <Button
                   onClick={login}
                   size="lg"
-                  className="bg-primary hover:bg-primary/90"
+                  className="font-bold uppercase tracking-wider"
+                  style={{
+                    background: "linear-gradient(135deg, #00FF88, #00cc6a)",
+                    color: "#000",
+                    boxShadow: "0 0 20px rgba(0,255,136,0.5)",
+                    fontFamily: "'Orbitron', sans-serif",
+                  }}
                   data-ocid="tournament.primary_button"
                 >
-                  Login to Register
+                  🔐 Login to Register
                 </Button>
               )}
             </div>
@@ -513,190 +584,155 @@ export function TournamentDetailPage() {
   );
 }
 
-// Returns number of player fields to show based on tournament type
-function getRequiredPlayers(tournamentType: string): number {
-  switch (tournamentType) {
-    case "custom1v1":
-      return 1;
-    case "custom2v2":
-      return 2;
-    case "battleground":
-      return 4;
-    case "custom4v4":
-      return 4;
-    default:
-      return 4;
-  }
-}
-
-function getTeamNameLabel(tournamentType: string): string {
-  switch (tournamentType) {
-    case "custom1v1":
-      return "Player Name";
-    default:
-      return "Team Name";
-  }
-}
-
-type RegFlowState = "idle" | "watchAd" | "adPlaying" | "registering" | "done";
+type RegFlowState = "idle" | "adPlaying" | "formOpen" | "registering" | "done";
 
 function RegistrationDialog({
   tournament,
   walletBalance,
 }: { tournament: any; walletBalance: bigint }) {
-  const [open, setOpen] = useState(false);
+  const isFree = tournament.entryFee === 0n;
+
+  // Flow states
   const [flowState, setFlowState] = useState<RegFlowState>("idle");
-  // Post-registration interstitial state
   const [showInterstitial, setShowInterstitial] = useState(false);
-  const [teamName, setTeamName] = useState("");
+
+  // Form fields (simplified: nickname + UID)
+  const [nickname, setNickname] = useState("");
+  const [uid, setUid] = useState("");
+  const [confirmed, setConfirmed] = useState(false);
   const [formTouched, setFormTouched] = useState(false);
-  const [showWatchAdModal, setShowWatchAdModal] = useState(false);
-  const [tokenEarned, setTokenEarned] = useState(false);
-  const requiredPlayers = getRequiredPlayers(tournament.tournamentType);
-  const [players, setPlayers] = useState<Player[]>(
-    Array.from({ length: requiredPlayers }, () => ({
-      name: "",
-      freeFireId: "",
-    })),
-  );
-  const [substitute, setSubstitute] = useState<Player>({
-    name: "",
-    freeFireId: "",
-  });
-  const [includeSubstitute, setIncludeSubstitute] = useState(false);
-  const [agreedToTerms, setAgreedToTerms] = useState(false);
+  const [uidError, setUidError] = useState("");
+
   const navigate = useNavigate();
   const tokens = useTokens();
-
   const registerMutation = useRegisterTeam();
 
-  const hasSubstituteData =
-    substitute.name.trim() !== "" && substitute.freeFireId.trim() !== "";
-  const sufficientBalance = walletBalance >= tournament.entryFee;
-  const allPlayersFilled = players.every(
-    (p) => p.name.trim() !== "" && p.freeFireId.trim() !== "",
-  );
-  const is1v1 = tournament.tournamentType === "custom1v1";
-  const canSubmit =
-    (is1v1 ? teamName.trim() !== "" : teamName.trim() !== "") &&
-    allPlayersFilled &&
-    agreedToTerms &&
-    sufficientBalance;
-
-  // Watch Ad button handler (standalone — earn token before registering)
-  const handleWatchAdClick = () => {
-    setShowWatchAdModal(true);
+  // UID validation
+  const validateUid = (value: string): string => {
+    if (!value.trim()) return "Free Fire UID required hai.";
+    if (!/^\d+$/.test(value)) return "⚠️ UID sirf numbers mein hona chahiye.";
+    if (value.length < 8 || value.length > 12)
+      return "⚠️ UID 8-12 digits ka hona chahiye.";
+    return "";
   };
 
-  // Standalone Watch Ad complete → +1 token
-  const handleStandaloneAdComplete = () => {
-    setShowWatchAdModal(false);
-    tokens.earnToken();
-    setTokenEarned(true);
-    toast.success("✅ +1 Token credited!", {
-      description: "Token aapke wallet mein add ho gaya!",
-    });
-  };
-
-  const handleStandaloneAdCancel = () => {
-    setShowWatchAdModal(false);
-    toast.error("Ad pura nahi dekha", {
-      description: "Token earn karne ke liye poora ad dekho.",
-    });
-  };
-
-  // When form is submitted, show ad first
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setFormTouched(true);
-    if (!canSubmit) {
-      if (!teamName.trim()) {
-        toast.error("Team name required", {
-          description: "Apni team ka naam enter karo.",
-        });
-        return;
-      }
-      if (!allPlayersFilled) {
-        toast.error("Player details incomplete", {
-          description: "Sab players ke naam aur Free Fire ID bharo.",
-        });
-        return;
-      }
-      if (!sufficientBalance) {
-        toast.error("Insufficient Balance", {
-          description: "Wallet mein paisa add karo. Deposits section mein jao.",
-        });
-        return;
-      }
-      if (!agreedToTerms) {
-        toast.error("Terms agree karo", {
-          description: '"I agree to tournament rules" checkbox tick karo.',
-        });
-        return;
-      }
-      return;
+  // Duplicate UID check per tournament
+  const isUidAlreadyRegistered = (uidValue: string): boolean => {
+    try {
+      const key = `ke_registered_uids_${tournament.id.toString()}`;
+      const stored = localStorage.getItem(key);
+      const list: string[] = stored ? JSON.parse(stored) : [];
+      return list.includes(uidValue);
+    } catch {
+      return false;
     }
-    // Start the ad-gate flow
+  };
+
+  const saveRegisteredUid = (uidValue: string) => {
+    try {
+      const key = `ke_registered_uids_${tournament.id.toString()}`;
+      const stored = localStorage.getItem(key);
+      const list: string[] = stored ? JSON.parse(stored) : [];
+      if (!list.includes(uidValue)) {
+        list.push(uidValue);
+        localStorage.setItem(key, JSON.stringify(list));
+      }
+    } catch {
+      // ignore storage errors
+    }
+  };
+
+  // Step 1: Click WATCH AD & JOIN FREE → start ad
+  const handleWatchAdClick = () => {
     setFlowState("adPlaying");
   };
 
-  // Ad completed → earn token + register
-  const handleAdComplete = async () => {
+  // Step 2: Ad completed → show form
+  const handleAdComplete = () => {
+    tokens.earnToken();
+    toast.success("🪙 +1 Token earned!", {
+      description: "Token credited! Ab registration complete karo.",
+    });
+    setFlowState("formOpen");
+  };
+
+  const handleAdCancel = () => {
+    setFlowState("idle");
+    toast.error("Ad pura nahi dekha.", {
+      description: "Registration ke liye poora ad dekhna zaroori hai.",
+    });
+  };
+
+  // Step 3: Form submit → register
+  const handleFormSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setFormTouched(true);
+
+    if (!nickname.trim()) {
+      toast.error("Nickname required hai.");
+      return;
+    }
+
+    const uidValidationError = validateUid(uid);
+    if (uidValidationError) {
+      setUidError(uidValidationError);
+      return;
+    }
+
+    if (isUidAlreadyRegistered(uid)) {
+      setUidError("⚠️ This UID is already registered for this tournament.");
+      return;
+    }
+
+    if (!confirmed) {
+      toast.error("Please confirm to continue.");
+      return;
+    }
+
+    if (!isFree && walletBalance < tournament.entryFee) {
+      toast.error("Insufficient wallet balance.", {
+        description: "Wallet mein paisa add karo phir try karo.",
+      });
+      return;
+    }
+
     setFlowState("registering");
 
-    // Award +1 bonus token for tournament join
-    tokens.earnTokenFromTournament(tournament.name);
-    toast.success("🪙 +1 Token Bonus Earned!", {
-      description: "Tournament join bonus credited!",
-    });
-
     try {
-      const substitutes =
-        includeSubstitute && hasSubstituteData ? [substitute] : null;
-
+      const player: Player = { name: nickname, freeFireId: uid };
       await registerMutation.mutateAsync({
         tournamentId: tournament.id,
-        teamName,
-        members: players,
-        substitutes,
+        teamName: nickname,
+        members: [player],
+        substitutes: null,
       });
 
+      saveRegisteredUid(uid);
       setFlowState("done");
 
-      toast.success("✅ Team registered successfully!", {
-        description: `Team "${teamName}" tournament mein register ho gayi!`,
+      toast.success("✅ Registration successful!", {
+        description: `${nickname} tournament mein register ho gaya!`,
       });
 
-      setOpen(false);
-      setFlowState("idle");
-
-      // Show post-registration interstitial ad (optional — user can skip)
       setShowInterstitial(true);
     } catch (error: any) {
-      console.error("Registration error:", error);
-      setFlowState("idle");
-
+      setFlowState("formOpen");
       let errorMessage = "Registration failed. Please try again.";
       if (error?.message) {
         if (error.message.includes("Insufficient balance")) {
-          errorMessage =
-            "Insufficient wallet balance. Please add money to your wallet.";
+          errorMessage = "Insufficient wallet balance.";
         } else if (error.message.includes("already registered")) {
           errorMessage = "You are already registered for this tournament.";
         } else if (error.message.includes("full")) {
-          errorMessage = "This tournament is full. Registration is closed.";
+          errorMessage = "This tournament is full.";
         } else {
           errorMessage = error.message;
         }
       }
-
-      toast.error("Registration Failed", {
-        description: errorMessage,
-      });
+      toast.error("Registration Failed", { description: errorMessage });
     }
   };
 
-  /** Called when user dismisses the post-registration interstitial */
   const handleInterstitialDismiss = () => {
     setShowInterstitial(false);
     setTimeout(() => {
@@ -704,321 +740,204 @@ function RegistrationDialog({
     }, 100);
   };
 
-  // Ad cancelled → cancel registration
-  const handleAdCancel = () => {
-    setFlowState("idle");
-    toast.error("Registration Cancelled", {
-      description: "Ad not completed. Registration cancelled.",
-    });
-  };
-
   return (
     <>
-      {/* Standalone Watch Ad modal (earn token before registering) */}
-      <AdModal
-        isOpen={showWatchAdModal}
-        onComplete={handleStandaloneAdComplete}
-        onCancel={handleStandaloneAdCancel}
-        duration={30}
-        title="Watch Ad to Earn Token"
-        rewardLabel="+1 Token"
-      />
-
-      {/* Ad modal renders outside dialog for proper z-index */}
+      {/* Rewarded Ad Modal */}
       <AdModal
         isOpen={flowState === "adPlaying"}
         onComplete={handleAdComplete}
         onCancel={handleAdCancel}
         duration={30}
-        title="Watch Ad to Register"
+        title="Watch Ad to Join Free"
         rewardLabel="+1 Token Bonus"
       />
 
-      {/* Post-registration interstitial ad — optional, user can skip */}
+      {/* Post-registration interstitial */}
       <InterstitialOverlay
         isOpen={showInterstitial}
         onDismiss={handleInterstitialDismiss}
       />
 
-      <Dialog
-        open={open}
-        onOpenChange={(v) => {
-          if (!v && flowState === "adPlaying") return; // don't close dialog while ad playing
-          setOpen(v);
-          if (!v) setFlowState("idle");
-        }}
-      >
-        <DialogTrigger asChild>
-          <Button
-            size="lg"
-            className="font-bold uppercase tracking-wider"
+      {/* Main registration flow */}
+      {flowState === "idle" || flowState === "adPlaying" ? (
+        /* Step 1: Show the Watch Ad & Join button */
+        <div className="flex flex-col items-center gap-3">
+          <button
+            type="button"
+            onClick={handleWatchAdClick}
+            className="relative px-8 py-4 rounded-xl text-base font-bold uppercase tracking-widest transition-all active:scale-95 flex items-center gap-3"
             style={{
-              background: "linear-gradient(135deg, #9d4edd, #7b2fbf)",
-              color: "#fff",
-              boxShadow: "0 0 20px rgba(157,78,221,0.5)",
+              background: "linear-gradient(135deg, #00FF88, #00cc6a)",
+              color: "#000",
+              boxShadow:
+                "0 0 24px rgba(0,255,136,0.6), 0 0 48px rgba(0,255,136,0.2)",
+              fontFamily: "'Orbitron', sans-serif",
+              minWidth: 260,
             }}
-            data-ocid="tournament.open_modal_button"
+            data-ocid="tournament.primary_button"
           >
-            ⚡ REGISTER
-          </Button>
-        </DialogTrigger>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Register Your Team</DialogTitle>
-            <DialogDescription>
-              Fill in your team details to register for the tournament
-            </DialogDescription>
-          </DialogHeader>
+            <span className="text-xl">🎬</span>
+            WATCH AD &amp; JOIN FREE
+          </button>
+          <p className="text-xs text-muted-foreground">
+            Watch a 30-sec ad to register for free
+          </p>
+        </div>
+      ) : (
+        /* Step 2: Registration form (shown after ad completes) */
+        <Dialog
+          open={flowState === "formOpen" || flowState === "registering"}
+          onOpenChange={(v) => {
+            if (!v && flowState !== "registering") setFlowState("idle");
+          }}
+        >
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle
+                style={{
+                  fontFamily: "'Orbitron', sans-serif",
+                  color: "#00FF88",
+                }}
+              >
+                🎮 JOIN TOURNAMENT
+              </DialogTitle>
+              <DialogDescription>
+                Ad dekh liya! Ab apni details bhar ke register karo.
+              </DialogDescription>
+            </DialogHeader>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {!sufficientBalance && (
-              <Card className="border-destructive bg-destructive/5">
-                <CardContent className="pt-4">
-                  <div className="flex items-start gap-2 text-sm text-destructive">
-                    <Wallet className="h-4 w-4 mt-0.5" />
-                    <div>
-                      <p className="font-semibold">Insufficient Balance</p>
-                      <p className="text-xs">
-                        You need {formatCurrency(tournament.entryFee)} but have{" "}
-                        {formatCurrency(walletBalance)}. Please add money to
-                        your wallet.
-                      </p>
-                    </div>
+            <form onSubmit={handleFormSubmit} className="space-y-5 pt-2">
+              {/* Free tournament badge section */}
+              {isFree && (
+                <div
+                  className="rounded-lg p-3 flex items-center gap-3"
+                  style={{
+                    background: "rgba(255,215,0,0.08)",
+                    border: "1px solid rgba(255,215,0,0.3)",
+                  }}
+                >
+                  <span className="text-2xl">🏆</span>
+                  <div>
+                    <p className="font-bold text-yellow-400 text-sm">
+                      Free Tournament
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Winners get badges: 🥇🥈🥉
+                    </p>
                   </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Prize info for all modes */}
-            {(() => {
-              const prizeInfo = getTournamentPrizeInfo(
-                tournament.tournamentType,
-              );
-              return (
-                <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 text-xs space-y-2">
-                  <p className="font-semibold text-primary">Prize Structure</p>
-                  <div className="flex gap-3 text-muted-foreground">
-                    <span className="text-destructive">
-                      Commission: {prizeInfo.commissionPct}%
-                    </span>
-                    <span>Prize Pool: {prizeInfo.prizePct}%</span>
-                  </div>
-                  <p className="text-muted-foreground">
-                    {prizeInfo.prizeStructure}
-                  </p>
                 </div>
-              );
-            })()}
-
-            <div className="space-y-2">
-              <Label htmlFor="teamName">
-                {getTeamNameLabel(tournament.tournamentType)} *
-              </Label>
-              <Input
-                id="teamName"
-                value={teamName}
-                onChange={(e) => setTeamName(e.target.value)}
-                placeholder={
-                  is1v1 ? "Enter your player name" : "Enter your team name"
-                }
-                required
-                className={
-                  formTouched && !teamName.trim()
-                    ? "border-red-500 focus:border-red-500"
-                    : ""
-                }
-                data-ocid="tournament.input"
-              />
-              {formTouched && !teamName.trim() && (
-                <p className="text-xs text-red-400">Team name required hai.</p>
               )}
-            </div>
 
-            <div className="space-y-4">
-              <Label>
-                {is1v1
-                  ? "Player Details *"
-                  : `Players (${requiredPlayers} Required) *`}
-              </Label>
-              {players.map((player, idx) => (
-                // biome-ignore lint/suspicious/noArrayIndexKey: fixed-size player array, positions don't change
-                <div key={idx} className="grid grid-cols-2 gap-3">
-                  <Input
-                    placeholder={is1v1 ? "Your Name" : `Player ${idx + 1} Name`}
-                    value={player.name}
-                    onChange={(e) => {
-                      const newPlayers = [...players];
-                      newPlayers[idx] = {
-                        ...newPlayers[idx],
-                        name: e.target.value,
-                      };
-                      setPlayers(newPlayers);
-                    }}
-                    required
-                  />
-                  <Input
-                    placeholder={"Free Fire ID"}
-                    value={player.freeFireId}
-                    onChange={(e) => {
-                      const newPlayers = [...players];
-                      newPlayers[idx] = {
-                        ...newPlayers[idx],
-                        freeFireId: e.target.value,
-                      };
-                      setPlayers(newPlayers);
-                    }}
-                    required
-                  />
-                </div>
-              ))}
-              {formTouched && !allPlayersFilled && (
-                <p className="text-xs text-red-400 mt-1">
-                  ❌ All player fields are required
+              {/* Nickname */}
+              <div className="space-y-2">
+                <Label htmlFor="ff-nickname" className="font-semibold">
+                  Free Fire Nickname *
+                </Label>
+                <Input
+                  id="ff-nickname"
+                  value={nickname}
+                  onChange={(e) => setNickname(e.target.value)}
+                  placeholder="Enter your Free Fire nickname"
+                  className={
+                    formTouched && !nickname.trim()
+                      ? "border-red-500 focus:border-red-500"
+                      : ""
+                  }
+                  autoComplete="off"
+                  data-ocid="tournament.input"
+                />
+                {formTouched && !nickname.trim() && (
+                  <p className="text-xs text-red-400">
+                    ❌ Nickname required hai.
+                  </p>
+                )}
+              </div>
+
+              {/* UID */}
+              <div className="space-y-2">
+                <Label htmlFor="ff-uid" className="font-semibold">
+                  Free Fire UID *{" "}
+                  <span className="text-xs font-normal text-muted-foreground">
+                    (8-12 digits)
+                  </span>
+                </Label>
+                <Input
+                  id="ff-uid"
+                  value={uid}
+                  onChange={(e) => {
+                    const val = e.target.value.replace(/\D/g, "");
+                    setUid(val);
+                    if (uidError) setUidError(validateUid(val));
+                  }}
+                  placeholder="e.g. 123456789"
+                  inputMode="numeric"
+                  maxLength={12}
+                  className={
+                    uidError
+                      ? "border-red-500 focus:border-red-500"
+                      : uid.length >= 8 && uid.length <= 12
+                        ? "border-green-500"
+                        : ""
+                  }
+                  data-ocid="tournament.input"
+                />
+                {uidError && <p className="text-xs text-red-400">{uidError}</p>}
+                {!uidError && uid.length >= 8 && uid.length <= 12 && (
+                  <p className="text-xs text-green-400">✅ Valid UID</p>
+                )}
+              </div>
+
+              {/* Confirm checkbox */}
+              <div className="flex items-start gap-3 pt-1">
+                <Checkbox
+                  id="confirm"
+                  checked={confirmed}
+                  onCheckedChange={(checked) =>
+                    setConfirmed(checked as boolean)
+                  }
+                  data-ocid="tournament.checkbox"
+                />
+                <Label
+                  htmlFor="confirm"
+                  className="text-sm cursor-pointer leading-relaxed"
+                >
+                  I confirm that the above details are correct and I agree to
+                  the tournament rules.
+                </Label>
+              </div>
+              {formTouched && !confirmed && (
+                <p className="text-xs text-red-400 -mt-3">
+                  ❌ Please confirm to proceed.
                 </p>
               )}
-            </div>
 
-            {!is1v1 && (
-              <div className="space-y-3">
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="includeSubstitute"
-                    checked={includeSubstitute}
-                    onCheckedChange={(checked) =>
-                      setIncludeSubstitute(checked as boolean)
-                    }
-                    data-ocid="tournament.checkbox"
-                  />
-                  <Label htmlFor="includeSubstitute" className="cursor-pointer">
-                    Add Substitute Player (Optional)
-                  </Label>
-                </div>
-                {includeSubstitute && (
-                  <div className="grid grid-cols-2 gap-3 ml-6">
-                    <Input
-                      placeholder="Substitute Name"
-                      value={substitute.name}
-                      onChange={(e) =>
-                        setSubstitute({ ...substitute, name: e.target.value })
-                      }
-                    />
-                    <Input
-                      placeholder="Free Fire ID"
-                      value={substitute.freeFireId}
-                      onChange={(e) =>
-                        setSubstitute({
-                          ...substitute,
-                          freeFireId: e.target.value,
-                        })
-                      }
-                    />
-                  </div>
-                )}
-              </div>
-            )}
-
-            <div className="border-t border-border pt-4 space-y-3">
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Entry Fee</span>
-                <span className="font-semibold">
-                  {formatCurrency(tournament.entryFee)}
-                </span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Your Balance</span>
-                <span
-                  className={`font-semibold ${sufficientBalance ? "text-success" : "text-destructive"}`}
-                >
-                  {formatCurrency(walletBalance)}
-                </span>
-              </div>
-              <div className="flex justify-between text-sm border-t border-yellow-500/20 pt-2">
-                <span className="text-yellow-400 font-medium">
-                  🪙 Token Bonus
-                </span>
-                <span className="text-yellow-400 font-semibold">
-                  +1 Token (after ad)
-                </span>
-              </div>
-            </div>
-
-            <div className="flex items-start space-x-2">
-              <Checkbox
-                id="terms"
-                checked={agreedToTerms}
-                onCheckedChange={(checked) =>
-                  setAgreedToTerms(checked as boolean)
-                }
-                required
-                data-ocid="tournament.checkbox"
-              />
-              <div className="space-y-0.5">
-                <Label htmlFor="terms" className="text-sm cursor-pointer">
-                  I agree to the tournament rules and understand that entry fee
-                  will be deducted from my wallet
-                </Label>
-                {formTouched && !agreedToTerms && (
-                  <p className="text-xs text-red-400">
-                    Tournament rules agree karna zaroori hai.
-                  </p>
-                )}
-              </div>
-            </div>
-
-            {/* Watch Ad Button — neon green, above Register */}
-            <div className="space-y-1">
-              {tokenEarned ? (
-                <div
-                  className="flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-semibold"
-                  style={{
-                    background: "rgba(0,255,136,0.1)",
-                    border: "1px solid rgba(0,255,136,0.3)",
-                  }}
-                >
-                  <CheckCircle2 className="h-4 w-4 text-green-400" />
-                  <span className="text-green-400">✅ +1 Token credited!</span>
-                </div>
-              ) : (
-                <button
-                  type="button"
-                  onClick={handleWatchAdClick}
-                  className="w-full py-3 rounded-lg text-sm font-bold uppercase tracking-wider transition-all active:scale-95 flex items-center justify-center gap-2"
-                  style={{
-                    background: "linear-gradient(135deg, #00FF88, #00cc6a)",
-                    color: "#000",
-                    boxShadow: "0 0 16px rgba(0,255,136,0.4)",
-                    fontFamily: "'Orbitron', sans-serif",
-                  }}
-                  data-ocid="tournament.secondary_button"
-                >
-                  📺 WATCH AD (+1 TOKEN)
-                </button>
-              )}
-            </div>
-
-            {/* Register Button — neon purple */}
-            <Button
-              type="submit"
-              onClick={() => setFormTouched(true)}
-              className="w-full font-bold text-base py-6 uppercase tracking-wider transition-all"
-              style={{
-                background: "linear-gradient(135deg, #9d4edd, #7b2fbf)",
-                color: "#fff",
-                boxShadow: "0 0 20px rgba(157,78,221,0.5)",
-                fontFamily: "'Orbitron', sans-serif",
-              }}
-              disabled={
-                registerMutation.isPending || flowState === "registering"
-              }
-              data-ocid="tournament.submit_button"
-            >
-              {flowState === "registering"
-                ? "⏳ Registering..."
-                : "⚡ REGISTER"}
-            </Button>
-          </form>
-        </DialogContent>
-      </Dialog>
+              {/* Submit */}
+              <button
+                type="submit"
+                disabled={flowState === "registering"}
+                className="w-full py-4 rounded-xl font-bold uppercase tracking-widest text-base transition-all active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed"
+                style={{
+                  background:
+                    flowState === "registering"
+                      ? "#5a2d91"
+                      : "linear-gradient(135deg, #9d4edd, #7b2fbf)",
+                  color: "#fff",
+                  boxShadow:
+                    flowState === "registering"
+                      ? "none"
+                      : "0 0 20px rgba(157,78,221,0.5)",
+                  fontFamily: "'Orbitron', sans-serif",
+                }}
+                data-ocid="tournament.submit_button"
+              >
+                {flowState === "registering"
+                  ? "⏳ Registering..."
+                  : "✅ COMPLETE REGISTRATION"}
+              </button>
+            </form>
+          </DialogContent>
+        </Dialog>
+      )}
     </>
   );
 }
