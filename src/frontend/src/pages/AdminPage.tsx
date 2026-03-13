@@ -113,6 +113,193 @@ import {
 import { useState } from "react";
 import { toast } from "sonner";
 
+const FREE_TOURNAMENT_LIST = [
+  {
+    id: "free-battleground",
+    name: "⚔️ Battle Ground Championship",
+    maxPlayers: 500,
+  },
+  { id: "free-4v4", name: "🎮 4v4 Custom Match", maxPlayers: 40 },
+  { id: "free-1v1", name: "🥇 1v1 Solo Duel", maxPlayers: 10 },
+  { id: "free-2v2", name: "🥈 2v2 Duo Battle", maxPlayers: 20 },
+];
+
+function FreeTournamentAdminCard({
+  t,
+}: { t: (typeof FREE_TOURNAMENT_LIST)[0] }) {
+  const [roomId, setRoomId] = useState(
+    localStorage.getItem(`freeRoomId_${t.id}`) || "",
+  );
+  const [roomPassword, setRoomPassword] = useState(
+    localStorage.getItem(`freeRoomPassword_${t.id}`) || "",
+  );
+  const [matchStarted, setMatchStarted] = useState(
+    localStorage.getItem(`freeMatchStarted_${t.id}`) === "true",
+  );
+  const [saved, setSaved] = useState(false);
+
+  const handleSave = () => {
+    localStorage.setItem(`freeRoomId_${t.id}`, roomId);
+    localStorage.setItem(`freeRoomPassword_${t.id}`, roomPassword);
+    window.dispatchEvent(new Event("freeTournamentUpdated"));
+    setSaved(true);
+    toast.success(`Room details saved for ${t.name}`);
+    setTimeout(() => setSaved(false), 2000);
+  };
+
+  const toggleMatchStarted = () => {
+    const newVal = !matchStarted;
+    setMatchStarted(newVal);
+    localStorage.setItem(`freeMatchStarted_${t.id}`, String(newVal));
+    window.dispatchEvent(new Event("freeTournamentUpdated"));
+    toast.success(
+      newVal
+        ? "✅ Match started! LIVE button active for users."
+        : "⏹️ Match stopped.",
+    );
+  };
+
+  const joinCount = Number.parseInt(
+    localStorage.getItem(`freeJoinCount_${t.id}`) || "0",
+    10,
+  );
+
+  return (
+    <div
+      className="rounded-xl p-4 space-y-3"
+      style={{
+        background: "rgba(22,33,62,0.7)",
+        border: "1px solid rgba(0,255,136,0.15)",
+      }}
+    >
+      <div className="flex items-center justify-between">
+        <div>
+          <h3
+            className="font-bold text-white text-sm"
+            style={{ fontFamily: "'Orbitron', sans-serif" }}
+          >
+            {t.name}
+          </h3>
+          <p
+            className="text-xs mt-0.5"
+            style={{ color: "rgba(255,255,255,0.4)" }}
+          >
+            👥 {joinCount}/{t.maxPlayers} joined
+          </p>
+        </div>
+        <div className="flex gap-2 text-xs">
+          {matchStarted && (
+            <span
+              className="px-2 py-0.5 rounded-full font-bold"
+              style={{
+                background: "rgba(255,215,0,0.15)",
+                color: "#ffd700",
+                border: "1px solid rgba(255,215,0,0.3)",
+              }}
+            >
+              🟡 LIVE
+            </span>
+          )}
+          {roomId && (
+            <span
+              className="px-2 py-0.5 rounded-full font-bold"
+              style={{
+                background: "rgba(157,78,221,0.15)",
+                color: "#c084fc",
+                border: "1px solid rgba(157,78,221,0.3)",
+              }}
+            >
+              🔑 Room Set
+            </span>
+          )}
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <div className="flex gap-2">
+          <div className="flex-1 space-y-1">
+            <label
+              htmlFor={`room-id-${t.id}`}
+              className="text-xs font-medium"
+              style={{ color: "rgba(255,255,255,0.5)" }}
+            >
+              Room ID
+            </label>
+            <input
+              id={`room-id-${t.id}`}
+              type="text"
+              value={roomId}
+              onChange={(e) => setRoomId(e.target.value)}
+              placeholder="e.g., 213579050"
+              className="w-full rounded-lg px-3 py-2 text-sm font-mono text-white outline-none"
+              style={{
+                background: "rgba(255,255,255,0.06)",
+                border: "1px solid rgba(255,255,255,0.12)",
+              }}
+              data-ocid="admin.free_tournament.room_id.input"
+            />
+          </div>
+          <div className="flex-1 space-y-1">
+            <label
+              htmlFor={`room-pw-${t.id}`}
+              className="text-xs font-medium"
+              style={{ color: "rgba(255,255,255,0.5)" }}
+            >
+              Password
+            </label>
+            <input
+              id={`room-pw-${t.id}`}
+              type="text"
+              value={roomPassword}
+              onChange={(e) => setRoomPassword(e.target.value)}
+              placeholder="e.g., 00"
+              className="w-full rounded-lg px-3 py-2 text-sm font-mono text-white outline-none"
+              style={{
+                background: "rgba(255,255,255,0.06)",
+                border: "1px solid rgba(255,255,255,0.12)",
+              }}
+              data-ocid="admin.free_tournament.password.input"
+            />
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={handleSave}
+          className="w-full py-2 rounded-lg text-xs font-bold uppercase tracking-wide"
+          style={{
+            background: saved ? "rgba(0,255,136,0.15)" : "rgba(157,78,221,0.2)",
+            color: saved ? "#00FF88" : "#c084fc",
+            border: `1px solid ${saved ? "rgba(0,255,136,0.4)" : "rgba(157,78,221,0.4)"}`,
+            fontFamily: "'Orbitron', sans-serif",
+          }}
+          data-ocid="admin.free_tournament.save_room.button"
+        >
+          {saved ? "✅ Saved!" : "🔑 Set Room ID & Password"}
+        </button>
+      </div>
+
+      <button
+        type="button"
+        onClick={toggleMatchStarted}
+        className="w-full py-2 rounded-lg text-xs font-bold uppercase tracking-wide"
+        style={{
+          background: matchStarted
+            ? "rgba(255,50,50,0.15)"
+            : "rgba(255,215,0,0.12)",
+          color: matchStarted ? "#ff6b6b" : "#ffd700",
+          border: `1px solid ${matchStarted ? "rgba(255,50,50,0.4)" : "rgba(255,215,0,0.4)"}`,
+          fontFamily: "'Orbitron', sans-serif",
+        }}
+        data-ocid="admin.free_tournament.match_started.toggle"
+      >
+        {matchStarted
+          ? "⏹️ STOP MATCH (Deactivate LIVE)"
+          : "▶️ START MATCH (Activate LIVE Button)"}
+      </button>
+    </div>
+  );
+}
+
 export function AdminPage() {
   const { data: isAdmin, isLoading } = useIsCallerAdmin();
 
@@ -241,6 +428,14 @@ export function AdminPage() {
                 <span className="admin-nav-icon">🛡️</span>
                 <span>Security</span>
               </TabsTrigger>
+              <TabsTrigger
+                value="freeTournaments"
+                data-ocid="admin.free_tournaments.tab"
+                className="admin-nav-trigger"
+              >
+                <span className="admin-nav-icon">🎁</span>
+                <span>Free Tournaments</span>
+              </TabsTrigger>
             </TabsList>
           </div>
           {/* Scroll fade indicator on the right */}
@@ -293,6 +488,26 @@ export function AdminPage() {
 
         <TabsContent value="security">
           <SecurityTab />
+        </TabsContent>
+
+        <TabsContent value="freeTournaments">
+          <div className="space-y-4">
+            <h2
+              className="text-lg font-bold text-white"
+              style={{ fontFamily: "'Orbitron', sans-serif" }}
+            >
+              🎁 Free Tournament Management
+            </h2>
+            <p className="text-sm" style={{ color: "rgba(255,255,255,0.4)" }}>
+              Set Room ID &amp; Password for each free tournament. Toggle match
+              started to activate LIVE button for users.
+            </p>
+            <div className="grid gap-4 sm:grid-cols-2">
+              {FREE_TOURNAMENT_LIST.map((t) => (
+                <FreeTournamentAdminCard key={t.id} t={t} />
+              ))}
+            </div>
+          </div>
         </TabsContent>
       </Tabs>
     </div>

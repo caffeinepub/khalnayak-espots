@@ -42,16 +42,18 @@ import {
   getTournamentStatusLabel,
   getTournamentTypeLabel,
 } from "@/utils/format";
+import { fetchFFPlayerByUID } from "@/utils/freefirePlayerLookup";
 import { Link, useNavigate, useParams } from "@tanstack/react-router";
 import {
   Calendar,
   DollarSign,
   Info,
+  Loader2,
   Shield,
   Trophy,
   Users,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 export function TournamentDetailPage() {
@@ -362,8 +364,8 @@ export function TournamentDetailPage() {
                                       {item.label}
                                     </span>
                                     {item.note && (
-                                      <span className="ml-2 text-xs text-muted-foreground">
-                                        ({item.note})
+                                      <span className="ml-2 text-xs font-bold text-primary">
+                                        {item.note}
                                       </span>
                                     )}
                                   </div>
@@ -387,8 +389,20 @@ export function TournamentDetailPage() {
                   <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
                     <li>1 point per kill</li>
                     <li>
-                      Placement points: 1st (12pts), 2nd (9pts), 3rd (8pts), 4th
-                      (7pts), 5th (6pts), etc.
+                      Placement points: 1st:12, 2nd:9, 3rd:8, 4th:7, 5th:6,
+                      6th:5, 7th:4, 8th:3, 9th:2, 10th:1, 11th–48th:0
+                    </li>
+                    <li>Total score = Kill points + Placement points</li>
+                    <li>
+                      Most Kills prize: minimum 6 kills zaroori — tie-breaker:
+                      pehle kill wala jeets
+                    </li>
+                    <li>
+                      Entry Fee: ₹10 per player | Total Collection: ₹480 (48
+                      players)
+                    </li>
+                    <li>
+                      Platform Commission: 35% (₹168) | Prize Pool: 65% (₹312)
                     </li>
                   </ul>
                 </div>
@@ -585,6 +599,19 @@ export function TournamentDetailPage() {
 }
 
 type RegFlowState = "idle" | "adPlaying" | "formOpen" | "registering" | "done";
+type UidFetchStatus =
+  | "idle"
+  | "loading"
+  | "success"
+  | "error"
+  | "network_error";
+
+const FF_REGIONS = [
+  { value: "ind", label: "🇮🇳 IND (India)" },
+  { value: "pk", label: "🇵🇰 PK (Pakistan)" },
+  { value: "id", label: "🇮🇩 ID (Indonesia)" },
+  { value: "sg", label: "🇸🇬 SG (Singapore)" },
+];
 
 function RegistrationDialog({
   tournament,
@@ -603,6 +630,14 @@ function RegistrationDialog({
   const [formTouched, setFormTouched] = useState(false);
   const [uidError, setUidError] = useState("");
 
+  // UID Auto-Fill states
+  const [region, setRegion] = useState("ind");
+  const [uidFetchStatus, setUidFetchStatus] = useState<UidFetchStatus>("idle");
+  const [fetchedNickname, setFetchedNickname] = useState("");
+  const [isNicknameAutoFilled, setIsNicknameAutoFilled] = useState(false);
+  const [manualEntryMode, setManualEntryMode] = useState(false);
+  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   const navigate = useNavigate();
   const tokens = useTokens();
   const registerMutation = useRegisterTeam();
@@ -615,6 +650,59 @@ function RegistrationDialog({
       return "⚠️ UID 8-12 digits ka hona chahiye.";
     return "";
   };
+
+  // Auto-fetch player info when UID reaches valid length
+  useEffect(() => {
+    // Clear any previous debounce timer
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+
+    // Only fetch when UID is valid length
+    if (uid.length < 8 || uid.length > 12 || !/^\d+$/.test(uid)) {
+      if (uid.length > 0 && uid.length < 8) {
+        setUidFetchStatus("idle");
+        setManualEntryMode(false);
+      } else if (uid.length === 0) {
+        setUidFetchStatus("idle");
+        setFetchedNickname("");
+        setManualEntryMode(false);
+      }
+      return;
+    }
+    setManualEntryMode(false);
+
+    setUidFetchStatus("loading");
+
+    debounceTimerRef.current = setTimeout(async () => {
+      // Uses @spinzaf/freefire-api approach: new FreeFireAPI().getPlayerProfile(uid)
+      // No API key needed — auth handled internally by the library
+      const result = await fetchFFPlayerByUID(
+        uid,
+        region as import("@/utils/freefirePlayerLookup").FFRegion,
+      );
+
+      if (result.success && result.player?.nickname) {
+        setFetchedNickname(result.player.nickname);
+        setUidFetchStatus("success");
+        setNickname(result.player.nickname);
+        setIsNicknameAutoFilled(true);
+      } else if (result.error === "network_error") {
+        setUidFetchStatus("network_error");
+        setFetchedNickname("");
+      } else {
+        // invalid_uid or unknown
+        setUidFetchStatus("error");
+        setFetchedNickname("");
+      }
+    }, 500);
+
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
+  }, [uid, region]);
 
   // Duplicate UID check per tournament
   const isUidAlreadyRegistered = (uidValue: string): boolean => {
@@ -830,19 +918,54 @@ function RegistrationDialog({
 
               {/* Nickname */}
               <div className="space-y-2">
-                <Label htmlFor="ff-nickname" className="font-semibold">
-                  Free Fire Nickname *
-                </Label>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <Label htmlFor="ff-nickname" className="font-semibold">
+                    Free Fire Nickname *
+                  </Label>
+                  {isNicknameAutoFilled && (
+                    <span
+                      className="text-xs px-2 py-0.5 rounded-full font-semibold"
+                      style={{
+                        background: "rgba(0,255,136,0.15)",
+                        color: "#00FF88",
+                        border: "1px solid rgba(0,255,136,0.4)",
+                        fontFamily: "'Rajdhani', sans-serif",
+                      }}
+                    >
+                      ✨ Auto-filled via @spinzaf/freefire-api
+                    </span>
+                  )}
+                  {manualEntryMode && !isNicknameAutoFilled && (
+                    <span
+                      className="text-xs px-2 py-0.5 rounded-full font-semibold"
+                      style={{
+                        background: "rgba(251,191,36,0.15)",
+                        color: "#fbbf24",
+                        border: "1px solid rgba(251,191,36,0.4)",
+                        fontFamily: "'Rajdhani', sans-serif",
+                      }}
+                    >
+                      ✏️ Manual entry
+                    </span>
+                  )}
+                </div>
                 <Input
                   id="ff-nickname"
                   value={nickname}
-                  onChange={(e) => setNickname(e.target.value)}
+                  onChange={(e) => {
+                    setNickname(e.target.value);
+                    // If user manually edits, clear auto-filled flag
+                    if (isNicknameAutoFilled) setIsNicknameAutoFilled(false);
+                  }}
                   placeholder="Enter your Free Fire nickname"
                   className={
                     formTouched && !nickname.trim()
                       ? "border-red-500 focus:border-red-500"
-                      : ""
+                      : isNicknameAutoFilled
+                        ? "border-green-500"
+                        : ""
                   }
+                  style={isNicknameAutoFilled ? { color: "#00FF88" } : {}}
                   autoComplete="off"
                   data-ocid="tournament.input"
                 />
@@ -853,14 +976,51 @@ function RegistrationDialog({
                 )}
               </div>
 
-              {/* UID */}
+              {/* UID + Region Row */}
               <div className="space-y-2">
-                <Label htmlFor="ff-uid" className="font-semibold">
-                  Free Fire UID *{" "}
-                  <span className="text-xs font-normal text-muted-foreground">
-                    (8-12 digits)
-                  </span>
-                </Label>
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="ff-uid" className="font-semibold">
+                    Free Fire UID *{" "}
+                    <span className="text-xs font-normal text-muted-foreground">
+                      (8-12 digits)
+                    </span>
+                  </Label>
+                  {/* Region Selector */}
+                  <select
+                    value={region}
+                    onChange={(e) => {
+                      setRegion(e.target.value);
+                      // Re-trigger fetch on region change
+                      setUidFetchStatus("idle");
+                      setFetchedNickname("");
+                    }}
+                    aria-label="Select region"
+                    data-ocid="tournament.select"
+                    style={{
+                      background: "#16213E",
+                      border: "1px solid #00FF88",
+                      color: "#00FF88",
+                      borderRadius: 8,
+                      padding: "4px 8px",
+                      fontSize: 12,
+                      fontFamily: "'Rajdhani', sans-serif",
+                      fontWeight: 600,
+                      cursor: "pointer",
+                      outline: "none",
+                    }}
+                  >
+                    {FF_REGIONS.map((r) => (
+                      <option
+                        key={r.value}
+                        value={r.value}
+                        style={{ background: "#16213E", color: "#fff" }}
+                      >
+                        {r.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
                 <Input
                   id="ff-uid"
                   value={uid}
@@ -868,6 +1028,13 @@ function RegistrationDialog({
                     const val = e.target.value.replace(/\D/g, "");
                     setUid(val);
                     if (uidError) setUidError(validateUid(val));
+                    // Reset auto-fill if UID changes
+                    if (isNicknameAutoFilled) {
+                      setIsNicknameAutoFilled(false);
+                      setNickname("");
+                    }
+                    setFetchedNickname("");
+                    if (val.length === 0) setUidFetchStatus("idle");
                   }}
                   placeholder="e.g. 123456789"
                   inputMode="numeric"
@@ -881,9 +1048,109 @@ function RegistrationDialog({
                   }
                   data-ocid="tournament.input"
                 />
+
                 {uidError && <p className="text-xs text-red-400">{uidError}</p>}
-                {!uidError && uid.length >= 8 && uid.length <= 12 && (
-                  <p className="text-xs text-green-400">✅ Valid UID</p>
+
+                {/* UID Fetch Status Display */}
+                {!uidError && uid.length >= 8 && (
+                  <div
+                    style={{
+                      fontFamily: "'Rajdhani', sans-serif",
+                      fontSize: 13,
+                      fontWeight: 600,
+                      transition: "all 0.2s ease",
+                    }}
+                  >
+                    {uidFetchStatus === "loading" && (
+                      <div
+                        className="flex items-center gap-2"
+                        data-ocid="tournament.loading_state"
+                        style={{ color: "#fbbf24" }}
+                      >
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        <span>⏳ Fetching player info...</span>
+                      </div>
+                    )}
+
+                    {uidFetchStatus === "success" && fetchedNickname && (
+                      <div
+                        className="flex items-center gap-2"
+                        data-ocid="tournament.success_state"
+                        style={{ color: "#00FF88" }}
+                      >
+                        <span>✅ Player: {fetchedNickname}</span>
+                      </div>
+                    )}
+
+                    {uidFetchStatus === "error" && (
+                      <div
+                        data-ocid="tournament.error_state"
+                        className="flex flex-col gap-1"
+                        style={{ color: "#f87171" }}
+                      >
+                        <span>
+                          ❌ Invalid UID. Please try again or enter manually.
+                        </span>
+                        {!manualEntryMode && (
+                          <button
+                            type="button"
+                            onClick={() => setManualEntryMode(true)}
+                            style={{
+                              color: "#fbbf24",
+                              fontSize: 11,
+                              background: "none",
+                              border: "none",
+                              cursor: "pointer",
+                              padding: 0,
+                              textAlign: "left",
+                              textDecoration: "underline",
+                              fontFamily: "'Rajdhani', sans-serif",
+                            }}
+                          >
+                            ✏️ Enter nickname manually instead
+                          </button>
+                        )}
+                      </div>
+                    )}
+
+                    {uidFetchStatus === "network_error" && (
+                      <div
+                        data-ocid="tournament.error_state"
+                        className="flex flex-col gap-1"
+                        style={{ color: "#fb923c" }}
+                      >
+                        <span>
+                          ❌ Unable to fetch via @spinzaf/freefire-api. Enter
+                          nickname manually.
+                        </span>
+                        {!manualEntryMode && (
+                          <button
+                            type="button"
+                            onClick={() => setManualEntryMode(true)}
+                            style={{
+                              color: "#fbbf24",
+                              fontSize: 11,
+                              background: "none",
+                              border: "none",
+                              cursor: "pointer",
+                              padding: 0,
+                              textAlign: "left",
+                              textDecoration: "underline",
+                              fontFamily: "'Rajdhani', sans-serif",
+                            }}
+                          >
+                            ✏️ Enter nickname manually instead
+                          </button>
+                        )}
+                      </div>
+                    )}
+
+                    {uidFetchStatus === "idle" &&
+                      uid.length >= 8 &&
+                      uid.length <= 12 && (
+                        <p className="text-xs text-green-400">✅ Valid UID</p>
+                      )}
+                  </div>
                 )}
               </div>
 

@@ -153,15 +153,19 @@ export function getTournamentPrizeInfo(type: string): {
   switch (type) {
     case "battleground":
       return {
-        commissionPct: 40,
-        prizePct: 60,
+        commissionPct: 35,
+        prizePct: 65,
         prizeStructure:
-          "1st: 40%, 2nd: 30%, 3rd: 20%, Most Kills (6+ kills): 10%",
+          "1st: 40% (₹125), 2nd: 30% (₹94), 3rd: 20% (₹62), Most Kills 6+ kills: 10% (₹31)",
         prizeBreakdown: [
-          { label: "1st Place", pct: 40 },
-          { label: "2nd Place", pct: 30 },
-          { label: "3rd Place", pct: 20 },
-          { label: "Most Kills (6+ kills)", pct: 10, note: "Sirf 1 player ko" },
+          { label: "🥇 1st Place", pct: 40, note: "₹125" },
+          { label: "🥈 2nd Place", pct: 30, note: "₹94" },
+          { label: "🥉 3rd Place", pct: 20, note: "₹62" },
+          {
+            label: "⚔️ Most Kills (min 6 kills)",
+            pct: 10,
+            note: "₹31 — Ek player dono prize le sakta hai",
+          },
         ],
       };
     case "custom4v4":
