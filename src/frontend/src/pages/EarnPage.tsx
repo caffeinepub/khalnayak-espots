@@ -335,50 +335,27 @@ function WithdrawalSection({
   tokens,
 }: { tokens: ReturnType<typeof useTokens> }) {
   const [adOpen, setAdOpen] = useState(false);
-  const [method, setMethod] = useState<"upi" | "voucher" | "bank" | null>(null);
 
   const handleComplete = useCallback(() => {
     setAdOpen(false);
     const success = tokens.withdrawTokens();
     if (success) {
-      toast.success(
-        `💰 ₹${tokens.RUPEES_PER_WITHDRAWAL} Wallet mein add ho gaye!`,
-        {
-          description: `${tokens.TOKENS_FOR_WITHDRAWAL} tokens deduct ho gaye via ${method?.toUpperCase()}.`,
-          duration: 5000,
-        },
-      );
+      toast.success("✅ ₹1.25 added to your wallet!", {
+        duration: 5000,
+      });
     }
-    setMethod(null);
-  }, [tokens, method]);
+  }, [tokens]);
 
   const handleCancel = useCallback(() => {
     setAdOpen(false);
-    setMethod(null);
   }, []);
 
-  const handleWithdraw = (m: typeof method) => {
+  const handleWithdraw = () => {
     if (!tokens.canWithdraw) {
       toast.error(`${tokens.tokensNeeded} more tokens needed to withdraw`);
       return;
     }
-    setMethod(m);
     setAdOpen(true);
-  };
-
-  const btnBase: React.CSSProperties = {
-    ...orbitron,
-    fontSize: 12,
-    fontWeight: 700,
-    borderRadius: 10,
-    padding: "12px 0",
-    cursor: tokens.canWithdraw ? "pointer" : "not-allowed",
-    opacity: tokens.canWithdraw ? 1 : 0.5,
-    transition: "all 0.2s",
-    flex: 1,
-    border: `1.5px solid ${neonGreen}66`,
-    background: tokens.canWithdraw ? `${neonGreen}18` : "#1a1a2e",
-    color: tokens.canWithdraw ? neonGreen : "#666",
   };
 
   return (
@@ -388,7 +365,7 @@ function WithdrawalSection({
         onComplete={handleComplete}
         onCancel={handleCancel}
         duration={WITHDRAWAL_AD_SECONDS}
-        title={`Withdraw via ${method?.toUpperCase()}`}
+        title="Watch Ad to Redeem ₹1.25"
         rewardLabel={`₹${tokens.RUPEES_PER_WITHDRAWAL}`}
       />
 
@@ -398,39 +375,38 @@ function WithdrawalSection({
         data-ocid="earn.panel"
       >
         <p style={{ ...orbitron, color: neonGreen, fontSize: 13 }}>
-          WITHDRAWAL METHODS
+          REDEEM TOKENS
         </p>
         <p style={{ ...rajdhani, color: "#aaa", fontSize: 13 }}>
           {tokens.canWithdraw
-            ? "✅ Ready! Choose withdrawal method below."
-            : `Need ${tokens.tokensNeeded} more tokens to unlock withdrawal.`}
+            ? "✅ Ready! Watch a short ad to redeem ₹1.25 directly to your wallet."
+            : `Need ${tokens.tokensNeeded} more tokens to unlock redemption.`}
         </p>
-        <div className="flex gap-3">
-          <button
-            type="button"
-            style={btnBase}
-            onClick={() => handleWithdraw("upi")}
-            data-ocid="earn.toggle"
-          >
-            💳 UPI
-          </button>
-          <button
-            type="button"
-            style={btnBase}
-            onClick={() => handleWithdraw("voucher")}
-            data-ocid="earn.toggle"
-          >
-            🎟️ VOUCHER
-          </button>
-          <button
-            type="button"
-            style={btnBase}
-            onClick={() => handleWithdraw("bank")}
-            data-ocid="earn.toggle"
-          >
-            🏦 BANK
-          </button>
-        </div>
+        <button
+          type="button"
+          style={{
+            ...orbitron,
+            fontSize: 14,
+            fontWeight: 700,
+            borderRadius: 12,
+            padding: "14px 0",
+            width: "100%",
+            cursor: tokens.canWithdraw ? "pointer" : "not-allowed",
+            opacity: tokens.canWithdraw ? 1 : 0.5,
+            transition: "all 0.2s",
+            border: `2px solid ${neonGreen}`,
+            background: tokens.canWithdraw ? `${neonGreen}22` : "#1a1a2e",
+            color: tokens.canWithdraw ? neonGreen : "#666",
+            boxShadow: tokens.canWithdraw ? `0 0 20px ${neonGreen}44` : "none",
+          }}
+          onClick={handleWithdraw}
+          disabled={!tokens.canWithdraw}
+          data-ocid="earn.redeem.primary_button"
+        >
+          {tokens.canWithdraw
+            ? "🎬 WATCH AD TO REDEEM ₹1.25"
+            : "Collect 25 tokens to redeem"}
+        </button>
         {!tokens.canWithdraw && (
           <div
             className="rounded-xl p-3 text-center"

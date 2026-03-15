@@ -236,29 +236,95 @@ export function TournamentDetailPage() {
 
       {/* Room Credentials */}
       {showRoomCredentials && (
-        <Card className="border-destructive/50 bg-destructive/5">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-destructive">
-              <Shield className="h-5 w-5" />
-              Room Credentials
-            </CardTitle>
-            <CardDescription>
-              Join the tournament using these credentials
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div>
-              <Label className="text-xs text-muted-foreground">Room ID</Label>
-              <p className="text-xl font-mono font-bold">{tournament.roomId}</p>
+        <div
+          className="rounded-2xl p-5 space-y-4"
+          style={{ background: "#0d1117", border: "1.5px solid #00FF8844" }}
+        >
+          <p
+            className="flex items-center gap-2 font-bold text-base"
+            style={{ fontFamily: "Orbitron, sans-serif", color: "#00FF88" }}
+          >
+            🔑 MATCH DETAILS
+          </p>
+          {/* Room ID */}
+          <div className="space-y-1">
+            <p
+              className="text-xs"
+              style={{ color: "#888", fontFamily: "Rajdhani, sans-serif" }}
+            >
+              Room ID
+            </p>
+            <div className="flex items-center gap-3">
+              <p
+                className="text-xl font-mono font-bold"
+                style={{ color: "#fff", letterSpacing: "0.08em" }}
+              >
+                {tournament.roomId}
+              </p>
+              <button
+                type="button"
+                data-ocid="room.copy_button"
+                onClick={() => {
+                  navigator.clipboard.writeText(tournament.roomId ?? "");
+                  toast.success("✅ Copied!");
+                }}
+                style={{
+                  fontFamily: "Orbitron, sans-serif",
+                  fontSize: 11,
+                  fontWeight: 700,
+                  padding: "6px 14px",
+                  borderRadius: 8,
+                  border: "1.5px solid #00FF88",
+                  background: "#00FF8822",
+                  color: "#00FF88",
+                  cursor: "pointer",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                📋 COPY ROOM ID
+              </button>
             </div>
-            <div>
-              <Label className="text-xs text-muted-foreground">Password</Label>
-              <p className="text-xl font-mono font-bold">
+          </div>
+          {/* Password */}
+          <div className="space-y-1">
+            <p
+              className="text-xs"
+              style={{ color: "#888", fontFamily: "Rajdhani, sans-serif" }}
+            >
+              Password
+            </p>
+            <div className="flex items-center gap-3">
+              <p
+                className="text-xl font-mono font-bold"
+                style={{ color: "#fff", letterSpacing: "0.08em" }}
+              >
                 {tournament.roomPassword}
               </p>
+              <button
+                type="button"
+                data-ocid="password.copy_button"
+                onClick={() => {
+                  navigator.clipboard.writeText(tournament.roomPassword ?? "");
+                  toast.success("✅ Copied!");
+                }}
+                style={{
+                  fontFamily: "Orbitron, sans-serif",
+                  fontSize: 11,
+                  fontWeight: 700,
+                  padding: "6px 14px",
+                  borderRadius: 8,
+                  border: "1.5px solid #00FF88",
+                  background: "#00FF8822",
+                  color: "#00FF88",
+                  cursor: "pointer",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                📋 COPY PASSWORD
+              </button>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       )}
 
       {/* Tabs */}

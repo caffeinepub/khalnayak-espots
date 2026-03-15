@@ -50,6 +50,42 @@ type FreeTournament = {
   prizeDistribution: PrizeDistribution[];
   rules: string[];
 };
+export type FreeMyMatch = {
+  tournamentId: string;
+  name: string;
+  mode: string;
+  prizePool: string;
+  registeredAt: number;
+  nickname: string;
+  uid: string;
+};
+
+export function saveFreeMyMatch(
+  tournament: FreeTournament,
+  nickname: string,
+  uid: string,
+) {
+  try {
+    const key = "ke_free_my_matches";
+    const list: FreeMyMatch[] = JSON.parse(localStorage.getItem(key) || "[]");
+    const exists = list.some(
+      (m) => m.tournamentId === tournament.id && m.uid === uid,
+    );
+    if (!exists) {
+      const match: FreeMyMatch = {
+        tournamentId: tournament.id,
+        name: tournament.name,
+        mode: tournament.modeDetail,
+        prizePool: tournament.prizePool,
+        registeredAt: Date.now(),
+        nickname,
+        uid,
+      };
+      list.push(match);
+      localStorage.setItem(key, JSON.stringify(list));
+    }
+  } catch {}
+}
 
 // ─────────────────────────────────────────────
 // Static Free Tournaments (frontend-only)
@@ -259,6 +295,12 @@ function FreeRegistrationModal({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setTouched(true);
+    // Check if this browser/user already joined this tournament
+    if (localStorage.getItem(`ke_free_joined_${tournament.id}`) === "true") {
+      toast.error("❌ You have already registered for this tournament.");
+      setState("idle");
+      return;
+    }
     if (!nickname.trim()) {
       toast.error("Nickname required hai.");
       return;
@@ -280,6 +322,8 @@ function FreeRegistrationModal({
     setState("submitting");
     setTimeout(() => {
       saveUid(uid);
+      localStorage.setItem(`ke_free_joined_${tournament.id}`, "true");
+      saveFreeMyMatch(tournament, nickname, uid);
       setState("done");
       setShowInterstitial(true);
       toast.success("✅ Registration successful!", {
@@ -539,6 +583,9 @@ function FreeTournamentCard({ t }: { t: FreeTournament }) {
     isFreeMatchStarted(t.id),
   );
   const [showRoomPopup, setShowRoomPopup] = useState(false);
+  const [isJoined, setIsJoined] = useState(
+    () => localStorage.getItem(`ke_free_joined_${t.id}`) === "true",
+  );
 
   useEffect(() => {
     const handler = () => {
@@ -546,6 +593,7 @@ function FreeTournamentCard({ t }: { t: FreeTournament }) {
       setRoomId(getFreeRoomId(t.id));
       setRoomPassword(getFreeRoomPassword(t.id));
       setMatchStarted(isFreeMatchStarted(t.id));
+      setIsJoined(localStorage.getItem(`ke_free_joined_${t.id}`) === "true");
     };
     window.addEventListener("storage", handler);
     window.addEventListener("freeTournamentUpdated", handler);
@@ -797,24 +845,42 @@ function FreeTournamentCard({ t }: { t: FreeTournament }) {
           </div>
 
           {/* Main JOIN button */}
-          <button
-            type="button"
-            onClick={() => !isFull && setModalOpen(true)}
-            disabled={isFull}
-            className="block w-full text-center py-2.5 rounded-lg font-bold text-sm uppercase tracking-wide transition-all active:scale-95 flex items-center justify-center gap-2"
-            style={{
-              background: isFull
-                ? "rgba(255,255,255,0.08)"
-                : `linear-gradient(135deg, ${accent}, #00cc6a)`,
-              color: isFull ? "rgba(255,255,255,0.3)" : "#0A0A0A",
-              boxShadow: isFull ? "none" : `0 0 16px ${accent}66`,
-              fontFamily: "'Orbitron', sans-serif",
-              cursor: isFull ? "not-allowed" : "pointer",
-            }}
-            data-ocid="free_tournament.primary_button"
-          >
-            {isFull ? "🚫 TOURNAMENT FULL" : "🎬 WATCH AD & JOIN FREE"}
-          </button>
+          {isJoined ? (
+            <button
+              type="button"
+              disabled
+              className="block w-full text-center py-2.5 rounded-lg font-bold text-sm uppercase tracking-wide"
+              style={{
+                background: "rgba(0,255,136,0.1)",
+                color: "#00FF88",
+                border: "1px solid rgba(0,255,136,0.4)",
+                fontFamily: "'Orbitron', sans-serif",
+                cursor: "not-allowed",
+              }}
+              data-ocid="free_tournament.joined_button"
+            >
+              ✅ JOINED
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => !isFull && setModalOpen(true)}
+              disabled={isFull}
+              className="block w-full text-center py-2.5 rounded-lg font-bold text-sm uppercase tracking-wide transition-all active:scale-95 flex items-center justify-center gap-2"
+              style={{
+                background: isFull
+                  ? "rgba(255,255,255,0.08)"
+                  : `linear-gradient(135deg, ${accent}, #00cc6a)`,
+                color: isFull ? "rgba(255,255,255,0.3)" : "#0A0A0A",
+                boxShadow: isFull ? "none" : `0 0 16px ${accent}66`,
+                fontFamily: "'Orbitron', sans-serif",
+                cursor: isFull ? "not-allowed" : "pointer",
+              }}
+              data-ocid="free_tournament.primary_button"
+            >
+              {isFull ? "🚫 TOURNAMENT FULL" : "🎬 WATCH AD & JOIN FREE"}
+            </button>
+          )}
         </div>
       </div>
 
@@ -919,6 +985,35 @@ export function TournamentsPage() {
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [section, setSection] = useState<"free" | "paid">("free");
+  const [publishedIds, setPublishedIds] = useState<Set<string>>(() => {
+    const ids = new Set<string>();
+    for (const t of FREE_TOURNAMENTS) {
+      if (localStorage.getItem(`ke_free_published_${t.id}`) === "true")
+        ids.add(t.id);
+    }
+    return ids;
+  });
+
+  useEffect(() => {
+    const handler = () => {
+      const ids = new Set<string>();
+      for (const t of FREE_TOURNAMENTS) {
+        if (localStorage.getItem(`ke_free_published_${t.id}`) === "true")
+          ids.add(t.id);
+      }
+      setPublishedIds(ids);
+    };
+    window.addEventListener("freeTournamentUpdated", handler);
+    window.addEventListener("storage", handler);
+    return () => {
+      window.removeEventListener("freeTournamentUpdated", handler);
+      window.removeEventListener("storage", handler);
+    };
+  }, []);
+
+  const visibleFreeTournaments = FREE_TOURNAMENTS.filter((t) =>
+    publishedIds.has(t.id),
+  );
 
   const filteredTournaments =
     tournaments?.filter((t) => {
@@ -1013,11 +1108,32 @@ export function TournamentsPage() {
               </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-5">
-              {FREE_TOURNAMENTS.map((t) => (
-                <FreeTournamentCard key={t.id} t={t} />
-              ))}
-            </div>
+            {visibleFreeTournaments.length === 0 ? (
+              <div
+                className="text-center py-12"
+                style={{ color: "rgba(255,255,255,0.4)" }}
+              >
+                <p className="text-4xl mb-3">🎮</p>
+                <p
+                  className="font-bold"
+                  style={{
+                    fontFamily: "'Orbitron', sans-serif",
+                    color: "rgba(255,255,255,0.6)",
+                  }}
+                >
+                  No tournaments available
+                </p>
+                <p className="text-sm mt-1">
+                  Admin hasn't published any free tournaments yet.
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-5">
+                {visibleFreeTournaments.map((t) => (
+                  <FreeTournamentCard key={t.id} t={t} />
+                ))}
+              </div>
+            )}
           </div>
         )}
 

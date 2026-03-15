@@ -8,6 +8,11 @@ export function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {/* Brand */}
           <div>
+            <img
+              src="/assets/generated/kl-esports-life-logo-transparent.dim_400x300.png"
+              alt="KL Esports Life"
+              className="h-16 w-auto object-contain mb-3"
+            />
             <h3 className="text-xl font-bold font-display text-primary mb-2">
               KHALNAYAK ESPOTS
             </h3>

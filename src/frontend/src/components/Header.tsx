@@ -68,7 +68,7 @@ export function Header() {
       <div className="container flex h-14 sm:h-16 items-center justify-between px-3 sm:px-8">
         <Link to="/" className="flex items-center space-x-2 group">
           <img
-            src="/assets/generated/khalnayak-espots-logo.dim_512x512.png"
+            src="/assets/generated/kl-esports-life-logo-transparent.dim_400x300.png"
             alt="Khalnayak Espots"
             className="h-8 w-8 sm:h-10 sm:w-10 object-contain transition-all group-hover:drop-shadow-[0_0_10px_rgba(0,245,255,0.8)]"
             style={{

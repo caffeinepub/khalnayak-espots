@@ -137,6 +137,25 @@ function FreeTournamentAdminCard({
     localStorage.getItem(`freeMatchStarted_${t.id}`) === "true",
   );
   const [saved, setSaved] = useState(false);
+  const [newMatchTime, setNewMatchTime] = useState(
+    localStorage.getItem(`freeMatchTime_${t.id}`) || "",
+  );
+  const [timeSaved, setTimeSaved] = useState(false);
+  const [isPublished, setIsPublished] = useState(
+    localStorage.getItem(`ke_free_published_${t.id}`) === "true",
+  );
+
+  const handleUpdateTime = () => {
+    if (!newMatchTime) {
+      toast.error("Please select a date and time.");
+      return;
+    }
+    localStorage.setItem(`freeMatchTime_${t.id}`, newMatchTime);
+    window.dispatchEvent(new Event("freeTournamentUpdated"));
+    setTimeSaved(true);
+    toast.success(`Match time updated for ${t.name}`);
+    setTimeout(() => setTimeSaved(false), 2000);
+  };
 
   const handleSave = () => {
     localStorage.setItem(`freeRoomId_${t.id}`, roomId);
@@ -156,6 +175,18 @@ function FreeTournamentAdminCard({
       newVal
         ? "✅ Match started! LIVE button active for users."
         : "⏹️ Match stopped.",
+    );
+  };
+
+  const togglePublish = () => {
+    const newVal = !isPublished;
+    setIsPublished(newVal);
+    localStorage.setItem(`ke_free_published_${t.id}`, String(newVal));
+    window.dispatchEvent(new Event("freeTournamentUpdated"));
+    toast.success(
+      newVal
+        ? "✅ Tournament published for users!"
+        : "⛔ Tournament hidden from users.",
     );
   };
 
@@ -296,6 +327,94 @@ function FreeTournamentAdminCard({
           ? "⏹️ STOP MATCH (Deactivate LIVE)"
           : "▶️ START MATCH (Activate LIVE Button)"}
       </button>
+
+      {/* Edit Match Time */}
+      <div
+        className="border-t pt-3 mt-1"
+        style={{ borderColor: "rgba(0,255,136,0.1)" }}
+      >
+        <p
+          className="text-xs font-bold uppercase tracking-wide mb-2"
+          style={{
+            color: "rgba(255,255,255,0.5)",
+            fontFamily: "'Orbitron', sans-serif",
+          }}
+        >
+          ⏰ Edit Match Time
+        </p>
+        {newMatchTime && (
+          <p
+            className="text-xs mb-2"
+            style={{ color: "rgba(255,255,255,0.4)" }}
+          >
+            Current:{" "}
+            {new Date(newMatchTime).toLocaleString("en-IN", {
+              day: "2-digit",
+              month: "short",
+              year: "numeric",
+              hour: "2-digit",
+              minute: "2-digit",
+            })}
+          </p>
+        )}
+        <input
+          type="datetime-local"
+          value={newMatchTime}
+          onChange={(e) => setNewMatchTime(e.target.value)}
+          data-ocid="admin.free_tournament.match_time.input"
+          style={{
+            width: "100%",
+            padding: "8px 10px",
+            borderRadius: "8px",
+            background: "rgba(0,0,0,0.4)",
+            border: "1px solid rgba(0,255,136,0.2)",
+            color: "white",
+            fontSize: "13px",
+            marginBottom: "8px",
+          }}
+        />
+        <button
+          type="button"
+          onClick={handleUpdateTime}
+          data-ocid="admin.free_tournament.update_time.button"
+          style={{
+            width: "100%",
+            padding: "8px",
+            borderRadius: "8px",
+            background: timeSaved
+              ? "rgba(0,255,136,0.2)"
+              : "rgba(0,255,136,0.1)",
+            border: "1px solid rgba(0,255,136,0.4)",
+            color: "#00FF88",
+            fontFamily: "'Orbitron', sans-serif",
+            fontSize: "11px",
+            fontWeight: "bold",
+            cursor: "pointer",
+            letterSpacing: "0.05em",
+          }}
+        >
+          {timeSaved ? "✅ TIME UPDATED!" : "✅ UPDATE MATCH TIME"}
+        </button>
+        {/* Publish/Unpublish toggle */}
+        <button
+          type="button"
+          onClick={togglePublish}
+          className="w-full py-2 rounded-lg text-xs font-bold uppercase tracking-wide mt-1"
+          style={{
+            background: isPublished
+              ? "rgba(255,50,50,0.15)"
+              : "rgba(0,255,136,0.12)",
+            color: isPublished ? "#ff6b6b" : "#00FF88",
+            border: `1px solid ${isPublished ? "rgba(255,50,50,0.4)" : "rgba(0,255,136,0.4)"}`,
+            fontFamily: "'Orbitron', sans-serif",
+          }}
+          data-ocid="admin.free_tournament.publish.toggle"
+        >
+          {isPublished
+            ? "✅ Published (Click to Hide)"
+            : "🚀 Publish Tournament"}
+        </button>
+      </div>
     </div>
   );
 }
@@ -2052,19 +2171,7 @@ function WithdrawalsTab() {
                               </span>
                             </div>
                           )}
-                          {detail?.method === "bank" && (
-                            <div className="text-xs space-y-0.5">
-                              <p className="font-medium truncate">
-                                {detail.accountHolderName}
-                              </p>
-                              <p className="font-mono text-muted-foreground">
-                                A/C: ****{detail.accountNumber?.slice(-4)}
-                              </p>
-                              <p className="font-mono text-muted-foreground">
-                                IFSC: {detail.ifscCode}
-                              </p>
-                            </div>
-                          )}
+
                           {!detail && (
                             <span className="text-xs text-muted-foreground">
                               No details

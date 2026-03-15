@@ -37,6 +37,166 @@ import { toast } from "sonner";
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
+// ── Free Tournament Helpers ───────────────────────────────────────────────────
+type FreeMyMatch = {
+  tournamentId: string;
+  name: string;
+  mode: string;
+  prizePool: string;
+  registeredAt: number;
+  nickname: string;
+  uid: string;
+};
+function loadFreeMyMatches(): FreeMyMatch[] {
+  try {
+    return JSON.parse(localStorage.getItem("ke_free_my_matches") || "[]");
+  } catch {
+    return [];
+  }
+}
+function getFreeMatchTime(id: string): string {
+  return localStorage.getItem(`freeMatchTime_${id}`) || "";
+}
+function getFreeMatchStatus(id: string): string {
+  const started = localStorage.getItem(`freeMatchStarted_${id}`) === "true";
+  return started ? "Live" : "Upcoming";
+}
+function getFreeRoomId(id: string): string {
+  return localStorage.getItem(`freeRoomId_${id}`) || "";
+}
+function getFreeRoomPassword(id: string): string {
+  return localStorage.getItem(`freeRoomPassword_${id}`) || "";
+}
+
+function FreeMatchCard({
+  match,
+  index,
+}: { match: FreeMyMatch; index: number }) {
+  const [roomOpen, setRoomOpen] = useState(false);
+  const timeStr = getFreeMatchTime(match.tournamentId);
+  const status = getFreeMatchStatus(match.tournamentId);
+  const roomId = getFreeRoomId(match.tournamentId);
+  const roomPass = getFreeRoomPassword(match.tournamentId);
+
+  const formattedTime = timeStr
+    ? new Date(timeStr).toLocaleString("en-IN", {
+        weekday: "short",
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+    : "Time TBD";
+
+  const statusColor =
+    status === "Live"
+      ? "bg-yellow-500/20 text-yellow-400 border-yellow-500/30"
+      : "bg-secondary/20 text-secondary border-secondary/30";
+
+  return (
+    <Card
+      className="border-border/40 bg-card/60 overflow-hidden"
+      data-ocid={`free_match.card.${index}`}
+    >
+      <CardContent className="p-4 space-y-3">
+        <div className="flex items-start justify-between gap-2">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <h3 className="font-bold font-display text-base leading-snug truncate">
+                {match.name}
+              </h3>
+              <span
+                className="text-[10px] px-2 py-0.5 rounded-full font-bold flex-shrink-0"
+                style={{
+                  background: "rgba(0,255,136,0.15)",
+                  color: "#00FF88",
+                  border: "1px solid rgba(0,255,136,0.3)",
+                }}
+              >
+                🎁 FREE
+              </span>
+            </div>
+            <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1">
+              <Calendar className="h-3 w-3 flex-shrink-0" />
+              {formattedTime}
+            </p>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              {match.mode} • Prize: {match.prizePool}
+            </p>
+          </div>
+          <Badge
+            variant="outline"
+            className={`text-[10px] uppercase tracking-wide shrink-0 ${statusColor}`}
+          >
+            {status}
+          </Badge>
+        </div>
+
+        <div className="text-xs text-muted-foreground/70">
+          Player:{" "}
+          <span className="text-foreground font-medium">{match.nickname}</span>{" "}
+          • UID: <span className="font-mono">{match.uid}</span>
+        </div>
+
+        {roomId && (
+          <Button
+            size="sm"
+            variant="outline"
+            className="w-full border-primary/30 text-primary hover:bg-primary/10"
+            data-ocid={`free_match.room_button.${index}`}
+            onClick={() => setRoomOpen(true)}
+          >
+            <KeyRound className="h-3.5 w-3.5 mr-1.5" />🔑 ID/PASSWORD
+          </Button>
+        )}
+
+        <Dialog open={roomOpen} onOpenChange={setRoomOpen}>
+          <DialogContent
+            className="max-w-sm"
+            data-ocid="free_room_details.dialog"
+            style={{
+              background:
+                "linear-gradient(135deg, oklch(0.10 0.03 285), oklch(0.08 0.025 285))",
+              border: "1px solid oklch(0.70 0.20 160 / 0.35)",
+            }}
+          >
+            <DialogHeader>
+              <DialogTitle className="font-display">{match.name}</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-3 pt-2">
+              <div
+                className="rounded-xl p-4"
+                style={{
+                  background: "oklch(0.12 0.05 195 / 0.25)",
+                  border: "1px solid oklch(0.75 0.18 195 / 0.25)",
+                }}
+              >
+                <p className="text-xs text-muted-foreground mb-1">Room ID</p>
+                <p className="font-mono text-2xl font-bold text-primary">
+                  {roomId}
+                </p>
+              </div>
+              <div
+                className="rounded-xl p-4"
+                style={{
+                  background: "oklch(0.12 0.05 345 / 0.2)",
+                  border: "1px solid oklch(0.62 0.25 345 / 0.25)",
+                }}
+              >
+                <p className="text-xs text-muted-foreground mb-1">Password</p>
+                <p className="font-mono text-2xl font-bold text-secondary">
+                  {roomPass || "—"}
+                </p>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      </CardContent>
+    </Card>
+  );
+}
+
 function startTimeMs(t: Tournament): number {
   return Number(t.startTime) / 1_000_000;
 }
@@ -441,6 +601,7 @@ function MatchCard({ tournament, registeredCount, index }: MatchCardProps) {
 
 export function MyMatchesPage() {
   const { identity, login } = useInternetIdentity();
+  const [freeMatches] = useState<FreeMyMatch[]>(() => loadFreeMyMatches());
   const { data: myRegistrations, isLoading: regLoading } =
     useGetCallerTeamRegistrations();
   const { data: tournaments, isLoading: tournLoading } = useGetTournaments();
@@ -542,7 +703,7 @@ export function MyMatchesPage() {
       )}
 
       {/* Empty state */}
-      {!isLoading && myTournaments.length === 0 && (
+      {!isLoading && myTournaments.length === 0 && freeMatches.length === 0 && (
         <div
           className="py-16 text-center space-y-5"
           data-ocid="my_matches.empty_state"
@@ -590,6 +751,27 @@ export function MyMatchesPage() {
                 index={index}
               />
             ))}
+        </div>
+      )}
+
+      {/* Free Tournament Matches */}
+      {freeMatches.length > 0 && (
+        <div className="space-y-4 mt-4">
+          <div className="flex items-center gap-2">
+            <span
+              className="text-sm font-bold"
+              style={{ color: "#00FF88", fontFamily: "'Orbitron', sans-serif" }}
+            >
+              🎁 FREE TOURNAMENTS
+            </span>
+          </div>
+          {freeMatches.map((match, i) => (
+            <FreeMatchCard
+              key={`${match.tournamentId}-${match.uid}`}
+              match={match}
+              index={i + 1}
+            />
+          ))}
         </div>
       )}
     </div>

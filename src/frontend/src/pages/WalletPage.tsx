@@ -49,11 +49,9 @@ import {
 import { useQueryClient } from "@tanstack/react-query";
 import {
   AlertTriangle,
-  Banknote,
   CheckCircle2,
   Clock,
   Copy,
-  CreditCard,
   ExternalLink,
   Gift,
   Minus,
@@ -71,7 +69,7 @@ import { toast } from "sonner";
 // Google Play Redeem Code localStorage helpers (demo mode)
 // ──────────────────────────────────────────────────────────────
 const REDEEM_REQUESTS_KEY = "gp_redeem_requests";
-const USED_CODES_KEY = "gp_used_codes";
+// const USED_CODES_KEY = "gp_used_codes"; // removed with RedeemCodeSection
 
 export interface RedeemRequest {
   id: string;
@@ -97,19 +95,6 @@ function saveRedeemRequests(requests: RedeemRequest[]) {
   localStorage.setItem(REDEEM_REQUESTS_KEY, JSON.stringify(requests));
 }
 
-function getUsedCodes(): string[] {
-  try {
-    return JSON.parse(localStorage.getItem(USED_CODES_KEY) || "[]");
-  } catch {
-    return [];
-  }
-}
-
-// Validate Google Play code format: XXXX-XXXX-XXXX  (4-4-4 alphanumeric, case-insensitive)
-function isValidCodeFormat(code: string): boolean {
-  return /^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/i.test(code.trim());
-}
-
 export { getRedeemRequests, saveRedeemRequests };
 
 // ──────────────────────────────────────────────────────────────
@@ -118,7 +103,7 @@ export { getRedeemRequests, saveRedeemRequests };
 const WITHDRAWAL_DETAILS_KEY = "withdrawal_details_v2";
 const WITHDRAWAL_DAILY_KEY = "withdrawal_daily_v2";
 
-export type WithdrawMethod = "upi" | "voucher" | "bank";
+export type WithdrawMethod = "upi" | "voucher";
 
 export interface WithdrawalDetail {
   requestId: string; // stringified bigint from backend
@@ -302,7 +287,6 @@ export function WalletPage() {
       <PendingWithdrawalsCard userId={profile?.username ?? ""} />
 
       {/* Google Play Redeem Code */}
-      <RedeemCodeSection profile={profile} />
 
       {/* Referral Card */}
       {profile?.referralCode && (
@@ -410,13 +394,11 @@ function PendingWithdrawalsCard({ userId }: { userId: string }) {
   const methodLabel: Record<WithdrawMethod, string> = {
     upi: "UPI",
     voucher: "Play Voucher",
-    bank: "Bank Transfer",
   };
 
   const methodColor: Record<WithdrawMethod, string> = {
     upi: "bg-blue-500/20 text-blue-300 border-blue-500/30",
     voucher: "bg-green-500/20 text-green-300 border-green-500/30",
-    bank: "bg-yellow-500/20 text-yellow-300 border-yellow-500/30",
   };
 
   if (userDetails.length === 0) return null;
@@ -458,11 +440,7 @@ function PendingWithdrawalsCard({ userId }: { userId: string }) {
                       {d.upiId}
                     </span>
                   )}
-                  {d.method === "bank" && d.accountHolderName && (
-                    <span className="text-xs text-muted-foreground truncate">
-                      {d.accountHolderName}
-                    </span>
-                  )}
+
                   {d.method === "voucher" && d.voucherCode && (
                     <span className="font-mono text-xs text-green-400 tracking-wider">
                       {d.voucherCode}
@@ -505,288 +483,529 @@ function PendingWithdrawalsCard({ userId }: { userId: string }) {
   );
 }
 
-const PRESET_AMOUNTS = [10, 20, 50, 100, 200, 500, 1000];
-
-function RedeemCodeSection({
-  profile,
-}: { profile: { username?: string } | null | undefined }) {
-  const [code, setCode] = useState("");
-  const [selectedAmount, setSelectedAmount] = useState<number | null>(null);
-  const [submitting, setSubmitting] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
-  const [codeError, setCodeError] = useState<string | null>(null);
-  const depositMutation = useDeposit();
-
-  const handleCodeChange = (val: string) => {
-    setCode(val);
-    setCodeError(null);
-    setSubmitted(false);
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setCodeError(null);
-
-    const trimmed = code.trim().toUpperCase();
-
-    if (!selectedAmount) {
-      toast.error("Please select an amount");
-      return;
-    }
-
-    if (!isValidCodeFormat(trimmed)) {
-      setCodeError("Invalid code. Format: XXXX-XXXX-XXXX");
-      return;
-    }
-
-    const usedCodes = getUsedCodes();
-    if (usedCodes.includes(trimmed)) {
-      setCodeError("This code has already been redeemed");
-      return;
-    }
-
-    const existing = getRedeemRequests().find(
-      (r) => r.code === trimmed && r.status === "pending",
-    );
-    if (existing) {
-      setCodeError("This code is already awaiting admin approval");
-      return;
-    }
-
-    setSubmitting(true);
-    try {
-      // Create a backend deposit request so admin can approve it properly
-      // This links wallet balance update + transaction history to backend
-      const amountInPaise = BigInt(Math.round(selectedAmount * 100));
-      const depositReq = await depositMutation.mutateAsync(amountInPaise);
-
-      const requests = getRedeemRequests();
-      const newReq: RedeemRequest = {
-        id: `redeem_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
-        code: trimmed,
-        amount: selectedAmount,
-        userId: profile ? (profile.username ?? "unknown") : "unknown",
-        username: profile?.username ?? "Unknown User",
-        timestamp: Date.now(),
-        status: "pending",
-        depositRequestId: depositReq?.id?.toString(),
-      };
-      requests.push(newReq);
-      saveRedeemRequests(requests);
-      setSubmitted(true);
-      setCode("");
-      setSelectedAmount(null);
-    } catch (err: any) {
-      toast.error(err?.message || "Failed to submit redeem request");
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  return (
-    <Card className="border-green-500/30 bg-gradient-to-br from-green-950/20 to-emerald-900/10">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-green-400">
-          <Gift className="h-5 w-5" />
-          Redeem Google Play Code
-        </CardTitle>
-        <CardDescription>
-          Enter your Google Play gift card code to add balance (Demo Mode)
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        {submitted ? (
-          <div
-            className="flex flex-col items-center gap-3 py-6 text-center"
-            data-ocid="wallet.redeem.success_state"
-          >
-            <div className="rounded-full bg-yellow-500/20 p-4">
-              <Clock className="h-8 w-8 text-yellow-400" />
-            </div>
-            <p className="text-lg font-semibold text-yellow-300">
-              Awaiting Admin Approval
-            </p>
-            <p className="text-sm text-muted-foreground max-w-xs">
-              Your redeem request has been submitted. Admin will review and
-              credit your wallet shortly.
-            </p>
-            <Button
-              variant="outline"
-              size="sm"
-              className="mt-2 border-green-500/30"
-              onClick={() => setSubmitted(false)}
-              data-ocid="wallet.redeem.secondary_button"
-            >
-              Redeem Another Code
-            </Button>
-          </div>
-        ) : (
-          <form onSubmit={handleSubmit} className="space-y-5">
-            {/* Amount Preset Buttons */}
-            <div className="space-y-2">
-              <Label>Select Amount (₹)</Label>
-              <div className="grid grid-cols-4 sm:grid-cols-7 gap-2">
-                {PRESET_AMOUNTS.map((amt) => (
-                  <Button
-                    key={amt}
-                    type="button"
-                    variant={selectedAmount === amt ? "default" : "outline"}
-                    size="sm"
-                    className={
-                      selectedAmount === amt
-                        ? "bg-green-600 hover:bg-green-700 border-green-500 font-bold"
-                        : "border-green-500/30 hover:border-green-400/60 hover:bg-green-950/40"
-                    }
-                    onClick={() => setSelectedAmount(amt)}
-                    data-ocid={`wallet.redeem.amount_button.${amt}`}
-                  >
-                    ₹{amt}
-                  </Button>
-                ))}
-              </div>
-              {selectedAmount && (
-                <p className="text-xs text-green-400">
-                  Selected: ₹{selectedAmount} code
-                </p>
-              )}
-            </div>
-
-            {/* Code Input */}
-            <div className="space-y-2">
-              <Label htmlFor="redeemCode">Google Play Code</Label>
-              <Input
-                id="redeemCode"
-                value={code}
-                onChange={(e) => handleCodeChange(e.target.value)}
-                placeholder="XXXX-XXXX-XXXX"
-                className={`font-mono uppercase tracking-widest ${
-                  codeError
-                    ? "border-destructive focus-visible:ring-destructive"
-                    : "border-green-500/30 focus-visible:ring-green-500/50"
-                }`}
-                maxLength={14}
-                data-ocid="wallet.redeem.input"
-              />
-              {codeError && (
-                <p
-                  className="text-sm text-destructive font-medium"
-                  data-ocid="wallet.redeem.error_state"
-                >
-                  {codeError}
-                </p>
-              )}
-              <p className="text-xs text-muted-foreground">
-                Format: XXXX-XXXX-XXXX (letters and numbers)
-              </p>
-            </div>
-
-            <Button
-              type="submit"
-              className="w-full bg-green-600 hover:bg-green-700"
-              disabled={submitting || !code || !selectedAmount}
-              data-ocid="wallet.redeem.submit_button"
-            >
-              {submitting ? "Submitting..." : "Submit Redeem Request"}
-            </Button>
-          </form>
-        )}
-      </CardContent>
-    </Card>
-  );
-}
-
 function DepositDialog({ onClose }: { onClose: () => void }) {
+  const [activeTab, setActiveTab] = useState<"upi" | "qr" | "erupi">("upi");
+  const [erupiAmount, setErupiAmount] = useState<number | null>(null);
+  const [erupiCustomAmount, setErupiCustomAmount] = useState("");
+  const [erupiQrGenerated, setErupiQrGenerated] = useState(false);
   const [amount, setAmount] = useState("");
-  const [method, setMethod] = useState<string>("upi");
+  const [upiId, setUpiId] = useState("");
+  const [qrGenerated, setQrGenerated] = useState(false);
   const depositMutation = useDeposit();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const qrAmountValue = Number.parseFloat(amount);
+  const upiPaymentString =
+    !Number.isNaN(qrAmountValue) && qrAmountValue > 0
+      ? `upi://pay?pa=khalnayak@okaxis&am=${qrAmountValue}&cu=INR&tn=KhalnayakDeposit`
+      : "";
+
+  const qrImageUrl = upiPaymentString
+    ? `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(upiPaymentString)}&color=00FF88&bgcolor=0A0A0A`
+    : "";
+
+  const handleUpiSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const amountValue = Number.parseFloat(amount);
     if (Number.isNaN(amountValue) || amountValue <= 0) {
       toast.error("Please enter a valid amount");
       return;
     }
-
+    if (!upiId.trim()) {
+      toast.error("Please enter your UPI ID");
+      return;
+    }
     try {
       const amountInPaise = BigInt(Math.round(amountValue * 100));
       await depositMutation.mutateAsync(amountInPaise);
       toast.success(
-        `Deposit request of ${formatCurrency(amountInPaise)} submitted. Awaiting admin approval.`,
+        `Deposit request of ₹${amountValue} submitted. Admin will verify and credit.`,
       );
       setAmount("");
+      setUpiId("");
       onClose();
     } catch (error: any) {
       toast.error(error?.message || "Failed to submit deposit request");
     }
   };
 
+  const handleQrPaymentDone = async () => {
+    const amountValue = Number.parseFloat(amount);
+    if (Number.isNaN(amountValue) || amountValue <= 0) {
+      toast.error("Please enter a valid amount first");
+      return;
+    }
+    try {
+      const amountInPaise = BigInt(Math.round(amountValue * 100));
+      await depositMutation.mutateAsync(amountInPaise);
+      toast.success(
+        `Payment confirmation submitted for ₹${amountValue}. Admin will verify and credit.`,
+      );
+      setAmount("");
+      setQrGenerated(false);
+      onClose();
+    } catch (error: any) {
+      toast.error(error?.message || "Failed to submit payment confirmation");
+    }
+  };
+
   return (
-    <DialogContent>
+    <DialogContent className="max-h-[90vh] overflow-y-auto">
       <DialogHeader>
-        <DialogTitle>Add Money to Wallet</DialogTitle>
+        <DialogTitle
+          className="flex items-center gap-2"
+          style={{ fontFamily: "Orbitron, sans-serif", color: "#00FF88" }}
+        >
+          <Plus className="h-5 w-5" />
+          ADD MONEY
+        </DialogTitle>
         <DialogDescription>
-          Choose your payment method and amount
+          Deposit via UPI ID or scan QR code
         </DialogDescription>
       </DialogHeader>
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="space-y-2">
-          <Label htmlFor="method">Payment Method</Label>
-          <Select value={method} onValueChange={setMethod}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="upi">UPI</SelectItem>
-              <SelectItem value="phonepe">PhonePe</SelectItem>
-              <SelectItem value="googleplay">
-                Google Play Redeem Code
-              </SelectItem>
-            </SelectContent>
-          </Select>
-          <p className="text-xs text-muted-foreground">
-            Note: Actual payment integration is not available in this demo.
-            Submit a request for admin approval.
-          </p>
-        </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="amount">Amount (₹)</Label>
-          <Input
-            id="amount"
-            type="number"
-            step="0.01"
-            min="1"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            placeholder="Enter amount"
-            required
-          />
-        </div>
-
-        <div className="flex gap-2">
-          {[100, 500, 1000, 2000].map((preset) => (
-            <Button
-              key={preset}
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => setAmount(preset.toString())}
-              className="flex-1"
-            >
-              ₹{preset}
-            </Button>
-          ))}
-        </div>
-
-        <Button
-          type="submit"
-          className="w-full"
-          disabled={depositMutation.isPending}
+      {/* Tab switcher */}
+      <div className="flex rounded-xl overflow-hidden border border-[#00FF88]/20 bg-[#16213E]">
+        <button
+          type="button"
+          onClick={() => setActiveTab("upi")}
+          className={`flex-1 py-2.5 text-sm font-semibold flex items-center justify-center gap-2 transition-all ${
+            activeTab === "upi"
+              ? "bg-[#00FF88]/20 text-[#00FF88] border-b-2 border-[#00FF88]"
+              : "text-gray-400 hover:text-white"
+          }`}
+          data-ocid="wallet.deposit.upi.tab"
         >
-          {depositMutation.isPending ? "Submitting..." : "Submit Request"}
-        </Button>
-      </form>
+          <Smartphone className="h-4 w-4" />💳 UPI
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab("qr")}
+          className={`flex-1 py-2.5 text-sm font-semibold flex items-center justify-center gap-2 transition-all ${
+            activeTab === "qr"
+              ? "bg-[#9d4edd]/20 text-[#9d4edd] border-b-2 border-[#9d4edd]"
+              : "text-gray-400 hover:text-white"
+          }`}
+          data-ocid="wallet.deposit.qr.tab"
+        >
+          <Zap className="h-4 w-4" />📷 QR Code
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab("erupi")}
+          className={`flex-1 py-2.5 text-sm font-semibold flex items-center justify-center gap-2 transition-all ${
+            activeTab === "erupi"
+              ? "bg-[#FF6B35]/20 text-[#FF6B35] border-b-2 border-[#FF6B35]"
+              : "text-gray-400 hover:text-white"
+          }`}
+          data-ocid="wallet.deposit.erupi.tab"
+        >
+          🏦 e-RUPI
+        </button>
+      </div>
+
+      {/* UPI Tab */}
+      {activeTab === "upi" && (
+        <form
+          onSubmit={handleUpiSubmit}
+          className="space-y-4"
+          data-ocid="wallet.deposit.upi.panel"
+        >
+          <div className="space-y-2">
+            <Label
+              htmlFor="depositUpiId"
+              style={{ fontFamily: "Rajdhani, sans-serif" }}
+            >
+              UPI ID
+            </Label>
+            <Input
+              id="depositUpiId"
+              value={upiId}
+              onChange={(e) => setUpiId(e.target.value)}
+              placeholder="yourname@oksbi"
+              className="font-mono border-[#00FF88]/30 bg-[#16213E] focus:border-[#00FF88]"
+              data-ocid="wallet.deposit.upi_id.input"
+              required
+            />
+            <p className="text-xs text-muted-foreground">
+              Supported: GPay, PhonePe, Paytm (e.g. name@okaxis, number@paytm)
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <Label
+              htmlFor="depositAmount"
+              style={{ fontFamily: "Rajdhani, sans-serif" }}
+            >
+              Amount (₹)
+            </Label>
+            <Input
+              id="depositAmount"
+              type="number"
+              step="1"
+              min="10"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              placeholder="Enter amount (min ₹10)"
+              className="border-[#00FF88]/30 bg-[#16213E] focus:border-[#00FF88]"
+              data-ocid="wallet.deposit.amount.input"
+              required
+            />
+          </div>
+
+          <div className="grid grid-cols-4 gap-1">
+            {[100, 500, 1000, 2000].map((preset) => (
+              <button
+                key={preset}
+                type="button"
+                onClick={() => setAmount(preset.toString())}
+                className="py-1.5 text-xs font-semibold rounded-lg border border-[#00FF88]/30 text-[#00FF88] bg-[#00FF88]/5 hover:bg-[#00FF88]/15 transition-colors"
+              >
+                ₹{preset}
+              </button>
+            ))}
+          </div>
+
+          <div className="p-3 rounded-lg bg-blue-950/30 border border-blue-500/20 text-xs text-blue-300 space-y-1">
+            <p className="font-semibold">📌 How it works:</p>
+            <p>1. Enter UPI ID &amp; amount → Submit request</p>
+            <p>
+              2. Pay ₹{amount || "X"} to{" "}
+              <span className="font-mono">khalnayak@okaxis</span>
+            </p>
+            <p>3. Admin verifies &amp; credits your wallet</p>
+          </div>
+
+          <Button
+            type="submit"
+            className="w-full font-bold"
+            style={{
+              background: "linear-gradient(135deg, #00FF88, #00cc6a)",
+              color: "#0A0A0A",
+              fontFamily: "Orbitron, sans-serif",
+            }}
+            disabled={depositMutation.isPending}
+            data-ocid="wallet.deposit.upi.submit_button"
+          >
+            {depositMutation.isPending
+              ? "Submitting..."
+              : "⚡ SUBMIT UPI REQUEST"}
+          </Button>
+        </form>
+      )}
+
+      {/* QR Code Tab */}
+      {activeTab === "qr" && (
+        <div className="space-y-4" data-ocid="wallet.deposit.qr.panel">
+          <div className="space-y-2">
+            <Label
+              htmlFor="qrAmount"
+              style={{ fontFamily: "Rajdhani, sans-serif" }}
+            >
+              Amount (₹)
+            </Label>
+            <Input
+              id="qrAmount"
+              type="number"
+              step="1"
+              min="10"
+              value={amount}
+              onChange={(e) => {
+                setAmount(e.target.value);
+                setQrGenerated(false);
+              }}
+              placeholder="Enter amount (min ₹10)"
+              className="border-[#9d4edd]/30 bg-[#16213E] focus:border-[#9d4edd]"
+              data-ocid="wallet.deposit.qr_amount.input"
+            />
+          </div>
+
+          <div className="grid grid-cols-4 gap-1">
+            {[100, 500, 1000, 2000].map((preset) => (
+              <button
+                key={preset}
+                type="button"
+                onClick={() => {
+                  setAmount(preset.toString());
+                  setQrGenerated(false);
+                }}
+                className="py-1.5 text-xs font-semibold rounded-lg border border-[#9d4edd]/30 text-[#9d4edd] bg-[#9d4edd]/5 hover:bg-[#9d4edd]/15 transition-colors"
+              >
+                ₹{preset}
+              </button>
+            ))}
+          </div>
+
+          {!qrGenerated ? (
+            <button
+              type="button"
+              onClick={() => {
+                const v = Number.parseFloat(amount);
+                if (Number.isNaN(v) || v < 10) {
+                  toast.error("Please enter a valid amount (min ₹10)");
+                  return;
+                }
+                setQrGenerated(true);
+              }}
+              className="w-full py-3 font-bold rounded-xl border-2 border-[#9d4edd] text-[#9d4edd] bg-[#9d4edd]/10 hover:bg-[#9d4edd]/20 transition-all"
+              style={{ fontFamily: "Orbitron, sans-serif", fontSize: "13px" }}
+              data-ocid="wallet.deposit.generate_qr.button"
+            >
+              📷 GENERATE QR CODE
+            </button>
+          ) : (
+            <div className="space-y-4">
+              {/* QR Code Display */}
+              <div
+                className="flex flex-col items-center gap-3 p-4 rounded-xl border border-[#9d4edd]/40 bg-[#16213E]"
+                data-ocid="wallet.deposit.qr.card"
+              >
+                <p className="text-xs text-[#9d4edd] font-semibold uppercase tracking-wider">
+                  Scan to Pay ₹{amount}
+                </p>
+                <div
+                  className="rounded-xl overflow-hidden border-2 border-[#00FF88]/40 p-2 bg-white"
+                  style={{ boxShadow: "0 0 20px rgba(0,255,136,0.2)" }}
+                >
+                  <img
+                    src={qrImageUrl}
+                    alt={`QR Code for ₹${amount} UPI payment`}
+                    width={200}
+                    height={200}
+                    className="block"
+                  />
+                </div>
+                <div className="text-center space-y-1">
+                  <p className="text-sm font-semibold text-white">
+                    Pay to:{" "}
+                    <span className="text-[#00FF88] font-mono">
+                      khalnayak@okaxis
+                    </span>
+                  </p>
+                  <p className="text-xs text-gray-400">
+                    Amount: ₹{amount} · UPI
+                  </p>
+                </div>
+              </div>
+
+              <div className="p-3 rounded-lg bg-purple-950/30 border border-purple-500/20 text-xs text-purple-300 space-y-1">
+                <p className="font-semibold">📌 Steps to complete payment:</p>
+                <p>1. Open GPay / PhonePe / Paytm</p>
+                <p>2. Scan the QR code above</p>
+                <p>3. Pay ₹{amount} and complete the payment</p>
+                <p>4. Come back &amp; click "✅ Payment Done" below</p>
+              </div>
+
+              <Button
+                onClick={handleQrPaymentDone}
+                className="w-full font-bold"
+                style={{
+                  background: "linear-gradient(135deg, #00FF88, #00cc6a)",
+                  color: "#0A0A0A",
+                  fontFamily: "Orbitron, sans-serif",
+                }}
+                disabled={depositMutation.isPending}
+                data-ocid="wallet.deposit.payment_done.button"
+              >
+                {depositMutation.isPending
+                  ? "Confirming..."
+                  : "✅ PAYMENT DONE"}
+              </Button>
+
+              <button
+                type="button"
+                onClick={() => setQrGenerated(false)}
+                className="w-full text-xs text-gray-400 hover:text-white py-1 transition-colors"
+                data-ocid="wallet.deposit.qr_back.button"
+              >
+                ← Change Amount
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* e-RUPI Voucher Tab */}
+      {activeTab === "erupi" && (
+        <div className="space-y-4" data-ocid="wallet.deposit.erupi.panel">
+          {!erupiQrGenerated ? (
+            <>
+              <div className="p-3 rounded-xl bg-[#FF6B35]/10 border border-[#FF6B35]/30">
+                <p
+                  className="text-sm font-bold text-[#FF6B35]"
+                  style={{ fontFamily: "Orbitron, sans-serif" }}
+                >
+                  🏦 e-RUPI Voucher (No Bank Needed)
+                </p>
+                <p className="text-xs text-gray-400 mt-1">
+                  NPCI Government Digital Voucher • One-time use • 24hr validity
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label
+                  style={{ fontFamily: "Rajdhani, sans-serif" }}
+                  className="text-sm font-semibold"
+                >
+                  Select Amount (₹10 – ₹500)
+                </Label>
+                <div className="grid grid-cols-3 gap-2">
+                  {[10, 25, 50, 100, 200, 500].map((preset, idx) => (
+                    <button
+                      key={preset}
+                      type="button"
+                      onClick={() => {
+                        setErupiAmount(preset);
+                        setErupiCustomAmount("");
+                      }}
+                      className={`py-2 text-sm font-bold rounded-lg border transition-all ${
+                        erupiAmount === preset
+                          ? "border-[#FF6B35] bg-[#FF6B35]/20 text-[#FF6B35]"
+                          : "border-[#FF6B35]/20 text-gray-300 bg-[#16213E] hover:border-[#FF6B35]/50"
+                      }`}
+                      data-ocid={`wallet.deposit.erupi_amount.button.${idx + 1}`}
+                    >
+                      ₹{preset}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <Label
+                  style={{ fontFamily: "Rajdhani, sans-serif" }}
+                  className="text-xs text-gray-400"
+                >
+                  Or enter custom amount
+                </Label>
+                <Input
+                  type="number"
+                  min="10"
+                  max="500"
+                  value={erupiCustomAmount}
+                  onChange={(e) => {
+                    setErupiCustomAmount(e.target.value);
+                    setErupiAmount(null);
+                  }}
+                  placeholder="₹10 – ₹500"
+                  className="border-[#FF6B35]/30 bg-[#16213E] focus:border-[#FF6B35]"
+                  data-ocid="wallet.deposit.erupi_amount.input"
+                />
+              </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  const amt =
+                    erupiAmount ?? Number.parseFloat(erupiCustomAmount);
+                  if (Number.isNaN(amt) || amt < 10 || amt > 500) {
+                    toast.error(
+                      "Please select or enter a valid amount (₹10–₹500)",
+                    );
+                    return;
+                  }
+                  setErupiAmount(amt);
+                  setErupiQrGenerated(true);
+                }}
+                className="w-full py-3 rounded-xl font-bold text-sm transition-all"
+                style={{
+                  background: "linear-gradient(135deg, #FF6B35, #E84393)",
+                  color: "#fff",
+                  fontFamily: "Orbitron, sans-serif",
+                }}
+                data-ocid="wallet.deposit.generate_erupi.button"
+              >
+                🏦 GENERATE e-RUPI QR
+              </button>
+            </>
+          ) : (
+            <div className="space-y-4" data-ocid="wallet.deposit.erupi.card">
+              <div className="p-3 rounded-xl bg-[#FF6B35]/10 border border-[#FF6B35]/30 text-center space-y-1">
+                <p
+                  className="text-sm font-bold text-[#FF6B35]"
+                  style={{ fontFamily: "Orbitron, sans-serif" }}
+                >
+                  e-RUPI Voucher QR
+                </p>
+                <div className="flex items-center justify-center gap-3 text-xs text-gray-400">
+                  <span className="bg-[#FF6B35]/20 text-[#FF6B35] px-2 py-0.5 rounded-full font-semibold">
+                    ⏰ Valid for 24 hours
+                  </span>
+                  <span className="bg-purple-500/20 text-purple-300 px-2 py-0.5 rounded-full font-semibold">
+                    🔒 One-time use
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex flex-col items-center gap-3">
+                <div className="p-3 rounded-2xl bg-white">
+                  <img
+                    src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(`upi://pay?pa=khalnayak@upi&pn=KhalnayakEsports&am=${erupiAmount}&cu=INR&tn=eRUPI-VOUCHER-${Math.random().toString(36).slice(2, 8).toUpperCase()}`)}&color=FF6B35&bgcolor=FFFFFF`}
+                    alt={`e-RUPI QR for ₹${erupiAmount}`}
+                    className="w-[200px] h-[200px]"
+                  />
+                </div>
+                <p className="text-xs text-gray-400 text-center">
+                  Scan with any UPI app (GPay, PhonePe, Paytm)
+                </p>
+                <p
+                  className="text-lg font-bold text-[#FF6B35]"
+                  style={{ fontFamily: "Orbitron, sans-serif" }}
+                >
+                  ₹{erupiAmount}
+                </p>
+              </div>
+
+              <div className="p-3 rounded-lg bg-blue-950/30 border border-blue-500/20 text-xs text-blue-300 space-y-1">
+                <p className="font-semibold">📌 Steps:</p>
+                <p>1. Open any UPI app</p>
+                <p>2. Scan QR code above</p>
+                <p>3. Complete payment of ₹{erupiAmount}</p>
+                <p>4. Click "Payment Done" below</p>
+              </div>
+
+              <Button
+                type="button"
+                className="w-full font-bold"
+                style={{
+                  background: "linear-gradient(135deg, #00FF88, #00cc6a)",
+                  color: "#0A0A0A",
+                  fontFamily: "Orbitron, sans-serif",
+                }}
+                disabled={depositMutation.isPending}
+                onClick={async () => {
+                  try {
+                    const amountInPaise = BigInt(
+                      Math.round((erupiAmount ?? 0) * 100),
+                    );
+                    await depositMutation.mutateAsync(amountInPaise);
+                    toast.success(`✅ ₹${erupiAmount} added to your wallet!`);
+                    setErupiQrGenerated(false);
+                    setErupiAmount(null);
+                    setErupiCustomAmount("");
+                    onClose();
+                  } catch (err: any) {
+                    toast.error(err?.message || "Failed to confirm payment");
+                  }
+                }}
+                data-ocid="wallet.deposit.erupi_payment_done.button"
+              >
+                {depositMutation.isPending
+                  ? "Processing..."
+                  : "✅ PAYMENT DONE"}
+              </Button>
+
+              <button
+                type="button"
+                onClick={() => setErupiQrGenerated(false)}
+                className="w-full text-xs text-gray-400 hover:text-white py-1 transition-colors"
+                data-ocid="wallet.deposit.erupi_back.button"
+              >
+                ← Change Amount
+              </button>
+            </div>
+          )}
+        </div>
+      )}
     </DialogContent>
   );
 }
@@ -802,10 +1021,6 @@ function WithdrawDialog({
   const [amount, setAmount] = useState("");
   // UPI fields
   const [upiId, setUpiId] = useState("");
-  // Bank fields
-  const [accountNumber, setAccountNumber] = useState("");
-  const [ifscCode, setIfscCode] = useState("");
-  const [accountHolderName, setAccountHolderName] = useState("");
   // Voucher result state
   const [generatedVoucher, setGeneratedVoucher] = useState<{
     code: string;
@@ -823,8 +1038,6 @@ function WithdrawDialog({
   const uid = userId ?? "guest";
 
   const getMinMax = () => {
-    if (method === "bank") return { min: 10, max: 500 };
-    if (method === "voucher") return { min: 10, max: 500 };
     return { min: 10, max: 500 };
   };
 
@@ -888,21 +1101,6 @@ function WithdrawDialog({
       }
     }
 
-    if (method === "bank") {
-      if (
-        !accountNumber.trim() ||
-        !ifscCode.trim() ||
-        !accountHolderName.trim()
-      ) {
-        toast.error("Please fill all bank details");
-        return;
-      }
-      if (!/^[A-Z]{4}0[A-Z0-9]{6}$/i.test(ifscCode.trim())) {
-        toast.error("Invalid IFSC code format (e.g., HDFC0001234)");
-        return;
-      }
-    }
-
     try {
       const amountInPaise = BigInt(Math.round(amountValue * 100));
       const result = await withdrawMutation.mutateAsync(amountInPaise);
@@ -944,13 +1142,7 @@ function WithdrawDialog({
         timestamp: Date.now(),
         status: method === "voucher" ? "approved" : "pending",
         ...(method === "upi" ? { upiId: upiId.trim() } : {}),
-        ...(method === "bank"
-          ? {
-              accountNumber: accountNumber.trim(),
-              ifscCode: ifscCode.trim().toUpperCase(),
-              accountHolderName: accountHolderName.trim(),
-            }
-          : {}),
+
         ...(method === "voucher"
           ? {
               voucherCode,
@@ -976,9 +1168,8 @@ function WithdrawDialog({
   };
 
   const methodLabel: Record<WithdrawMethod, string> = {
-    upi: "UPI (GPay / PhonePe / Paytm)",
-    voucher: "Google Play Store Voucher",
-    bank: "Bank Transfer (NEFT/IMPS)",
+    upi: "UPI Transfer",
+    voucher: "Google Play Voucher",
   };
 
   // ── Voucher Success Screen ──────────────────────────────────
@@ -1149,22 +1340,6 @@ function WithdrawDialog({
                 <span className="font-mono">{upiId}</span>
               </p>
             )}
-            {method === "bank" && (
-              <>
-                <p>
-                  <span className="text-muted-foreground">Account:</span>{" "}
-                  {accountHolderName}
-                </p>
-                <p>
-                  <span className="text-muted-foreground">A/C No:</span>{" "}
-                  {accountNumber.slice(0, 4)}****{accountNumber.slice(-4)}
-                </p>
-                <p>
-                  <span className="text-muted-foreground">IFSC:</span>{" "}
-                  {ifscCode.toUpperCase()}
-                </p>
-              </>
-            )}
           </div>
           <Button
             variant="outline"
@@ -1288,26 +1463,6 @@ function WithdrawDialog({
                 </p>
               </div>
             </label>
-
-            {/* Bank Transfer */}
-            <label
-              htmlFor="method-bank"
-              className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
-                method === "bank"
-                  ? "border-yellow-500/60 bg-yellow-500/10"
-                  : "border-border hover:border-primary/40 hover:bg-muted/40"
-              }`}
-              data-ocid="wallet.withdraw.bank.radio"
-            >
-              <RadioGroupItem value="bank" id="method-bank" />
-              <Banknote className="h-4 w-4 text-yellow-400 flex-shrink-0" />
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium">Bank Transfer (NEFT/IMPS)</p>
-                <p className="text-xs text-muted-foreground">
-                  ₹10 – ₹500 · Admin approval required
-                </p>
-              </div>
-            </label>
           </RadioGroup>
         </div>
 
@@ -1393,51 +1548,6 @@ function WithdrawDialog({
                 </p>
               </div>
             )}
-          </div>
-        )}
-
-        {/* Bank fields */}
-        {method === "bank" && (
-          <div className="space-y-3">
-            <div className="space-y-2">
-              <Label htmlFor="accountHolderName">Account Holder Name</Label>
-              <Input
-                id="accountHolderName"
-                value={accountHolderName}
-                onChange={(e) => setAccountHolderName(e.target.value)}
-                placeholder="As per bank records"
-                required
-                data-ocid="wallet.withdraw.account_name.input"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="accountNumber">Account Number</Label>
-              <Input
-                id="accountNumber"
-                value={accountNumber}
-                onChange={(e) => setAccountNumber(e.target.value)}
-                placeholder="Enter account number"
-                required
-                data-ocid="wallet.withdraw.account_number.input"
-                className="font-mono"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="ifscCode">IFSC Code</Label>
-              <Input
-                id="ifscCode"
-                value={ifscCode}
-                onChange={(e) => setIfscCode(e.target.value.toUpperCase())}
-                placeholder="e.g., HDFC0001234"
-                required
-                maxLength={11}
-                data-ocid="wallet.withdraw.ifsc.input"
-                className="font-mono uppercase"
-              />
-              <p className="text-xs text-muted-foreground">
-                11-character code (e.g., HDFC0001234)
-              </p>
-            </div>
           </div>
         )}
 

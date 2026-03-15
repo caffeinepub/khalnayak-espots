@@ -96,7 +96,7 @@ export function SplashScreen() {
           />
           {/* Logo image */}
           <img
-            src="/assets/generated/khalnayak-espots-logo.dim_512x512.png"
+            src="/assets/generated/kl-esports-life-logo-transparent.dim_400x300.png"
             alt="Khalnayak Espots"
             style={{
               width: 160,
