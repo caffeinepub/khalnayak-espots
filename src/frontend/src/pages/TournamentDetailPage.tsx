@@ -25,7 +25,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useInternetIdentity } from "@/hooks/useInternetIdentity";
+import { useOtpAuth } from "@/hooks/useOtpAuth";
 import {
   useGetCallerWallet,
   useGetLeaderboard,
@@ -61,7 +61,7 @@ export function TournamentDetailPage() {
   const tournamentId = BigInt(id);
   const { data: tournament, isLoading } = useGetTournamentById(tournamentId);
   const { data: wallet } = useGetCallerWallet();
-  const { identity, login } = useInternetIdentity();
+  const { identity, login } = useOtpAuth();
   const { data: teams } = useGetTeams();
   const { data: registrations } = useGetTeamRegistrations();
   const { data: leaderboard } = useGetLeaderboard(
@@ -700,6 +700,10 @@ function RegistrationDialog({
   const [region, setRegion] = useState("ind");
   const [uidFetchStatus, setUidFetchStatus] = useState<UidFetchStatus>("idle");
   const [fetchedNickname, setFetchedNickname] = useState("");
+  const [fetchedLevel, setFetchedLevel] = useState<number | undefined>(
+    undefined,
+  );
+  const [fetchedRegionName, setFetchedRegionName] = useState("");
   const [isNicknameAutoFilled, setIsNicknameAutoFilled] = useState(false);
   const [manualEntryMode, setManualEntryMode] = useState(false);
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -750,16 +754,22 @@ function RegistrationDialog({
 
       if (result.success && result.player?.nickname) {
         setFetchedNickname(result.player.nickname);
+        setFetchedLevel(result.player.level);
+        setFetchedRegionName(result.player.region || "");
         setUidFetchStatus("success");
         setNickname(result.player.nickname);
         setIsNicknameAutoFilled(true);
       } else if (result.error === "network_error") {
         setUidFetchStatus("network_error");
         setFetchedNickname("");
+        setFetchedLevel(undefined);
+        setFetchedRegionName("");
       } else {
         // invalid_uid or unknown
         setUidFetchStatus("error");
         setFetchedNickname("");
+        setFetchedLevel(undefined);
+        setFetchedRegionName("");
       }
     }, 500);
 
@@ -1144,7 +1154,13 @@ function RegistrationDialog({
                         data-ocid="tournament.success_state"
                         style={{ color: "#00FF88" }}
                       >
-                        <span>✅ Player: {fetchedNickname}</span>
+                        <span>
+                          ✅ Player: {fetchedNickname}
+                          {fetchedLevel ? ` | Level ${fetchedLevel}` : ""}
+                          {fetchedRegionName
+                            ? ` | ${fetchedRegionName.toUpperCase()}`
+                            : ""}
+                        </span>
                       </div>
                     )}
 

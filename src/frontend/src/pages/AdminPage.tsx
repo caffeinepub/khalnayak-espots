@@ -435,12 +435,44 @@ export function AdminPage() {
   }
 
   return (
-    <div className="container py-12 space-y-8">
+    <div
+      className="container py-8 space-y-8"
+      style={{ background: "#0A0A0A", minHeight: "100vh" }}
+    >
       <div className="flex items-center gap-3">
-        <Shield className="h-8 w-8 text-primary" />
+        <div
+          style={{
+            background: "rgba(157,78,221,0.15)",
+            border: "1px solid rgba(157,78,221,0.4)",
+            borderRadius: 10,
+            padding: 10,
+          }}
+        >
+          <Shield style={{ width: 28, height: 28, color: "#9d4edd" }} />
+        </div>
         <div>
-          <h1 className="text-4xl font-bold font-display">Admin Panel</h1>
-          <p className="text-muted-foreground">
+          <h1
+            style={{
+              fontFamily: "'Orbitron', sans-serif",
+              fontWeight: 900,
+              fontSize: "clamp(20px, 5vw, 32px)",
+              background: "linear-gradient(90deg, #00FF88, #9d4edd)",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              backgroundClip: "text",
+              textTransform: "uppercase",
+              letterSpacing: 2,
+            }}
+          >
+            🛡️ Admin Panel
+          </h1>
+          <p
+            style={{
+              fontFamily: "'Rajdhani', sans-serif",
+              color: "rgba(255,255,255,0.5)",
+              fontSize: 14,
+            }}
+          >
             Manage tournaments, users, and platform operations
           </p>
         </div>
@@ -1154,70 +1186,125 @@ function OverviewTab() {
   const pendingWithdrawals =
     withdrawals?.filter((w) => w.status === "pending").length || 0;
 
+  const statCards = [
+    {
+      icon: "👥",
+      label: "TOTAL PLAYERS",
+      value: stats?.totalPlayers.toString() || "0",
+      color: "#00FF88",
+    },
+    {
+      icon: "🏆",
+      label: "TOURNAMENTS",
+      value: stats?.totalTournaments.toString() || "0",
+      color: "#9d4edd",
+    },
+    {
+      icon: "💰",
+      label: "PRIZE DISTRIBUTED",
+      value: stats ? formatCurrency(stats.totalPrizeDistributed) : "₹0",
+      color: "#FFD700",
+    },
+    {
+      icon: "⚡",
+      label: "PENDING ACTIONS",
+      value: (
+        pendingRegistrations +
+        pendingDeposits +
+        pendingWithdrawals
+      ).toString(),
+      color: "#FF4444",
+    },
+  ];
+
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card className="border-primary/30">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm flex items-center gap-2">
-              <Users className="h-4 w-4" />
-              Total Players
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-bold font-display">
-              {stats?.totalPlayers.toString() || "0"}
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-secondary/30">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm flex items-center gap-2">
-              <Trophy className="h-4 w-4" />
-              Tournaments
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-bold font-display">
-              {stats?.totalTournaments.toString() || "0"}
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-accent/30">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm flex items-center gap-2">
-              <DollarSign className="h-4 w-4" />
-              Prize Distributed
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-bold font-display text-primary">
-              {stats ? formatCurrency(stats.totalPrizeDistributed) : "₹0"}
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-destructive/30">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm">Pending Actions</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2 text-sm">
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Registrations</span>
-              <Badge variant="secondary">{pendingRegistrations}</Badge>
+      {/* Stat Cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {statCards.map((card) => (
+          <div
+            key={card.label}
+            className="gaming-card"
+            style={{ padding: "16px", textAlign: "center" }}
+          >
+            <div style={{ fontSize: 28, marginBottom: 8 }}>{card.icon}</div>
+            <div
+              style={{
+                fontFamily: "'Orbitron', sans-serif",
+                fontWeight: 900,
+                fontSize: "clamp(18px, 4vw, 28px)",
+                color: card.color,
+                textShadow: `0 0 12px ${card.color}88`,
+                lineHeight: 1.1,
+              }}
+            >
+              {card.value}
             </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Deposits</span>
-              <Badge variant="secondary">{pendingDeposits}</Badge>
+            <div
+              style={{
+                fontFamily: "'Rajdhani', sans-serif",
+                fontSize: 11,
+                color: "rgba(255,255,255,0.5)",
+                textTransform: "uppercase",
+                letterSpacing: "0.08em",
+                marginTop: 4,
+              }}
+            >
+              {card.label}
             </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Withdrawals</span>
-              <Badge variant="secondary">{pendingWithdrawals}</Badge>
+          </div>
+        ))}
+      </div>
+
+      {/* Pending breakdown */}
+      <div className="gaming-card" style={{ padding: 16 }}>
+        <h3
+          style={{
+            fontFamily: "'Orbitron', sans-serif",
+            color: "#00FF88",
+            fontSize: 14,
+            marginBottom: 12,
+            textTransform: "uppercase",
+            letterSpacing: 1,
+          }}
+        >
+          ⚡ Pending Actions Breakdown
+        </h3>
+        <div className="space-y-2">
+          {[
+            { label: "Registrations", count: pendingRegistrations },
+            { label: "Deposits", count: pendingDeposits },
+            { label: "Withdrawals", count: pendingWithdrawals },
+          ].map((item) => (
+            <div
+              key={item.label}
+              className="flex justify-between items-center"
+              style={{
+                padding: "8px 0",
+                borderBottom: "1px solid rgba(0,255,136,0.1)",
+              }}
+            >
+              <span
+                style={{
+                  fontFamily: "'Rajdhani', sans-serif",
+                  color: "rgba(255,255,255,0.7)",
+                }}
+              >
+                {item.label}
+              </span>
+              <span
+                style={{
+                  fontFamily: "'Orbitron', sans-serif",
+                  fontWeight: 700,
+                  color: item.count > 0 ? "#FF4444" : "#00FF88",
+                  fontSize: 14,
+                }}
+              >
+                {item.count}
+              </span>
             </div>
-          </CardContent>
-        </Card>
+          ))}
+        </div>
       </div>
     </div>
   );

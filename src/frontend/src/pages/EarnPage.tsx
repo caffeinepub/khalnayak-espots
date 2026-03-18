@@ -1,7 +1,7 @@
 import { AdModal } from "@/components/AdModal";
 import { Button } from "@/components/ui/button";
 import { useAdMob } from "@/hooks/useAdMob";
-import { useInternetIdentity } from "@/hooks/useInternetIdentity";
+import { useOtpAuth } from "@/hooks/useOtpAuth";
 import { useTokens } from "@/hooks/useTokens";
 import { Loader2, LogIn, Play } from "lucide-react";
 import { useCallback, useState } from "react";
@@ -30,7 +30,7 @@ const TOP_EARNERS = [
 ];
 
 export function EarnPage() {
-  const { identity, login } = useInternetIdentity();
+  const { identity, login } = useOtpAuth();
   const tokens = useTokens();
 
   if (!identity) {

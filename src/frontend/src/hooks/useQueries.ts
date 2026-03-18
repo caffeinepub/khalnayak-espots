@@ -22,7 +22,7 @@ import type {
 } from "../backend";
 import { decodeTournament, encodeTournamentName } from "../utils/format";
 import { useActor } from "./useActor";
-import { useInternetIdentity } from "./useInternetIdentity";
+import { useOtpAuth } from "./useOtpAuth";
 
 // Platform Stats
 export function useGetPlatformStats() {
@@ -827,7 +827,7 @@ export function useAdjustUserBalance() {
 // Auto-setup profile + wallet for new users on first login
 export function useAutoSetupProfile() {
   const { actor, isFetching } = useActor();
-  const { identity } = useInternetIdentity();
+  const { identity } = useOtpAuth();
   const queryClient = useQueryClient();
   // Prevent duplicate calls across re-renders
   const hasAttempted = useRef(false);

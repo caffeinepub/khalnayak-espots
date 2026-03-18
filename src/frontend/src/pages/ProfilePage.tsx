@@ -1,46 +1,23 @@
 import type { Variant_admin_player } from "@/backend";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useIIProfile } from "@/hooks/useIIProfile";
 import { useInternetIdentity } from "@/hooks/useInternetIdentity";
-import {
-  type LocalSession,
-  getAllLocalUsers,
-  useCurrentUser,
-} from "@/hooks/useLocalAuth";
 import {
   useGetCallerStats,
   useGetCallerTeamRegistrations,
-  useGetCallerUserProfile,
-  useGetCallerWallet,
   useGetTeams,
   useGetTournaments,
-  useSaveUserProfile,
 } from "@/hooks/useQueries";
-import {
-  type ReferralStats,
-  generateReferralCode,
-  getUserReferralStats,
-} from "@/hooks/useReferral";
+import { type ReferralStats, getUserReferralStats } from "@/hooks/useReferral";
 import { useTokens } from "@/hooks/useTokens";
-import {
-  type PlayVoucher,
-  getMyVouchers,
-  saveMyVouchers,
-} from "@/pages/WalletPage";
+import { type PlayVoucher, getMyVouchers } from "@/pages/WalletPage";
 import { formatCurrency, getTournamentStatusLabel } from "@/utils/format";
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import {
   CheckCircle2,
   Coins,
@@ -48,51 +25,30 @@ import {
   DollarSign,
   ExternalLink,
   Gift,
-  Loader2,
-  LogIn,
-  Mail,
+  LogOut,
   MessageCircle,
-  Phone,
   Send,
   ShoppingBag,
   Ticket,
   Trophy,
   User,
-  UserPlus,
   Users,
   Wallet,
   XCircle,
 } from "lucide-react";
 import { useState } from "react";
+import { SiFacebook, SiInstagram, SiWhatsapp } from "react-icons/si";
 import { toast } from "sonner";
 
-// Social share icons via react-icons
-import { SiFacebook, SiInstagram, SiWhatsapp } from "react-icons/si";
-
 export function ProfilePage() {
-  const { identity } = useInternetIdentity();
-  const localUser = useCurrentUser();
-  const { data: profile, isLoading: profileLoading } =
-    useGetCallerUserProfile();
+  const { identity, clear } = useInternetIdentity();
+  const { profile } = useIIProfile();
+  const navigate = useNavigate();
   const { data: stats, isLoading: statsLoading } = useGetCallerStats();
   const { data: registrations } = useGetCallerTeamRegistrations();
   const { data: tournaments } = useGetTournaments();
   const { data: teams } = useGetTeams();
-  const { data: wallet } = useGetCallerWallet();
   const tokens = useTokens();
-
-  // Inline email/phone edit states
-  const [showEmailEdit, setShowEmailEdit] = useState(false);
-  const [showPhoneEdit, setShowPhoneEdit] = useState(false);
-  const [editEmail, setEditEmail] = useState("");
-  const [editPhone, setEditPhone] = useState("");
-  const [savedEmail, setSavedEmail] = useState<string | null>(null);
-  const [savedPhone, setSavedPhone] = useState<string | null>(null);
-
-  // Get the full local user to access referralCode
-  const localUserFull = localUser
-    ? getAllLocalUsers().find((u) => u.id === localUser.userId)
-    : undefined;
 
   const myTournaments =
     registrations?.map((reg) => {
@@ -101,1462 +57,606 @@ export function ProfilePage() {
       return { registration: reg, tournament, team };
     }) || [];
 
-  // Not logged in (neither local auth nor II)
-  if (!localUser && !identity) {
+  const handleLogout = () => {
+    clear();
+    void navigate({ to: "/login" });
+    toast.success("Logged out successfully");
+  };
+
+  const isLoggedIn = !!identity && !identity.getPrincipal().isAnonymous();
+
+  // Not logged in
+  if (!isLoggedIn) {
     return (
-      <div className="container py-20 flex flex-col items-center justify-center gap-6 text-center">
-        <div className="rounded-full bg-primary/10 p-6">
-          <LogIn className="h-12 w-12 text-primary" />
-        </div>
-        <div>
-          <h2 className="text-2xl font-bold font-display mb-2">
-            Login Required
-          </h2>
-          <p className="text-muted-foreground max-w-sm mx-auto">
-            Please login to view your profile, wallet balance, and tournament
-            history.
-          </p>
-        </div>
-        <div className="flex gap-3">
-          <Button
-            asChild
-            size="lg"
-            className="bg-primary hover:bg-primary/90"
-            data-ocid="profile.primary_button"
-          >
-            <Link to="/login">Login</Link>
-          </Button>
-          <Button
-            asChild
-            size="lg"
-            variant="outline"
-            className="border-secondary/50 hover:border-secondary"
-            data-ocid="profile.secondary_button"
-          >
-            <Link to="/register">Register</Link>
-          </Button>
-        </div>
+      <div className="container mx-auto py-16 px-4">
+        <Card className="max-w-md mx-auto gaming-card">
+          <CardHeader className="text-center">
+            <User
+              className="h-16 w-16 mx-auto mb-4"
+              style={{ color: "rgba(255,255,255,0.2)" }}
+            />
+            <CardTitle style={{ fontFamily: "'Orbitron', sans-serif" }}>
+              Login Required
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="text-center">
+            <p className="text-muted-foreground mb-6">
+              Please login to view your profile.
+            </p>
+            <Button asChild className="neon-btn w-full">
+              <Link to="/login">Login with Internet Identity</Link>
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     );
   }
 
-  // Loading state (only if II identity is established)
-  if (identity && profileLoading) {
+  if (!profile) {
     return (
-      <div
-        className="container py-12 space-y-8"
-        data-ocid="profile.loading_state"
-      >
-        <div>
-          <Skeleton className="h-10 w-48 mb-2" />
-          <Skeleton className="h-5 w-64" />
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Skeleton className="h-48 rounded-xl" />
-          <Skeleton className="h-48 rounded-xl" />
-          <Skeleton className="h-48 rounded-xl" />
-        </div>
-        <Skeleton className="h-64 rounded-xl" />
+      <div className="container mx-auto py-16 px-4">
+        <Card className="max-w-md mx-auto gaming-card">
+          <CardContent className="text-center py-10">
+            <p className="text-muted-foreground mb-4">
+              Setting up your profile...
+            </p>
+            <Button asChild className="neon-btn">
+              <Link to="/setup-profile">Complete Setup</Link>
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     );
   }
 
-  // Profile does not exist yet — show setup form (only if II identity is connected)
-  if (identity && !profile) {
-    return <ProfileSetupCard />;
-  }
+  // Truncate principal
+  const principalStr = profile.principal;
+  const shortPrincipal =
+    principalStr.length > 14
+      ? `${principalStr.slice(0, 8)}...${principalStr.slice(-4)}`
+      : principalStr;
 
-  // If user is logged in locally but not via II, show a minimal local profile view
-  if (localUser && !identity) {
-    return <LocalProfileView localUser={localUser} />;
-  }
+  // Referral stats from localStorage
+  const referralStats: ReferralStats = getUserReferralStats(
+    profile.referral_code,
+  );
+
+  // Vouchers
+  const myVouchers: PlayVoucher[] = getMyVouchers();
+
+  const copyToClipboard = (text: string, label = "Copied!") => {
+    navigator.clipboard
+      .writeText(text)
+      .then(() => toast.success(label))
+      .catch(() => toast.error("Copy failed"));
+  };
 
   return (
-    <div className="container py-12 space-y-8">
-      <div>
-        <h1 className="text-4xl font-bold font-display mb-2">My Profile</h1>
-        <p className="text-muted-foreground">
-          View your stats and tournament history
-        </p>
-      </div>
+    <div className="container mx-auto py-6 px-4 max-w-2xl">
+      {/* Profile Card */}
+      <Card
+        className="gaming-card mb-6"
+        style={{
+          background:
+            "linear-gradient(135deg, rgba(22,33,62,0.95), rgba(10,10,10,0.95))",
+          border: "1.5px solid rgba(0,255,136,0.2)",
+        }}
+      >
+        <CardContent className="pt-6">
+          <div className="flex items-start gap-4">
+            {/* Avatar */}
+            <div
+              className="w-16 h-16 rounded-full flex items-center justify-center text-2xl font-bold flex-shrink-0"
+              style={{
+                background: "linear-gradient(135deg, #00FF88, #9d4edd)",
+                color: "#0a0a0a",
+                fontFamily: "'Orbitron', sans-serif",
+                boxShadow: "0 0 20px rgba(0,255,136,0.4)",
+              }}
+            >
+              {profile.display_name.charAt(0).toUpperCase()}
+            </div>
 
-      {/* Profile Info */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="border-primary/30">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <User className="h-5 w-5" />
-              Player Info
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {/* Full Name from local auth */}
-            <div>
-              <p className="text-sm text-muted-foreground">Full Name</p>
-              <p className="text-lg font-semibold">
-                {localUser?.fullName || profile?.username || "Not set"}
+            {/* Info */}
+            <div className="flex-1 min-w-0">
+              <h2
+                className="text-xl font-bold truncate"
+                style={{
+                  fontFamily: "'Orbitron', sans-serif",
+                  color: "#00FF88",
+                }}
+              >
+                {profile.display_name}
+              </h2>
+              <p
+                className="text-xs mt-0.5"
+                style={{
+                  color: "rgba(255,255,255,0.35)",
+                  fontFamily: "monospace",
+                }}
+              >
+                {shortPrincipal}
               </p>
-            </div>
-            {/* Player ID */}
-            {identity && (
-              <div>
-                <p className="text-sm text-muted-foreground">Player ID</p>
-                <p className="text-xs font-mono text-primary/80 break-all">
-                  player_{identity.getPrincipal().toString().slice(0, 8)}
-                </p>
-              </div>
-            )}
-            {/* Email — prefer local auth, show Add Email if missing */}
-            <div>
-              <p className="text-sm text-muted-foreground">Email</p>
-              {savedEmail || localUser?.email || profile?.email ? (
-                <p className="text-base font-medium break-all">
-                  {savedEmail || localUser?.email || profile?.email}
-                </p>
-              ) : showEmailEdit ? (
-                <div className="flex gap-2 mt-1">
-                  <Input
-                    type="email"
-                    value={editEmail}
-                    onChange={(e) => setEditEmail(e.target.value)}
-                    placeholder="your@email.com"
-                    className="h-8 text-sm"
-                    data-ocid="profile.input"
-                  />
-                  <Button
-                    size="sm"
-                    className="h-8 px-3 bg-primary hover:bg-primary/90 text-xs"
-                    onClick={() => {
-                      if (editEmail) {
-                        setSavedEmail(editEmail);
-                        setShowEmailEdit(false);
-                        toast.success("Email saved!");
-                      }
-                    }}
-                    data-ocid="profile.save_button"
-                  >
-                    Save
-                  </Button>
-                </div>
-              ) : (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-7 px-2 text-xs text-primary hover:text-primary/80 -ml-2"
-                  onClick={() => setShowEmailEdit(true)}
-                  data-ocid="profile.edit_button"
-                >
-                  + Add Email
-                </Button>
-              )}
-            </div>
-            {/* Phone — from local auth only, show Add Phone if missing */}
-            <div>
-              <p className="text-sm text-muted-foreground">Phone</p>
-              {savedPhone || localUser?.phone ? (
-                <p className="text-base font-medium flex items-center gap-1.5">
-                  <Phone className="h-4 w-4 text-muted-foreground" />
-                  {savedPhone || localUser?.phone}
-                </p>
-              ) : showPhoneEdit ? (
-                <div className="flex gap-2 mt-1">
-                  <Input
-                    type="tel"
-                    value={editPhone}
-                    onChange={(e) => setEditPhone(e.target.value)}
-                    placeholder="+91XXXXXXXXXX"
-                    className="h-8 text-sm"
-                    data-ocid="profile.input"
-                  />
-                  <Button
-                    size="sm"
-                    className="h-8 px-3 bg-primary hover:bg-primary/90 text-xs"
-                    onClick={() => {
-                      if (editPhone) {
-                        setSavedPhone(editPhone);
-                        setShowPhoneEdit(false);
-                        toast.success("Phone number saved!");
-                      }
-                    }}
-                    data-ocid="profile.save_button"
-                  >
-                    Save
-                  </Button>
-                </div>
-              ) : (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-7 px-2 text-xs text-primary hover:text-primary/80 -ml-2"
-                  onClick={() => setShowPhoneEdit(true)}
-                  data-ocid="profile.edit_button"
-                >
-                  + Add Phone
-                </Button>
-              )}
-            </div>
-            {/* Role */}
-            {profile && (
-              <div>
-                <p className="text-sm text-muted-foreground">Role</p>
+              <div className="flex flex-wrap gap-2 mt-2">
                 <Badge
-                  variant={
-                    profile.role === ("admin" as Variant_admin_player)
-                      ? "default"
-                      : "secondary"
-                  }
+                  style={{
+                    background: "rgba(0,255,136,0.15)",
+                    color: "#00FF88",
+                    border: "1px solid rgba(0,255,136,0.3)",
+                    fontSize: 10,
+                  }}
                 >
-                  {typeof profile.role === "string"
-                    ? profile.role.toUpperCase()
-                    : "PLAYER"}
+                  🎮 Free Fire
+                </Badge>
+                <Badge
+                  style={{
+                    background: "rgba(157,78,221,0.15)",
+                    color: "#9d4edd",
+                    border: "1px solid rgba(157,78,221,0.3)",
+                    fontSize: 10,
+                  }}
+                >
+                  🔐 II Verified
                 </Badge>
               </div>
-            )}
-            {/* Referral Code */}
-            {profile?.referralCode && (
-              <div>
-                <p className="text-sm text-muted-foreground">Referral Code</p>
-                <p className="text-base font-mono font-semibold text-primary">
-                  {profile.referralCode}
-                </p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card className="border-secondary/30">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Trophy className="h-5 w-5" />
-              Tournaments
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {statsLoading ? (
-              <Skeleton className="h-10 w-16" />
-            ) : (
-              <>
-                <p className="text-4xl font-bold font-display">
-                  {stats?.tournamentsParticipated.toString() || "0"}
-                </p>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Total participated
-                </p>
-              </>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card className="border-accent/30">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Wallet className="h-5 w-5" />
-              Wallet
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div>
-              <p className="text-4xl font-bold font-display text-primary">
-                {wallet ? formatCurrency(wallet.balance) : "₹0.00"}
-              </p>
-              <p className="text-sm text-muted-foreground mt-1">
-                Available balance
-              </p>
             </div>
-            <div className="pt-1">
-              <p className="text-sm text-muted-foreground">Total Winnings</p>
-              {statsLoading ? (
-                <Skeleton className="h-6 w-20 mt-1" />
-              ) : (
-                <p className="text-lg font-semibold text-success">
-                  {stats ? formatCurrency(stats.totalWinnings) : "₹0.00"}
-                </p>
-              )}
-            </div>
-            <div className="flex gap-2 mt-2">
-              <Button
-                asChild
-                size="sm"
-                variant="outline"
-                className="flex-1 border-primary/40 text-xs"
-              >
-                <Link to="/wallet">
-                  <DollarSign className="h-3.5 w-3.5 mr-1" />
-                  Add Money
-                </Link>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
 
-      {/* Token Balance Card */}
-      <Card className="border-yellow-500/40 bg-gradient-to-br from-yellow-950/30 to-card">
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2 text-yellow-400">
-              <Coins className="h-5 w-5 text-yellow-400" />
-              Token Balance
-            </CardTitle>
+            {/* Logout */}
             <Button
-              asChild
-              size="sm"
-              className="bg-yellow-500 hover:bg-yellow-400 text-black font-bold"
+              variant="ghost"
+              size="icon"
+              onClick={handleLogout}
+              data-ocid="profile.delete_button"
+              style={{ color: "rgba(255,100,100,0.7)" }}
             >
-              <Link to="/earn">Watch Ads & Earn</Link>
+              <LogOut className="h-4 w-4" />
             </Button>
           </div>
-          <CardDescription>
-            Ads dekho, tokens kamao, real money withdraw karo
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center gap-6">
-            <div className="text-center">
-              <p
-                className="text-5xl font-bold font-display text-yellow-300"
-                style={{ textShadow: "0 0 14px rgba(253,224,71,0.5)" }}
-              >
-                {tokens.balance}
-              </p>
-              <p className="text-xs text-muted-foreground mt-1">🪙 Tokens</p>
-            </div>
-            <div className="flex-1 space-y-2">
-              <div className="flex justify-between text-xs text-muted-foreground">
-                <span>{tokens.tokensForNextWithdrawal}/25 for withdrawal</span>
-                <span
-                  className={
-                    tokens.canWithdraw ? "text-green-400 font-semibold" : ""
-                  }
+
+          {/* Free Fire Info */}
+          <div
+            className="mt-4 p-3 rounded-xl"
+            style={{
+              background: "rgba(0,0,0,0.4)",
+              border: "1px solid rgba(255,140,0,0.2)",
+            }}
+          >
+            <p
+              className="text-xs font-bold mb-2 uppercase tracking-widest"
+              style={{
+                color: "rgba(255,140,0,0.8)",
+                fontFamily: "'Orbitron', sans-serif",
+              }}
+            >
+              🔥 Free Fire Profile
+            </p>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <p
+                  className="text-xs"
+                  style={{ color: "rgba(255,255,255,0.4)" }}
                 >
-                  {tokens.canWithdraw
-                    ? "₹1.25 ready!"
-                    : `${tokens.tokensNeeded} more needed`}
-                </span>
+                  Nickname
+                </p>
+                <p className="text-sm font-bold" style={{ color: "#FFD700" }}>
+                  {profile.freefire_nickname || "—"}
+                </p>
               </div>
-              <Progress value={tokens.progressPct} className="h-2" />
-              <div className="grid grid-cols-2 gap-2 pt-1 text-xs text-center">
-                <div className="rounded-md bg-muted/40 py-1.5">
-                  <p className="text-muted-foreground">Total Earned</p>
-                  <p className="font-bold text-yellow-400">
-                    {tokens.totalEarned} 🪙
-                  </p>
-                </div>
-                <div className="rounded-md bg-muted/40 py-1.5">
-                  <p className="text-muted-foreground">Withdrawn</p>
-                  <p className="font-bold text-green-400">
-                    ₹{((tokens.totalWithdrawn / 25) * 1.25).toFixed(2)}
-                  </p>
-                </div>
+              <div>
+                <p
+                  className="text-xs"
+                  style={{ color: "rgba(255,255,255,0.4)" }}
+                >
+                  Level
+                </p>
+                <p className="text-sm font-bold" style={{ color: "#FFD700" }}>
+                  {profile.freefire_level || "—"}
+                </p>
+              </div>
+              <div>
+                <p
+                  className="text-xs"
+                  style={{ color: "rgba(255,255,255,0.4)" }}
+                >
+                  UID
+                </p>
+                <p
+                  className="text-sm font-mono"
+                  style={{ color: "rgba(255,255,255,0.8)" }}
+                >
+                  {profile.freefire_uid}
+                </p>
+              </div>
+              <div>
+                <p
+                  className="text-xs"
+                  style={{ color: "rgba(255,255,255,0.4)" }}
+                >
+                  Wallet
+                </p>
+                <p className="text-sm font-bold" style={{ color: "#00FF88" }}>
+                  {formatCurrency(BigInt(Math.floor(profile.wallet_balance)))}
+                </p>
               </div>
             </div>
           </div>
+
+          {/* Stats */}
+          {statsLoading ? (
+            <div className="grid grid-cols-3 gap-3 mt-4">
+              {[1, 2, 3].map((i) => (
+                <Skeleton key={i} className="h-16 rounded-xl" />
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-3 gap-3 mt-4">
+              {[
+                {
+                  label: "Matches",
+                  value: Number(stats?.tournamentsParticipated ?? 0n),
+                  icon: Trophy,
+                },
+                {
+                  label: "Wins",
+                  value: Number(stats?.tournamentsParticipated ?? 0n),
+                  icon: CheckCircle2,
+                },
+                {
+                  label: "Earnings",
+                  value: formatCurrency(stats?.totalWinnings ?? 0n),
+                  icon: DollarSign,
+                },
+              ].map(({ label, value, icon: Icon }) => (
+                <div
+                  key={label}
+                  className="flex flex-col items-center justify-center p-3 rounded-xl"
+                  style={{
+                    background: "rgba(0,255,136,0.05)",
+                    border: "1px solid rgba(0,255,136,0.15)",
+                  }}
+                >
+                  <Icon className="h-4 w-4 mb-1" style={{ color: "#00FF88" }} />
+                  <p className="text-sm font-bold" style={{ color: "white" }}>
+                    {value}
+                  </p>
+                  <p
+                    className="text-xs"
+                    style={{ color: "rgba(255,255,255,0.4)" }}
+                  >
+                    {label}
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
 
-      {/* My Vouchers */}
-      <MyVouchersCard
-        userId={localUser?.userId || identity?.getPrincipal().toString() || ""}
-      />
+      {/* Referral Code */}
+      <Card
+        className="gaming-card mb-6"
+        style={{
+          background: "rgba(10,10,10,0.9)",
+          border: "1.5px solid rgba(157,78,221,0.25)",
+        }}
+      >
+        <CardHeader className="pb-2">
+          <CardTitle
+            className="text-sm tracking-widest uppercase"
+            style={{ fontFamily: "'Orbitron', sans-serif", color: "#9d4edd" }}
+          >
+            🔗 Referral Code
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div
+            className="flex items-center gap-3 p-3 rounded-xl mb-3"
+            style={{
+              background: "rgba(157,78,221,0.1)",
+              border: "1px solid rgba(157,78,221,0.3)",
+            }}
+          >
+            <code
+              className="flex-1 text-lg font-bold tracking-widest text-center"
+              style={{ color: "#9d4edd", fontFamily: "monospace" }}
+            >
+              {profile.referral_code}
+            </code>
+            <Button
+              variant="ghost"
+              size="icon"
+              data-ocid="profile.button"
+              onClick={() =>
+                copyToClipboard(
+                  profile.referral_code,
+                  "✅ Referral code copied!",
+                )
+              }
+            >
+              <Copy className="h-4 w-4" style={{ color: "#9d4edd" }} />
+            </Button>
+          </div>
+          <div className="flex items-center gap-2">
+            <span
+              className="text-xs"
+              style={{ color: "rgba(255,255,255,0.4)" }}
+            >
+              Share:
+            </span>
+            <button
+              type="button"
+              data-ocid="profile.button"
+              onClick={() =>
+                window.open(
+                  `https://wa.me/?text=Join%20KL%20Esports%20Life%20with%20my%20code%20${profile.referral_code}`,
+                  "_blank",
+                )
+              }
+              style={{ color: "#25D366" }}
+            >
+              <SiWhatsapp className="h-5 w-5" />
+            </button>
+            <button
+              type="button"
+              data-ocid="profile.button"
+              onClick={() =>
+                window.open(
+                  `https://t.me/share/url?url=Join%20KL%20Esports%20with%20code%20${profile.referral_code}`,
+                  "_blank",
+                )
+              }
+              style={{ color: "#2AABEE" }}
+            >
+              <Send className="h-5 w-5" />
+            </button>
+            <button
+              type="button"
+              data-ocid="profile.button"
+              onClick={() =>
+                window.open(
+                  `https://www.facebook.com/sharer/sharer.php?u=klespots&quote=Join+with+code+${profile.referral_code}`,
+                  "_blank",
+                )
+              }
+              style={{ color: "#1877F2" }}
+            >
+              <SiFacebook className="h-5 w-5" />
+            </button>
+          </div>
+          {referralStats.totalReferrals > 0 && (
+            <p
+              className="text-xs mt-3"
+              style={{ color: "rgba(255,255,255,0.4)" }}
+            >
+              Total referrals: {referralStats.totalReferrals} • Earned:{" "}
+              {formatCurrency(BigInt(Math.floor(referralStats.totalEarnings)))}
+            </p>
+          )}
+        </CardContent>
+      </Card>
 
-      {/* Refer & Earn */}
-      {(localUserFull?.referralCode || profile?.referralCode) && (
-        <ReferAndEarnCard
-          userId={
-            localUser?.userId || identity?.getPrincipal().toString() || ""
-          }
-          referralCode={
-            localUserFull?.referralCode ||
-            profile?.referralCode ||
-            generateReferralCode(
-              localUser?.userId ||
-                identity?.getPrincipal().toString() ||
-                "anon",
-            )
-          }
-        />
+      {/* Token Balance */}
+      <Card
+        className="gaming-card mb-6"
+        style={{
+          background: "rgba(10,10,10,0.9)",
+          border: "1.5px solid rgba(255,215,0,0.25)",
+        }}
+      >
+        <CardContent className="pt-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Coins className="h-5 w-5 text-yellow-400" />
+              <span
+                className="text-sm font-bold"
+                style={{
+                  fontFamily: "'Orbitron', sans-serif",
+                  color: "#FFD700",
+                }}
+              >
+                Tokens
+              </span>
+            </div>
+            <span
+              className="text-xl font-bold"
+              style={{ color: "#FFD700", fontFamily: "'Orbitron', sans-serif" }}
+            >
+              {tokens.balance}
+            </span>
+          </div>
+          <Progress value={(tokens.balance % 25) * 4} className="mt-2 h-1.5" />
+          <p
+            className="text-xs mt-1"
+            style={{ color: "rgba(255,255,255,0.35)" }}
+          >
+            {tokens.balance % 25}/{25} to next ₹1.25 redeem
+          </p>
+        </CardContent>
+      </Card>
+
+      {/* Play Vouchers */}
+      {myVouchers.length > 0 && (
+        <Card
+          className="gaming-card mb-6"
+          style={{
+            background: "rgba(10,10,10,0.9)",
+            border: "1.5px solid rgba(0,255,136,0.15)",
+          }}
+        >
+          <CardHeader className="pb-2">
+            <CardTitle
+              className="text-sm tracking-widest uppercase"
+              style={{ fontFamily: "'Orbitron', sans-serif", color: "#00FF88" }}
+            >
+              🎟️ My Play Vouchers
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-col gap-2">
+              {myVouchers.map((v, i) => (
+                <div
+                  key={v.code}
+                  data-ocid={`profile.item.${i + 1}`}
+                  className="flex items-center justify-between p-2 rounded-lg"
+                  style={{
+                    background: "rgba(0,255,136,0.06)",
+                    border: "1px solid rgba(0,255,136,0.15)",
+                  }}
+                >
+                  <div>
+                    <code
+                      className="text-sm font-mono"
+                      style={{ color: "#00FF88" }}
+                    >
+                      {v.code}
+                    </code>
+                    <p
+                      className="text-xs"
+                      style={{ color: "rgba(255,255,255,0.4)" }}
+                    >
+                      {formatCurrency(BigInt(Math.floor(v.amount)))} •{" "}
+                      {new Date(v.createdAt).toLocaleDateString()}
+                    </p>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    data-ocid={`profile.button.${i + 1}`}
+                    onClick={() =>
+                      copyToClipboard(v.code, "✅ Voucher code copied!")
+                    }
+                  >
+                    <Copy className="h-3 w-3" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
       )}
 
       {/* My Tournaments */}
-      <Card>
-        <CardHeader>
-          <CardTitle>My Tournaments</CardTitle>
-          <CardDescription>
-            View all tournaments you've registered for
-          </CardDescription>
+      <Card
+        className="gaming-card"
+        style={{
+          background: "rgba(10,10,10,0.9)",
+          border: "1.5px solid rgba(0,255,136,0.15)",
+        }}
+      >
+        <CardHeader className="pb-2">
+          <CardTitle
+            className="text-sm tracking-widest uppercase"
+            style={{ fontFamily: "'Orbitron', sans-serif", color: "#00FF88" }}
+          >
+            ⚔️ My Tournaments
+          </CardTitle>
         </CardHeader>
         <CardContent>
-          <Tabs defaultValue="all" className="space-y-4">
-            <TabsList>
-              <TabsTrigger value="all" data-ocid="profile.tab">
-                All
-              </TabsTrigger>
+          <Tabs defaultValue="upcoming">
+            <TabsList
+              className="w-full mb-4"
+              style={{ background: "rgba(255,255,255,0.05)" }}
+            >
               <TabsTrigger value="upcoming" data-ocid="profile.tab">
                 Upcoming
               </TabsTrigger>
-              <TabsTrigger value="ongoing" data-ocid="profile.tab">
+              <TabsTrigger value="live" data-ocid="profile.tab">
                 Live
               </TabsTrigger>
               <TabsTrigger value="completed" data-ocid="profile.tab">
                 Completed
               </TabsTrigger>
             </TabsList>
-
-            <TabsContent value="all">
-              <TournamentList items={myTournaments} />
-            </TabsContent>
-            <TabsContent value="upcoming">
-              <TournamentList
-                items={myTournaments.filter(
-                  (t) => t.tournament?.status === "upcoming",
-                )}
-              />
-            </TabsContent>
-            <TabsContent value="ongoing">
-              <TournamentList
-                items={myTournaments.filter(
-                  (t) => t.tournament?.status === "ongoing",
-                )}
-              />
-            </TabsContent>
-            <TabsContent value="completed">
-              <TournamentList
-                items={myTournaments.filter(
-                  (t) => t.tournament?.status === "completed",
-                )}
-              />
-            </TabsContent>
+            {["upcoming", "live", "completed"].map((status) => {
+              const filtered = myTournaments.filter(
+                ({ tournament }) =>
+                  tournament &&
+                  getTournamentStatusLabel(tournament.status).toLowerCase() ===
+                    status,
+              );
+              return (
+                <TabsContent key={status} value={status}>
+                  {filtered.length === 0 ? (
+                    <div
+                      data-ocid="profile.empty_state"
+                      className="text-center py-8"
+                      style={{ color: "rgba(255,255,255,0.35)" }}
+                    >
+                      No {status} tournaments
+                    </div>
+                  ) : (
+                    <div className="flex flex-col gap-3">
+                      {filtered.map(
+                        ({ registration, tournament, team }, idx) => (
+                          <div
+                            key={registration.id}
+                            data-ocid={`profile.item.${idx + 1}`}
+                            className="p-3 rounded-xl"
+                            style={{
+                              background: "rgba(0,255,136,0.05)",
+                              border: "1px solid rgba(0,255,136,0.15)",
+                            }}
+                          >
+                            <div className="flex items-start justify-between gap-2">
+                              <div>
+                                <p
+                                  className="text-sm font-bold"
+                                  style={{
+                                    fontFamily: "'Orbitron', sans-serif",
+                                    color: "white",
+                                    fontSize: 11,
+                                  }}
+                                >
+                                  {tournament?.name}
+                                </p>
+                                {team && (
+                                  <p
+                                    className="text-xs mt-0.5"
+                                    style={{ color: "rgba(255,255,255,0.5)" }}
+                                  >
+                                    Team: {team.name}
+                                  </p>
+                                )}
+                              </div>
+                              <Badge
+                                style={{
+                                  background:
+                                    status === "live"
+                                      ? "rgba(255,68,68,0.2)"
+                                      : status === "completed"
+                                        ? "rgba(0,255,136,0.1)"
+                                        : "rgba(255,215,0,0.1)",
+                                  color:
+                                    status === "live"
+                                      ? "#FF4444"
+                                      : status === "completed"
+                                        ? "#00FF88"
+                                        : "#FFD700",
+                                  border: `1px solid ${
+                                    status === "live"
+                                      ? "rgba(255,68,68,0.3)"
+                                      : status === "completed"
+                                        ? "rgba(0,255,136,0.2)"
+                                        : "rgba(255,215,0,0.2)"
+                                  }`,
+                                  fontSize: 9,
+                                  textTransform: "uppercase",
+                                }}
+                              >
+                                {status}
+                              </Badge>
+                            </div>
+                          </div>
+                        ),
+                      )}
+                    </div>
+                  )}
+                </TabsContent>
+              );
+            })}
           </Tabs>
         </CardContent>
       </Card>
-    </div>
-  );
-}
-
-// ─── Local Profile View (when only local auth, no II identity) ────────────────
-
-function LocalProfileView({ localUser }: { localUser: LocalSession }) {
-  const tokens = useTokens();
-  const { login: iiLogin } = useInternetIdentity();
-  // Get full local user to access referralCode
-  const localUserFull = getAllLocalUsers().find(
-    (u) => u.id === localUser.userId,
-  );
-
-  // Inline edit states for missing email/phone
-  const [showEmailEdit, setShowEmailEdit] = useState(false);
-  const [showPhoneEdit, setShowPhoneEdit] = useState(false);
-  const [editEmail, setEditEmail] = useState("");
-  const [editPhone, setEditPhone] = useState("");
-  const [savedEmail, setSavedEmail] = useState<string | null>(null);
-  const [savedPhone, setSavedPhone] = useState<string | null>(null);
-
-  return (
-    <div className="container py-12 space-y-8">
-      <div>
-        <h1 className="text-4xl font-bold font-display mb-2">My Profile</h1>
-        <p className="text-muted-foreground">Welcome, {localUser.fullName}!</p>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Personal Info */}
-        <Card className="border-primary/30">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <User className="h-5 w-5" />
-              Player Info
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div>
-              <p className="text-sm text-muted-foreground">Full Name</p>
-              <p className="text-lg font-semibold">{localUser.fullName}</p>
-            </div>
-            {/* Email with Add Email button if missing */}
-            <div>
-              <p className="text-sm text-muted-foreground">Email</p>
-              {savedEmail || localUser.email ? (
-                <p className="text-base font-medium break-all">
-                  {savedEmail || localUser.email}
-                </p>
-              ) : showEmailEdit ? (
-                <div className="flex gap-2 mt-1">
-                  <Input
-                    type="email"
-                    value={editEmail}
-                    onChange={(e) => setEditEmail(e.target.value)}
-                    placeholder="your@email.com"
-                    className="h-8 text-sm"
-                    data-ocid="profile.input"
-                  />
-                  <Button
-                    size="sm"
-                    className="h-8 px-3 bg-primary hover:bg-primary/90 text-xs"
-                    onClick={() => {
-                      if (editEmail) {
-                        setSavedEmail(editEmail);
-                        setShowEmailEdit(false);
-                        toast.success("Email saved!");
-                      }
-                    }}
-                    data-ocid="profile.save_button"
-                  >
-                    Save
-                  </Button>
-                </div>
-              ) : (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-7 px-2 text-xs text-primary hover:text-primary/80 -ml-2"
-                  onClick={() => setShowEmailEdit(true)}
-                  data-ocid="profile.edit_button"
-                >
-                  + Add Email
-                </Button>
-              )}
-            </div>
-            {/* Phone with Add Phone button if missing */}
-            <div>
-              <p className="text-sm text-muted-foreground">Phone</p>
-              {savedPhone || localUser.phone ? (
-                <p className="text-base font-medium flex items-center gap-1.5">
-                  <Phone className="h-4 w-4 text-muted-foreground" />
-                  {savedPhone || localUser.phone}
-                </p>
-              ) : showPhoneEdit ? (
-                <div className="flex gap-2 mt-1">
-                  <Input
-                    type="tel"
-                    value={editPhone}
-                    onChange={(e) => setEditPhone(e.target.value)}
-                    placeholder="+91XXXXXXXXXX"
-                    className="h-8 text-sm"
-                    data-ocid="profile.input"
-                  />
-                  <Button
-                    size="sm"
-                    className="h-8 px-3 bg-primary hover:bg-primary/90 text-xs"
-                    onClick={() => {
-                      if (editPhone) {
-                        setSavedPhone(editPhone);
-                        setShowPhoneEdit(false);
-                        toast.success("Phone number saved!");
-                      }
-                    }}
-                    data-ocid="profile.save_button"
-                  >
-                    Save
-                  </Button>
-                </div>
-              ) : (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-7 px-2 text-xs text-primary hover:text-primary/80 -ml-2"
-                  onClick={() => setShowPhoneEdit(true)}
-                  data-ocid="profile.edit_button"
-                >
-                  + Add Phone
-                </Button>
-              )}
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Role</p>
-              <Badge variant="secondary">PLAYER</Badge>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Token Balance */}
-        <Card className="border-yellow-500/40 bg-gradient-to-br from-yellow-950/30 to-card">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-yellow-400">
-              <Coins className="h-5 w-5" />
-              Token Balance
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <p
-              className="text-5xl font-bold font-display text-yellow-300"
-              style={{ textShadow: "0 0 14px rgba(253,224,71,0.5)" }}
-            >
-              {tokens.balance}
-            </p>
-            <p className="text-xs text-muted-foreground">🪙 Tokens</p>
-            <Progress value={tokens.progressPct} className="h-2" />
-            <p className="text-xs text-muted-foreground">
-              {tokens.tokensForNextWithdrawal}/25 for withdrawal
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Refer & Earn */}
-      {localUserFull?.referralCode && (
-        <ReferAndEarnCard
-          userId={localUser.userId}
-          referralCode={localUserFull.referralCode}
-        />
-      )}
-
-      {/* Connect blockchain identity */}
-      <Card className="border-primary/30 bg-gradient-to-r from-primary/5 to-secondary/5">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            🔗 Connect Blockchain Identity
-          </CardTitle>
-          <CardDescription>
-            Connect your Internet Identity to unlock tournament participation,
-            wallet deposits, and live leaderboards.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Button
-            onClick={iiLogin}
-            className="bg-primary hover:bg-primary/90"
-            data-ocid="profile.primary_button"
-          >
-            Connect Internet Identity
-          </Button>
-        </CardContent>
-      </Card>
-    </div>
-  );
-}
-
-// ─── Profile Setup Card ────────────────────────────────────────────────────────
-
-function ProfileSetupCard() {
-  const { identity } = useInternetIdentity();
-  const localUser = useCurrentUser();
-  const saveProfileMutation = useSaveUserProfile();
-  const [username, setUsername] = useState(() => {
-    // Pre-fill from local auth if available, otherwise empty so user types freely
-    if (localUser?.fullName) return localUser.fullName;
-    return "";
-  });
-  const [email, setEmail] = useState(() => localUser?.email || "");
-  const [phone, setPhone] = useState(() => localUser?.phone || "");
-
-  // Show player ID for reference
-  const playerId = identity
-    ? `player_${identity.getPrincipal().toString().slice(0, 8)}`
-    : null;
-
-  const handleSave = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!username.trim()) return;
-
-    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-    let referralCode = "";
-    for (let i = 0; i < 6; i++) {
-      referralCode += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-
-    try {
-      await saveProfileMutation.mutateAsync({
-        username: username.trim(),
-        email: email.trim(),
-        role: "player" as Variant_admin_player,
-        banned: false,
-        referralCode,
-      });
-      toast.success("Profile created!", {
-        description: "Your wallet has been created with ₹0 balance.",
-      });
-    } catch (err: any) {
-      toast.error("Failed to create profile", {
-        description: err?.message || "Please try again.",
-      });
-    }
-  };
-
-  return (
-    <div className="container py-20 flex flex-col items-center justify-center">
-      <Card className="w-full max-w-md border-primary/40">
-        <CardHeader className="text-center">
-          <div className="mx-auto rounded-full bg-primary/10 p-4 w-fit mb-3">
-            <UserPlus className="h-8 w-8 text-primary" />
-          </div>
-          <CardTitle className="text-2xl font-display">
-            Complete Your Profile
-          </CardTitle>
-          <CardDescription>
-            Set up your player profile to get a wallet and join tournaments.
-          </CardDescription>
-          {playerId && (
-            <p className="text-xs text-muted-foreground mt-2 font-mono">
-              Player ID: <span className="text-primary/80">{playerId}</span>
-            </p>
-          )}
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSave} className="space-y-5">
-            <div className="space-y-2">
-              <Label htmlFor="setup-username">
-                Your Name <span className="text-destructive">*</span>
-              </Label>
-              <Input
-                id="setup-username"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                placeholder="Enter your name"
-                required
-                minLength={3}
-                data-ocid="profile.input"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="setup-email">Email (optional)</Label>
-              <Input
-                id="setup-email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="your@email.com"
-                data-ocid="profile.input"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="setup-phone">Phone Number (optional)</Label>
-              <Input
-                id="setup-phone"
-                type="tel"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                placeholder="+91XXXXXXXXXX"
-                data-ocid="profile.input"
-              />
-            </div>
-            <Button
-              type="submit"
-              className="w-full bg-primary hover:bg-primary/90"
-              disabled={!username.trim() || saveProfileMutation.isPending}
-              data-ocid="profile.submit_button"
-            >
-              {saveProfileMutation.isPending ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Creating Profile...
-                </>
-              ) : (
-                "Create Profile & Wallet"
-              )}
-            </Button>
-            {saveProfileMutation.isError && (
-              <p
-                className="text-sm text-destructive text-center"
-                data-ocid="profile.error_state"
-              >
-                Failed to create profile. Please try again.
-              </p>
-            )}
-          </form>
-        </CardContent>
-      </Card>
-    </div>
-  );
-}
-
-// ─── My Vouchers Card ─────────────────────────────────────────────────────────
-
-function MyVouchersCard({ userId }: { userId: string }) {
-  const [vouchers, setVouchers] = useState<PlayVoucher[]>(() =>
-    getMyVouchers(userId || undefined),
-  );
-  const [copiedId, setCopiedId] = useState<string | null>(null);
-
-  const handleCopy = async (voucher: PlayVoucher) => {
-    try {
-      await navigator.clipboard.writeText(voucher.code);
-      setCopiedId(voucher.id);
-      toast.success("Voucher code copied!", {
-        description: "Paste it in Google Play Store to redeem",
-      });
-      setTimeout(() => setCopiedId(null), 3000);
-    } catch {
-      toast.error("Could not copy. Please copy manually.");
-    }
-  };
-
-  const handleMarkUsed = (voucherId: string) => {
-    const allVouchers = getMyVouchers();
-    const updated = allVouchers.map((v) =>
-      v.id === voucherId ? { ...v, status: "used" as const } : v,
-    );
-    saveMyVouchers(updated);
-    setVouchers(updated.filter((v) => v.userId === userId));
-    toast.success("Voucher marked as used");
-  };
-
-  const isExpired = (expiry: number) => Date.now() > expiry;
-
-  if (vouchers.length === 0) return null;
-
-  const unusedCount = vouchers.filter((v) => v.status === "unused").length;
-
-  return (
-    <Card
-      className="border-green-500/40 bg-gradient-to-br from-green-950/20 to-card"
-      data-ocid="profile.my_vouchers.card"
-    >
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2 text-green-400">
-            <Ticket className="h-5 w-5" />
-            My Vouchers
-          </CardTitle>
-          {unusedCount > 0 && (
-            <Badge className="bg-green-600/30 text-green-300 border-green-500/40">
-              {unusedCount} Unused
-            </Badge>
-          )}
-        </div>
-        <CardDescription>Your Google Play Store voucher codes</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-3">
-        {vouchers.map((voucher, idx) => {
-          const expired = isExpired(voucher.expiresAt);
-          const statusColor =
-            voucher.status === "used"
-              ? "border-muted-foreground/30 bg-muted/10 opacity-60"
-              : expired
-                ? "border-red-500/30 bg-red-950/10 opacity-70"
-                : "border-green-500/30 bg-green-950/20";
-
-          return (
-            <div
-              key={voucher.id}
-              className={`rounded-xl border p-4 space-y-3 transition-colors ${statusColor}`}
-              data-ocid={`profile.my_vouchers.item.${idx + 1}`}
-            >
-              {/* Top row */}
-              <div className="flex items-start justify-between gap-2">
-                <div>
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-lg font-bold text-foreground">
-                      ₹{voucher.amount}
-                    </span>
-                    <Badge
-                      variant={
-                        voucher.status === "used"
-                          ? "secondary"
-                          : expired
-                            ? "destructive"
-                            : "default"
-                      }
-                      className={
-                        voucher.status === "unused" && !expired
-                          ? "bg-green-600/30 text-green-300 border-green-500/40"
-                          : ""
-                      }
-                    >
-                      {voucher.status === "used"
-                        ? "Used"
-                        : expired
-                          ? "Expired"
-                          : "Unused"}
-                    </Badge>
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    Created:{" "}
-                    {new Date(voucher.createdAt).toLocaleDateString("en-IN")}
-                    {" · "}
-                    Expires:{" "}
-                    {new Date(voucher.expiresAt).toLocaleDateString("en-IN")}
-                  </p>
-                </div>
-                <ShoppingBag className="h-4 w-4 text-green-400/60 shrink-0 mt-1" />
-              </div>
-
-              {/* Voucher code */}
-              <div
-                className="rounded-lg border border-green-500/20 bg-black/30 px-4 py-2.5 font-mono text-base font-bold tracking-[0.15em] text-center select-all"
-                style={
-                  voucher.status === "unused" && !expired
-                    ? { textShadow: "0 0 10px rgba(74,222,128,0.35)" }
-                    : {}
-                }
-              >
-                {voucher.code}
-              </div>
-
-              {/* Actions */}
-              <div className="flex gap-2">
-                {voucher.status === "unused" && !expired && (
-                  <>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className={`flex-1 border-green-500/40 text-xs ${
-                        copiedId === voucher.id
-                          ? "bg-green-600/30 text-green-300"
-                          : "hover:bg-green-950/40"
-                      }`}
-                      onClick={() => handleCopy(voucher)}
-                      data-ocid={`profile.my_vouchers.copy_button.${idx + 1}`}
-                    >
-                      {copiedId === voucher.id ? (
-                        <>
-                          <CheckCircle2 className="h-3.5 w-3.5 mr-1.5" />
-                          Copied!
-                        </>
-                      ) : (
-                        <>
-                          <Copy className="h-3.5 w-3.5 mr-1.5" />
-                          Copy Code
-                        </>
-                      )}
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="border-green-500/40 text-xs hover:bg-green-950/40"
-                      onClick={() =>
-                        window.open(
-                          "https://play.google.com/store",
-                          "_blank",
-                          "noopener",
-                        )
-                      }
-                      data-ocid={`profile.my_vouchers.redeem_button.${idx + 1}`}
-                    >
-                      <ExternalLink className="h-3.5 w-3.5 mr-1" />
-                      Redeem
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="text-xs text-muted-foreground hover:text-foreground"
-                      onClick={() => handleMarkUsed(voucher.id)}
-                      data-ocid={`profile.my_vouchers.used_button.${idx + 1}`}
-                    >
-                      Mark Used
-                    </Button>
-                  </>
-                )}
-                {(voucher.status === "used" || expired) && (
-                  <p className="text-xs text-muted-foreground italic">
-                    {voucher.status === "used"
-                      ? "This voucher has been redeemed"
-                      : "This voucher has expired"}
-                  </p>
-                )}
-              </div>
-
-              {/* Redeem instructions for unused vouchers */}
-              {voucher.status === "unused" && !expired && (
-                <details className="group">
-                  <summary className="text-xs text-muted-foreground cursor-pointer hover:text-foreground transition-colors">
-                    How to redeem ▸
-                  </summary>
-                  <ol className="mt-2 space-y-1 text-xs text-muted-foreground list-none pl-1">
-                    {[
-                      "Open Google Play Store app",
-                      'Tap profile icon → "Payments & subscriptions"',
-                      'Select "Redeem gift code"',
-                      "Paste your voucher code → tap Redeem",
-                    ].map((step, i) => (
-                      // biome-ignore lint/suspicious/noArrayIndexKey: static steps
-                      <li key={i} className="flex gap-2">
-                        <span className="text-green-400 font-bold shrink-0">
-                          {i + 1}.
-                        </span>
-                        <span>{step}</span>
-                      </li>
-                    ))}
-                  </ol>
-                </details>
-              )}
-            </div>
-          );
-        })}
-      </CardContent>
-    </Card>
-  );
-}
-
-// ─── Refer & Earn Card ────────────────────────────────────────────────────────
-
-function ReferAndEarnCard({
-  userId,
-  referralCode,
-}: {
-  userId: string;
-  referralCode: string;
-}) {
-  const [copied, setCopied] = useState(false);
-  const [linkCopied, setLinkCopied] = useState(false);
-  const stats: ReferralStats = userId
-    ? getUserReferralStats(userId)
-    : { totalReferrals: 0, totalEarnings: 0, fraudAttempts: 0, referrals: [] };
-
-  const appUrl =
-    typeof window !== "undefined"
-      ? window.location.origin
-      : "https://khalnayak.app";
-  const registerUrl = `${appUrl}/register`;
-  const shareMessage = `Join me on Khalnayak Espots! Use my referral code ${referralCode} and get ₹2 bonus. Register here: ${registerUrl}`;
-
-  const handleCopy = async () => {
-    try {
-      await navigator.clipboard.writeText(referralCode);
-      setCopied(true);
-      toast.success("Referral code copied!", {
-        description: `Code "${referralCode}" is now in your clipboard.`,
-      });
-      setTimeout(() => setCopied(false), 2500);
-    } catch {
-      toast.error("Could not copy. Please copy manually.");
-    }
-  };
-
-  const handleWhatsApp = () => {
-    window.open(
-      `https://wa.me/?text=${encodeURIComponent(shareMessage)}`,
-      "_blank",
-      "noopener,noreferrer",
-    );
-  };
-
-  const handleFacebook = () => {
-    window.open(
-      `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(registerUrl)}&quote=${encodeURIComponent(shareMessage)}`,
-      "_blank",
-      "noopener,noreferrer",
-    );
-  };
-
-  const handleInstagram = () => {
-    // Instagram web doesn't support deep-link sharing; copy code and open Instagram
-    navigator.clipboard
-      .writeText(shareMessage)
-      .then(() => {
-        toast.info("Message copied!", {
-          description: "Copy your code and paste it in Instagram story/post!",
-        });
-      })
-      .catch(() => {});
-    window.open("https://www.instagram.com/", "_blank", "noopener,noreferrer");
-  };
-
-  const handleEmail = () => {
-    window.open(
-      `mailto:?subject=Join%20Khalnayak%20Espots!&body=${encodeURIComponent(shareMessage)}`,
-      "_blank",
-      "noopener,noreferrer",
-    );
-  };
-
-  const handleCopyLink = async () => {
-    try {
-      await navigator.clipboard.writeText(shareMessage);
-      setLinkCopied(true);
-      toast.success("Share message copied!", {
-        description: "Paste it anywhere to share.",
-      });
-      setTimeout(() => setLinkCopied(false), 2500);
-    } catch {
-      toast.error("Could not copy. Please copy manually.");
-    }
-  };
-
-  const maskName = (name: string) => {
-    if (!name || name.length < 2) return "****";
-    return `${name.slice(0, 2)}****`;
-  };
-
-  const formatDate = (ts: number) => {
-    return new Date(ts).toLocaleDateString("en-IN", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-    });
-  };
-
-  return (
-    <Card className="border-green-500/40 bg-gradient-to-br from-green-950/40 to-yellow-950/20">
-      <CardHeader>
-        <CardTitle
-          className="flex items-center gap-2 text-xl"
-          style={{ textShadow: "0 0 12px rgba(74,222,128,0.3)" }}
-        >
-          <Gift className="h-5 w-5 text-green-400" />
-          <span className="text-green-400">Refer &amp; Earn</span>
-        </CardTitle>
-        <CardDescription>
-          Share your code. Friend registers → You earn ₹2!
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-5">
-        {/* Referral Code Display */}
-        <div className="space-y-2">
-          <p className="text-xs text-muted-foreground uppercase tracking-wider">
-            Your Referral Code
-          </p>
-          <div className="flex items-center gap-3">
-            <div
-              className="flex-1 py-3 px-4 rounded-lg border border-green-500/40 bg-green-950/30 font-mono text-2xl font-bold tracking-[0.2em] text-green-300"
-              style={{ textShadow: "0 0 10px rgba(74,222,128,0.4)" }}
-            >
-              {referralCode}
-            </div>
-            <Button
-              onClick={handleCopy}
-              size="sm"
-              className={`px-4 transition-all duration-200 ${
-                copied
-                  ? "bg-green-600 hover:bg-green-600 text-white"
-                  : "bg-green-700/60 hover:bg-green-600 text-green-100 border border-green-500/40"
-              }`}
-              data-ocid="referral.copy_button"
-            >
-              {copied ? (
-                <>
-                  <CheckCircle2 className="h-4 w-4 mr-1.5" />
-                  Copied!
-                </>
-              ) : (
-                <>
-                  <Copy className="h-4 w-4 mr-1.5" />
-                  Copy
-                </>
-              )}
-            </Button>
-          </div>
-        </div>
-
-        {/* Share Buttons — 5-button grid */}
-        <div className="space-y-2">
-          <p className="text-xs text-muted-foreground uppercase tracking-wider">
-            Share Via
-          </p>
-          <div className="grid grid-cols-3 gap-2">
-            {/* WhatsApp */}
-            <Button
-              onClick={handleWhatsApp}
-              size="sm"
-              className="bg-[#25D366]/20 hover:bg-[#25D366]/35 border border-[#25D366]/40 text-[#25D366] font-semibold flex items-center gap-1.5"
-              data-ocid="referral.whatsapp_button"
-            >
-              <SiWhatsapp className="h-4 w-4 shrink-0" />
-              <span className="hidden xs:inline">WhatsApp</span>
-              <span className="xs:hidden">WA</span>
-            </Button>
-            {/* Facebook */}
-            <Button
-              onClick={handleFacebook}
-              size="sm"
-              className="bg-[#1877F2]/20 hover:bg-[#1877F2]/35 border border-[#1877F2]/40 text-[#1877F2] font-semibold flex items-center gap-1.5"
-              data-ocid="referral.facebook_button"
-            >
-              <SiFacebook className="h-4 w-4 shrink-0" />
-              <span className="hidden xs:inline">Facebook</span>
-              <span className="xs:hidden">FB</span>
-            </Button>
-            {/* Instagram */}
-            <Button
-              onClick={handleInstagram}
-              size="sm"
-              className="font-semibold flex items-center gap-1.5 border"
-              style={{
-                background:
-                  "linear-gradient(135deg, rgba(253,92,99,0.2) 0%, rgba(162,59,189,0.2) 100%)",
-                borderColor: "rgba(162,59,189,0.4)",
-                color: "#e879f9",
-              }}
-              data-ocid="referral.instagram_button"
-            >
-              <SiInstagram className="h-4 w-4 shrink-0" />
-              <span className="hidden xs:inline">Instagram</span>
-              <span className="xs:hidden">IG</span>
-            </Button>
-            {/* Email */}
-            <Button
-              onClick={handleEmail}
-              size="sm"
-              className="bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-400 font-semibold flex items-center gap-1.5"
-              data-ocid="referral.email_button"
-            >
-              <Mail className="h-4 w-4 shrink-0" />
-              Email
-            </Button>
-            {/* Copy Link */}
-            <Button
-              onClick={handleCopyLink}
-              size="sm"
-              className={`col-span-2 font-semibold flex items-center gap-1.5 transition-all ${
-                linkCopied
-                  ? "bg-primary/30 border-primary/60 text-primary"
-                  : "bg-primary/20 hover:bg-primary/30 border border-primary/40 text-primary"
-              }`}
-              data-ocid="referral.copylink_button"
-            >
-              {linkCopied ? (
-                <>
-                  <CheckCircle2 className="h-4 w-4 shrink-0" />
-                  Message Copied!
-                </>
-              ) : (
-                <>
-                  <Copy className="h-4 w-4 shrink-0" />
-                  Copy Share Message
-                </>
-              )}
-            </Button>
-          </div>
-          <p className="text-xs text-muted-foreground/70 italic">
-            Message: "Join me on Khalnayak Espots! Use my referral code{" "}
-            <span className="font-mono text-green-400">{referralCode}</span> and
-            get ₹2 bonus."
-          </p>
-        </div>
-
-        {/* Stats Row */}
-        <div className="grid grid-cols-3 gap-3">
-          <div className="rounded-lg border border-green-500/20 bg-green-950/20 p-3 text-center">
-            <p className="text-2xl font-bold text-green-400">
-              {stats.totalReferrals}
-            </p>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              Total Referrals
-            </p>
-          </div>
-          <div className="rounded-lg border border-yellow-500/20 bg-yellow-950/20 p-3 text-center">
-            <p className="text-2xl font-bold text-yellow-400">
-              ₹{stats.totalEarnings.toFixed(0)}
-            </p>
-            <p className="text-xs text-muted-foreground mt-0.5">Earnings</p>
-          </div>
-          <div className="rounded-lg border border-border/30 bg-muted/10 p-3 text-center">
-            <p className="text-2xl font-bold text-foreground">
-              ₹{(stats.totalReferrals * 2).toFixed(0)}
-            </p>
-            <p className="text-xs text-muted-foreground mt-0.5">Total Paid</p>
-          </div>
-        </div>
-
-        {/* Referred Friends List */}
-        <div className="space-y-2">
-          <p className="text-xs text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
-            <Users className="h-3.5 w-3.5" />
-            Referred Friends
-          </p>
-          {stats.referrals.length === 0 ? (
-            <div
-              className="text-center py-6 rounded-lg border border-dashed border-green-500/20 bg-green-950/10"
-              data-ocid="referral.empty_state"
-            >
-              <Gift className="h-8 w-8 text-green-500/40 mx-auto mb-2" />
-              <p className="text-sm text-muted-foreground">
-                Share your code to start earning!
-              </p>
-              <p className="text-xs text-muted-foreground mt-1">
-                Earn ₹2 for every friend who registers
-              </p>
-            </div>
-          ) : (
-            <div
-              className="space-y-2 max-h-52 overflow-y-auto"
-              data-ocid="referral.list"
-            >
-              {stats.referrals.map((ref, idx) => (
-                <div
-                  key={ref.id}
-                  className={`flex items-center justify-between p-2.5 rounded-lg border text-sm ${
-                    ref.status === "success"
-                      ? "border-green-500/20 bg-green-950/15"
-                      : "border-red-500/20 bg-red-950/15"
-                  }`}
-                  data-ocid={`referral.item.${idx + 1}`}
-                >
-                  <div className="flex items-center gap-2">
-                    {ref.status === "success" ? (
-                      <CheckCircle2 className="h-4 w-4 text-green-400 shrink-0" />
-                    ) : (
-                      <XCircle className="h-4 w-4 text-red-400 shrink-0" />
-                    )}
-                    <div>
-                      <p className="font-medium text-foreground">
-                        {maskName(ref.newUserName)}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {formatDate(ref.timestamp)}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="text-right shrink-0">
-                    {ref.status === "success" ? (
-                      <Badge className="bg-green-700/40 text-green-300 border-green-500/30 text-xs">
-                        ₹2 earned
-                      </Badge>
-                    ) : (
-                      <Badge
-                        variant="destructive"
-                        className="text-xs opacity-80"
-                      >
-                        Blocked
-                      </Badge>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* How It Works */}
-        <div className="rounded-lg border border-border/30 bg-muted/5 p-3 space-y-1.5">
-          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-            How It Works
-          </p>
-          {[
-            "Share your unique referral code with friends",
-            "Friend registers using your code at signup",
-            "You instantly earn ₹2 in your wallet",
-          ].map((step, i) => (
-            // biome-ignore lint/suspicious/noArrayIndexKey: static list
-            <p key={i} className="text-xs text-muted-foreground flex gap-2">
-              <span className="text-green-400 font-bold shrink-0">
-                {i + 1}.
-              </span>
-              {step}
-            </p>
-          ))}
-        </div>
-
-        {/* Step-by-step Referral Guide */}
-        <div className="rounded-lg border border-green-500/20 bg-green-950/10 p-4 space-y-3">
-          <p className="text-xs font-semibold text-green-400 uppercase tracking-wide">
-            📖 How to Use Referral Code
-          </p>
-          <div className="grid grid-cols-2 gap-2">
-            {[
-              {
-                step: "1",
-                icon: "🔑",
-                title: "Get Your Code",
-                desc: "Copy your unique code from above",
-              },
-              {
-                step: "2",
-                icon: "📤",
-                title: "Share It",
-                desc: "Send via WhatsApp, Facebook, or Email",
-              },
-              {
-                step: "3",
-                icon: "👤",
-                title: "Friend Registers",
-                desc: "Friend signs up using your code",
-              },
-              {
-                step: "4",
-                icon: "💰",
-                title: "Earn ₹2!",
-                desc: "₹2 credited to your wallet instantly!",
-              },
-            ].map((item) => (
-              <div
-                key={item.step}
-                className="rounded-lg border border-green-500/15 bg-green-950/15 p-2.5 space-y-1"
-              >
-                <div className="flex items-center gap-1.5">
-                  <span className="text-base">{item.icon}</span>
-                  <span className="w-5 h-5 rounded-full bg-green-500/20 border border-green-500/40 text-green-400 text-[10px] font-bold flex items-center justify-center shrink-0">
-                    {item.step}
-                  </span>
-                </div>
-                <p className="text-xs font-semibold text-foreground">
-                  {item.title}
-                </p>
-                <p className="text-[11px] text-muted-foreground leading-tight">
-                  {item.desc}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-// ─── Tournament List ───────────────────────────────────────────────────────────
-
-function TournamentList({ items }: { items: any[] }) {
-  if (items.length === 0) {
-    return (
-      <div
-        className="text-center text-muted-foreground py-8"
-        data-ocid="profile.empty_state"
-      >
-        <p>No tournaments found</p>
-        <Button asChild variant="outline" size="sm" className="mt-3">
-          <Link to="/tournaments">Browse Tournaments</Link>
-        </Button>
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-3">
-      {items.map(({ registration, tournament, team }, idx) => (
-        <Link
-          key={registration.id.toString()}
-          to="/tournament/$id"
-          params={{ id: tournament?.id.toString() || "0" }}
-          className="block p-4 border border-border rounded-lg hover:border-primary/50 transition-colors"
-          data-ocid={`profile.item.${idx + 1}`}
-        >
-          <div className="flex items-start justify-between">
-            <div className="flex-1">
-              <div className="flex items-center gap-2 mb-2">
-                <Badge
-                  variant={
-                    tournament?.status === "ongoing"
-                      ? "destructive"
-                      : tournament?.status === "upcoming"
-                        ? "secondary"
-                        : "outline"
-                  }
-                >
-                  {tournament
-                    ? getTournamentStatusLabel(tournament.status)
-                    : "Unknown"}
-                </Badge>
-                <Badge
-                  variant={
-                    registration.status === "approved"
-                      ? "default"
-                      : registration.status === "pending"
-                        ? "secondary"
-                        : "destructive"
-                  }
-                  className={
-                    registration.status === "approved" ? "bg-success" : ""
-                  }
-                >
-                  {registration.status.toUpperCase()}
-                </Badge>
-              </div>
-              <h4 className="font-semibold text-lg">
-                {tournament?.name || "Unknown Tournament"}
-              </h4>
-              <p className="text-sm text-muted-foreground">
-                Team: {team?.name || "Unknown Team"}
-              </p>
-            </div>
-            <div className="text-right">
-              <p className="text-sm text-muted-foreground">Prize Pool</p>
-              <p className="font-semibold text-primary">
-                {tournament ? formatCurrency(tournament.prizePool) : "N/A"}
-              </p>
-            </div>
-          </div>
-        </Link>
-      ))}
     </div>
   );
 }

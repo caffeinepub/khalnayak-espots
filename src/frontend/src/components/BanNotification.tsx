@@ -6,13 +6,13 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { useInternetIdentity } from "@/hooks/useInternetIdentity";
+import { useOtpAuth } from "@/hooks/useOtpAuth";
 import { useGetCallerUserProfile } from "@/hooks/useQueries";
 import { Link } from "@tanstack/react-router";
 import { AlertTriangle, Mail, ShieldX } from "lucide-react";
 
 export function BanNotification() {
-  const { identity } = useInternetIdentity();
+  const { identity } = useOtpAuth();
   const { data: profile } = useGetCallerUserProfile();
 
   // Only show ban notification if user is logged in and their profile shows they're banned

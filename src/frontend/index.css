@@ -1,6 +1,56 @@
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;500;600;700&family=Oswald:wght@400;600;700&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ── Global Gaming Tokens ── */
+:root {
+  --gaming-bg: #0A0A0A;
+  --gaming-card: #16213E;
+  --gaming-green: #00FF88;
+  --gaming-purple: #9d4edd;
+  --gaming-border: rgba(0,255,136,0.2);
+  --gaming-glow: 0 4px 15px rgba(0,255,136,0.2);
+  --gaming-text: #FFFFFF;
+  --gaming-muted: rgba(255,255,255,0.6);
+}
+
+/* ── Gaming utility classes ── */
+.gaming-card {
+  background: #16213E;
+  border-radius: 12px;
+  border: 1px solid rgba(0,255,136,0.2);
+  box-shadow: 0 4px 15px rgba(0,255,136,0.1);
+  transition: all 0.2s ease;
+}
+.gaming-card:hover {
+  box-shadow: 0 4px 20px rgba(0,255,136,0.3);
+  border-color: rgba(0,255,136,0.4);
+  transform: translateY(-2px);
+}
+
+.neon-btn {
+  background: linear-gradient(135deg, #00FF88, #9d4edd);
+  color: #0A0A0A;
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 0 16px rgba(0,255,136,0.4);
+}
+.neon-btn:hover {
+  box-shadow: 0 0 28px rgba(0,255,136,0.7);
+  transform: translateY(-1px);
+}
+.neon-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+}
 
 @layer base {
   /* ── Cross-browser normalization (Chrome, Vidmate, UC, Firefox) ── */
@@ -25,6 +75,9 @@
     -webkit-overflow-scrolling: touch;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    font-family: 'Rajdhani', sans-serif;
+    background: #0A0A0A;
+    color: #FFFFFF;
   }
 
   /* Prevent font inflation on Vidmate, UC, and other Android browsers */
@@ -383,4 +436,145 @@
 /* Yellow glow for earn page */
 .glow-yellow {
   text-shadow: 0 0 16px rgba(253, 224, 71, 0.9), 0 0 32px rgba(253, 224, 71, 0.5);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   FIRE BATTLEGROUND BACKGROUND — Free Fire "THE VENGEANCE" Style
+   4K Ultra HD fire/flames effect — applied to all pages
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.battleground-bg {
+  position: relative;
+  background-image: url("/assets/generated/fire-battleground-bg.dim_3840x2160.jpg");
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+}
+
+/* Flame flicker overlay — subtle orange/red glow animation */
+.battleground-bg::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(ellipse 60% 25% at 15% 85%, rgba(255,140,0,0.10) 0%, transparent 65%),
+    radial-gradient(ellipse 50% 20% at 85% 80%, rgba(139,0,0,0.12) 0%, transparent 65%),
+    radial-gradient(ellipse 70% 15% at 50% 95%, rgba(255,69,0,0.08) 0%, transparent 55%),
+    linear-gradient(180deg, rgba(0,0,0,0.40) 0%, transparent 25%, transparent 75%, rgba(0,0,0,0.45) 100%);
+  animation: flameFlicker 5s ease-in-out infinite alternate;
+}
+
+@keyframes flameFlicker {
+  0%   { opacity: 0.65; }
+  30%  { opacity: 1.0; }
+  60%  { opacity: 0.75; }
+  100% { opacity: 0.90; }
+}
+
+/* Make inner page wrappers transparent so background shows through */
+.battleground-bg > main,
+.battleground-bg main.flex-1 {
+  background: transparent;
+  position: relative;
+  z-index: 1;
+}
+
+/* Any direct child page wrappers with solid backgrounds — make transparent */
+.battleground-bg .page-wrapper,
+.battleground-bg [class*="min-h-screen"] {
+  background-color: transparent;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   TOURNAMENT CARDS — Free Fire Vengeance Style
+   Fire glow border, orange/red gradient, military icons
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Fire card base */
+.fire-card {
+  background: linear-gradient(145deg, rgba(20,8,0,0.88) 0%, rgba(30,10,0,0.82) 100%);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255,140,0,0.35);
+  border-radius: 12px;
+  box-shadow:
+    0 4px 24px rgba(0,0,0,0.7),
+    0 0 16px rgba(255,100,0,0.15),
+    inset 0 1px 0 rgba(255,200,0,0.08);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.fire-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 80% 40% at 50% 100%, rgba(255,100,0,0.08) 0%, transparent 65%);
+  pointer-events: none;
+  border-radius: inherit;
+}
+
+.fire-card:hover {
+  border-color: rgba(255,140,0,0.65);
+  box-shadow:
+    0 8px 36px rgba(0,0,0,0.7),
+    0 0 28px rgba(255,100,0,0.30),
+    inset 0 1px 0 rgba(255,200,0,0.12);
+}
+
+/* LIVE badge — red glow */
+.fire-badge-live {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(220,20,20,0.18);
+  color: #ff4444;
+  border: 1px solid rgba(220,20,20,0.5);
+  border-radius: 999px;
+  padding: 2px 8px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  box-shadow: 0 0 10px rgba(220,20,20,0.4);
+  animation: livePulse 1.5s ease-in-out infinite;
+}
+
+@keyframes livePulse {
+  0%, 100% { box-shadow: 0 0 8px rgba(220,20,20,0.4); }
+  50%       { box-shadow: 0 0 18px rgba(220,20,20,0.7); }
+}
+
+/* COMPLETED badge */
+.fire-badge-completed {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(80,80,80,0.2);
+  color: #aaa;
+  border: 1px solid rgba(100,100,100,0.35);
+  border-radius: 999px;
+  padding: 2px 8px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Fire top gradient bar on cards */
+.fire-card-topbar {
+  height: 3px;
+  width: 100%;
+  background: linear-gradient(90deg, #8B0000, #FF8C00, #FFD700, #FF8C00, #8B0000);
+  background-size: 200% 100%;
+  animation: fireBarShimmer 3s linear infinite;
+}
+
+@keyframes fireBarShimmer {
+  0%   { background-position: 0% 50%; }
+  100% { background-position: 200% 50%; }
 }

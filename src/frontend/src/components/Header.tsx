@@ -8,8 +8,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+
+import { useIIProfile } from "@/hooks/useIIProfile";
 import { useInternetIdentity } from "@/hooks/useInternetIdentity";
-import { useLocalAuth } from "@/hooks/useLocalAuth";
 import {
   useAutoSetupProfile,
   useGetCallerWallet,
@@ -32,7 +33,7 @@ import { HeaderInstallButton } from "./InstallPrompt";
 
 export function Header() {
   const { identity, clear } = useInternetIdentity();
-  const { currentUser, isLoggedIn, logout: localLogout } = useLocalAuth();
+  const { profile } = useIIProfile();
   const { data: wallet } = useGetCallerWallet();
   const { data: isAdmin } = useIsCallerAdmin();
   const { balance: tokenBalance } = useTokens();
@@ -42,17 +43,16 @@ export function Header() {
   // Automatically create profile + wallet for new users on first login
   useAutoSetupProfile();
 
-  // Determine display name: prefer local auth name, fall back to II identity
-  const displayName = currentUser?.fullName || (identity ? "Player" : null);
+  const isLoggedIn = !!identity && !identity.getPrincipal().isAnonymous();
+  const displayName = profile?.display_name || (isLoggedIn ? "Player" : null);
   const displayInitial = displayName
     ? displayName.charAt(0).toUpperCase()
     : null;
 
   const handleLogout = () => {
-    localLogout();
     clear();
     setMobileMenuOpen(false);
-    void router.navigate({ to: "/" });
+    void router.navigate({ to: "/login" });
   };
 
   const navLinks = [
@@ -101,7 +101,7 @@ export function Header() {
           {/* PWA Install Button */}
           <HeaderInstallButton />
 
-          {isLoggedIn || identity ? (
+          {isLoggedIn ? (
             <>
               {/* Token Balance */}
               <Link to="/earn">
@@ -152,14 +152,14 @@ export function Header() {
                   className="w-56"
                   data-ocid="header.dropdown_menu"
                 >
-                  {currentUser && (
+                  {profile && (
                     <>
                       <DropdownMenuLabel className="text-xs">
                         <p className="font-semibold text-sm text-foreground">
-                          Hello, {currentUser.fullName}!
+                          {profile.display_name}
                         </p>
                         <p className="text-muted-foreground font-normal truncate">
-                          {currentUser.email}
+                          FF UID: {profile.freefire_uid}
                         </p>
                       </DropdownMenuLabel>
                       <DropdownMenuSeparator />
@@ -262,16 +262,16 @@ export function Header() {
                     {link.label}
                   </Link>
                 ))}
-                {(isLoggedIn || identity) && (
+                {isLoggedIn && (
                   <>
                     <hr className="border-border" />
-                    {currentUser && (
+                    {profile && (
                       <div className="px-1 py-1.5">
                         <p className="font-semibold text-foreground">
-                          {currentUser.fullName}
+                          {profile.display_name}
                         </p>
                         <p className="text-sm text-muted-foreground truncate">
-                          {currentUser.email}
+                          FF: {profile.freefire_nickname}
                         </p>
                       </div>
                     )}
@@ -322,7 +322,7 @@ export function Header() {
                     </button>
                   </>
                 )}
-                {!isLoggedIn && !identity && (
+                {!isLoggedIn && (
                   <>
                     <hr className="border-border" />
                     <Link
@@ -331,13 +331,6 @@ export function Header() {
                       className="text-lg font-medium text-primary hover:text-primary/80 transition-colors"
                     >
                       Login
-                    </Link>
-                    <Link
-                      to="/register"
-                      onClick={() => setMobileMenuOpen(false)}
-                      className="text-lg font-medium text-secondary hover:text-secondary/80 transition-colors"
-                    >
-                      Register
                     </Link>
                   </>
                 )}

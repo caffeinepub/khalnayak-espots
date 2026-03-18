@@ -5,9 +5,10 @@ import {
   createRootRoute,
   createRoute,
   createRouter,
+  useNavigate,
 } from "@tanstack/react-router";
 import { Loader2 } from "lucide-react";
-import React, { Suspense } from "react";
+import React, { Suspense, useEffect } from "react";
 import { BanNotification } from "./components/BanNotification";
 import { BottomNavBar } from "./components/BottomNavBar";
 import { Footer } from "./components/Footer";
@@ -18,9 +19,10 @@ import { PushNotificationManager } from "./components/PushNotificationManager";
 import { SplashScreen } from "./components/SplashScreen";
 import { VpnBlocker } from "./components/VpnBlocker";
 import { Toaster } from "./components/ui/sonner";
-import { InternetIdentityProvider } from "./hooks/useInternetIdentity";
+import { useIIProfile } from "./hooks/useIIProfile";
+import { useInternetIdentity } from "./hooks/useInternetIdentity";
 
-// ── Lazy-loaded pages (System 3: Performance Optimization) ───────────────────
+// ── Lazy-loaded pages ──────────────────────────────────────────────────────────
 const AdminPage = React.lazy(() =>
   import("./pages/AdminPage").then((m) => ({ default: m.AdminPage })),
 );
@@ -58,11 +60,14 @@ const MyMatchesPage = React.lazy(() =>
 const LoginPage = React.lazy(() =>
   import("./pages/LoginPage").then((m) => ({ default: m.LoginPage })),
 );
-const RegisterPage = React.lazy(() =>
-  import("./pages/RegisterPage").then((m) => ({ default: m.RegisterPage })),
+const ProfileSetupPage = React.lazy(() =>
+  import("./pages/ProfileSetupPage").then((m) => ({
+    default: m.ProfileSetupPage,
+  })),
 );
 
-// ── Page loading spinner ─────────────────────────────────────────────────────
+const AUTH_EXEMPT_PATHS = ["/login", "/setup-profile"];
+
 function PageLoadingSpinner() {
   return (
     <div className="flex flex-col items-center justify-center min-h-[50vh] gap-4">
@@ -79,14 +84,35 @@ function PageLoadingSpinner() {
   );
 }
 
-// ── QueryClient with optimized caching (System 3) ────────────────────────────
+function FullScreenSpinner() {
+  return (
+    <div
+      className="battleground-bg fixed inset-0 flex flex-col items-center justify-center gap-4"
+      style={{ zIndex: 9999 }}
+    >
+      <Loader2
+        className="h-12 w-12 animate-spin"
+        style={{ color: "#00FF88" }}
+      />
+      <p
+        className="text-sm tracking-widest uppercase"
+        style={{
+          color: "rgba(255,255,255,0.5)",
+          fontFamily: "'Orbitron', sans-serif",
+        }}
+      >
+        Loading...
+      </p>
+    </div>
+  );
+}
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 1000 * 60 * 2, // 2 minutes default
-      gcTime: 1000 * 60 * 10, // garbage collect after 10 min
+      staleTime: 1000 * 60 * 2,
+      gcTime: 1000 * 60 * 10,
       retry: (failureCount, error) => {
-        // Don't retry on authorization or trap errors from the canister
         const msg = error instanceof Error ? error.message : String(error);
         if (
           msg.includes("Unauthorized") ||
@@ -101,23 +127,61 @@ const queryClient = new QueryClient({
   },
 });
 
-// Define the root route
-const rootRoute = createRootRoute({
-  component: () => (
-    <div className="flex flex-col min-h-screen">
-      <Header />
-      <main className="flex-1 pb-16 md:pb-0 overflow-x-hidden">
+function AppContent() {
+  const { identity, isInitializing } = useInternetIdentity();
+  const { profile, profileLoading } = useIIProfile();
+  const navigate = useNavigate();
+
+  const path = typeof window !== "undefined" ? window.location.pathname : "/";
+
+  useEffect(() => {
+    if (isInitializing || profileLoading) return;
+    if (!identity && path !== "/login") {
+      void navigate({ to: "/login" });
+    } else if (identity && !profile && path !== "/setup-profile") {
+      void navigate({ to: "/setup-profile" });
+    } else if (
+      identity &&
+      profile &&
+      (path === "/login" || path === "/setup-profile")
+    ) {
+      void navigate({ to: "/" });
+    }
+  }, [identity, isInitializing, profile, profileLoading, path, navigate]);
+
+  if (isInitializing || profileLoading) return <FullScreenSpinner />;
+
+  return <Outlet />;
+}
+
+function RootLayout() {
+  const path = typeof window !== "undefined" ? window.location.pathname : "/";
+  const isAuthPage = AUTH_EXEMPT_PATHS.includes(path);
+
+  return (
+    <div
+      className="battleground-bg flex flex-col min-h-screen"
+      style={{ position: "relative", zIndex: 0 }}
+    >
+      {!isAuthPage && <Header />}
+      <main
+        className={`flex-1 overflow-x-hidden${!isAuthPage ? " pb-16 md:pb-0" : ""}`}
+        style={{ background: "transparent" }}
+      >
         <Suspense fallback={<PageLoadingSpinner />}>
-          <Outlet />
+          <AppContent />
         </Suspense>
       </main>
-      <Footer />
-      <BottomNavBar />
+      {!isAuthPage && <Footer />}
+      {!isAuthPage && <BottomNavBar />}
     </div>
-  ),
+  );
+}
+
+const rootRoute = createRootRoute({
+  component: RootLayout,
 });
 
-// Define individual routes
 const indexRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/",
@@ -184,13 +248,12 @@ const loginRoute = createRoute({
   component: LoginPage,
 });
 
-const registerRoute = createRoute({
+const setupProfileRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: "/register",
-  component: RegisterPage,
+  path: "/setup-profile",
+  component: ProfileSetupPage,
 });
 
-// Create the route tree
 const routeTree = rootRoute.addChildren([
   indexRoute,
   tournamentsRoute,
@@ -203,13 +266,11 @@ const routeTree = rootRoute.addChildren([
   earnRoute,
   myMatchesRoute,
   loginRoute,
-  registerRoute,
+  setupProfileRoute,
 ]);
 
-// Create the router
 const router = createRouter({ routeTree });
 
-// Register the router for type safety
 declare module "@tanstack/react-router" {
   interface Register {
     router: typeof router;
@@ -219,18 +280,16 @@ declare module "@tanstack/react-router" {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <InternetIdentityProvider>
-        <SplashScreen />
-        <BanNotification />
-        <VpnBlocker />
-        <NotificationPoller />
-        <Suspense fallback={<PageLoadingSpinner />}>
-          <RouterProvider router={router} />
-        </Suspense>
-        <Toaster position="top-right" richColors />
-        <InstallPrompt />
-        <PushNotificationManager />
-      </InternetIdentityProvider>
+      <SplashScreen />
+      <BanNotification />
+      <VpnBlocker />
+      <NotificationPoller />
+      <Suspense fallback={<PageLoadingSpinner />}>
+        <RouterProvider router={router} />
+      </Suspense>
+      <Toaster position="top-right" richColors />
+      <InstallPrompt />
+      <PushNotificationManager />
     </QueryClientProvider>
   );
 }

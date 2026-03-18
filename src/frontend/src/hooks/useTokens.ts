@@ -10,7 +10,7 @@
  */
 
 import { useCallback, useEffect, useState } from "react";
-import { useInternetIdentity } from "./useInternetIdentity";
+import { useOtpAuth } from "./useOtpAuth";
 
 export interface TokenTransaction {
   id: string;
@@ -127,7 +127,7 @@ function saveAdStats(key: string, stats: AdDayStats) {
 }
 
 export function useTokens() {
-  const { identity } = useInternetIdentity();
+  const { identity } = useOtpAuth();
   const principalStr = identity?.getPrincipal().toString() ?? "anonymous";
   const storageKey = getStorageKey(principalStr);
 

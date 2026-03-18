@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { useInternetIdentity } from "@/hooks/useInternetIdentity";
+import { useOtpAuth } from "@/hooks/useOtpAuth";
 import { Bell, Gift, Trophy, X } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -63,7 +63,7 @@ export function usePushNotifications() {
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export function PushNotificationManager() {
-  const { identity } = useInternetIdentity();
+  const { identity } = useOtpAuth();
   const { isSupported } = usePushNotifications();
   const [showDialog, setShowDialog] = useState(false);
   const [slideIn, setSlideIn] = useState(false);

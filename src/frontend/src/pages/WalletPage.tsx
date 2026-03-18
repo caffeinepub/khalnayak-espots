@@ -33,7 +33,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   useApproveDeposit,
   useDeposit,
@@ -59,8 +58,6 @@ import {
   ShoppingBag,
   Smartphone,
   Ticket,
-  Wallet as WalletIcon,
-  Zap,
 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -229,23 +226,63 @@ export function WalletPage() {
   return (
     <div className="container py-12 space-y-8">
       <div>
-        <h1 className="text-4xl font-bold font-display mb-2">My Wallet</h1>
-        <p className="text-muted-foreground">
+        <h1
+          className="text-4xl font-bold mb-2 uppercase tracking-wider"
+          style={{
+            fontFamily: "'Orbitron', sans-serif",
+            background: "linear-gradient(90deg, #00FF88, #9d4edd)",
+            WebkitBackgroundClip: "text",
+            WebkitTextFillColor: "transparent",
+            backgroundClip: "text",
+          }}
+        >
+          💳 My Wallet
+        </h1>
+        <p
+          style={{
+            color: "rgba(255,255,255,0.5)",
+            fontFamily: "'Rajdhani', sans-serif",
+          }}
+        >
           Manage your funds and view transaction history
         </p>
       </div>
 
       {/* Balance Card */}
-      <Card className="border-primary/50 bg-gradient-to-br from-primary/5 to-secondary/5">
+      <Card
+        style={{
+          background: "linear-gradient(135deg, #16213E, #0A1628)",
+          border: "2px solid #00FF88",
+          boxShadow: "0 0 32px rgba(0,255,136,0.3)",
+          borderRadius: 16,
+        }}
+      >
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-muted-foreground">
-            <WalletIcon className="h-5 w-5" />
-            Available Balance
+          <CardTitle
+            className="flex items-center gap-2"
+            style={{
+              color: "rgba(0,255,136,0.8)",
+              fontFamily: "'Rajdhani', sans-serif",
+              fontSize: 14,
+              textTransform: "uppercase",
+              letterSpacing: 1,
+            }}
+          >
+            💰 Available Balance
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
           <div>
-            <p className="text-5xl font-bold font-display">
+            <p
+              style={{
+                fontFamily: "'Orbitron', sans-serif",
+                fontSize: "clamp(36px, 10vw, 56px)",
+                fontWeight: 900,
+                color: "#00FF88",
+                textShadow: "0 0 20px rgba(0,255,136,0.6)",
+                lineHeight: 1.1,
+              }}
+            >
               {wallet ? formatCurrency(wallet.balance) : "₹0.00"}
             </p>
           </div>
@@ -255,9 +292,21 @@ export function WalletPage() {
               onOpenChange={setDepositDialogOpen}
             >
               <DialogTrigger asChild>
-                <Button className="flex-1 bg-primary hover:bg-primary/90">
-                  <Plus className="mr-2 h-4 w-4" />
-                  Add Money
+                <Button
+                  className="flex-1 font-bold hover:opacity-90 transition-all"
+                  style={{
+                    background: "linear-gradient(135deg, #00FF88, #00cc6a)",
+                    color: "#0A0A0A",
+                    fontFamily: "'Orbitron', sans-serif",
+                    fontWeight: 700,
+                    borderRadius: 10,
+                    boxShadow: "0 0 16px rgba(0,255,136,0.4)",
+                    textTransform: "uppercase",
+                    letterSpacing: 1,
+                    minHeight: 44,
+                  }}
+                >
+                  📥 Add Money
                 </Button>
               </DialogTrigger>
               <DepositDialog onClose={() => setDepositDialogOpen(false)} />
@@ -268,9 +317,21 @@ export function WalletPage() {
               onOpenChange={setWithdrawDialogOpen}
             >
               <DialogTrigger asChild>
-                <Button variant="outline" className="flex-1 border-primary/30">
-                  <Minus className="mr-2 h-4 w-4" />
-                  Withdraw
+                <Button
+                  className="flex-1 font-bold hover:opacity-90 transition-all"
+                  style={{
+                    background: "linear-gradient(135deg, #9d4edd, #7b2ff7)",
+                    color: "#fff",
+                    fontFamily: "'Orbitron', sans-serif",
+                    fontWeight: 700,
+                    borderRadius: 10,
+                    boxShadow: "0 0 16px rgba(157,78,221,0.4)",
+                    textTransform: "uppercase",
+                    letterSpacing: 1,
+                    minHeight: 44,
+                  }}
+                >
+                  💸 Withdraw
                 </Button>
               </DialogTrigger>
               <WithdrawDialog
@@ -290,38 +351,90 @@ export function WalletPage() {
 
       {/* Referral Card */}
       {profile?.referralCode && (
-        <Card className="border-secondary/30">
+        <Card
+          className="border-[#00FF88]/40"
+          style={{ boxShadow: "0 0 16px rgba(0,255,136,0.08)" }}
+        >
           <CardHeader>
-            <CardTitle className="text-lg">Referral Code</CardTitle>
+            <CardTitle className="text-lg flex items-center gap-2 text-[#00FF88]">
+              🔗 Referral Code
+            </CardTitle>
             <CardDescription>
               Share your code and earn bonuses when friends register
             </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-4">
             <div className="flex items-center gap-3">
-              <code className="flex-1 bg-muted px-4 py-3 rounded-md font-mono text-lg font-bold">
+              <code className="flex-1 bg-[#16213E] border border-[#00FF88]/30 px-4 py-3 rounded-xl font-mono text-lg font-bold text-[#00FF88]">
                 {profile.referralCode}
               </code>
-              <Button onClick={copyReferralCode} variant="outline" size="icon">
-                <Copy className="h-4 w-4" />
+              <Button
+                onClick={copyReferralCode}
+                variant="outline"
+                size="icon"
+                className="border-[#00FF88]/40 text-[#00FF88] hover:bg-[#00FF88]/10"
+                data-ocid="wallet.referral.button"
+              >
+                📋
               </Button>
+            </div>
+            <div className="flex gap-2">
+              <a
+                href={`https://wa.me/?text=${encodeURIComponent(`Join Khalnayak Espots using my referral code: ${profile.referralCode}`)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-1 py-2 text-center text-sm font-semibold rounded-xl border border-green-500/40 text-green-400 bg-green-500/10 hover:bg-green-500/20 transition-all"
+              >
+                📱 WhatsApp
+              </a>
+              <a
+                href={`https://t.me/share/url?url=${encodeURIComponent("https://khalnayak.app")}&text=${encodeURIComponent(`Join with my code: ${profile.referralCode}`)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-1 py-2 text-center text-sm font-semibold rounded-xl border border-blue-500/40 text-blue-400 bg-blue-500/10 hover:bg-blue-500/20 transition-all"
+              >
+                ✈️ Telegram
+              </a>
             </div>
           </CardContent>
         </Card>
       )}
 
       {/* Transaction History */}
-      <Card>
+      <Card
+        style={{
+          background: "#16213E",
+          border: "1px solid rgba(0,255,136,0.15)",
+          borderRadius: 12,
+        }}
+      >
         <CardHeader>
-          <CardTitle>Transaction History</CardTitle>
-          <CardDescription>View all your wallet transactions</CardDescription>
+          <CardTitle
+            className="flex items-center gap-2"
+            style={{
+              fontFamily: "'Orbitron', sans-serif",
+              color: "#00FF88",
+              fontSize: 16,
+              textTransform: "uppercase",
+            }}
+          >
+            💳 Transaction History
+          </CardTitle>
+          <CardDescription
+            style={{
+              fontFamily: "'Rajdhani', sans-serif",
+              color: "rgba(255,255,255,0.5)",
+            }}
+          >
+            View all your wallet transactions
+          </CardDescription>
         </CardHeader>
         <CardContent>
           {sortedTransactions.length > 0 ? (
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
-                  <TableRow>
+                  <TableRow className="bg-[#16213E]">
                     <TableHead>Type</TableHead>
                     <TableHead>Description</TableHead>
                     <TableHead>Date</TableHead>
@@ -352,11 +465,10 @@ export function WalletPage() {
                         </TableCell>
                         <TableCell className="text-right font-semibold">
                           <span
-                            className={
-                              isCredit ? "text-success" : "text-destructive"
-                            }
+                            className={isCredit ? "font-bold" : "font-bold"}
+                            style={{ color: isCredit ? "#00FF88" : "#FF4444" }}
                           >
-                            {isCredit ? "+" : "-"}
+                            {isCredit ? "📈 +" : "📉 -"}
                             {formatCurrency(txn.amount)}
                           </span>
                         </TableCell>
@@ -368,8 +480,7 @@ export function WalletPage() {
             </div>
           ) : (
             <div className="text-center py-12 text-muted-foreground">
-              <WalletIcon className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>No transactions yet</p>
+              💳<p className="mt-2">No transactions yet</p>
             </div>
           )}
         </CardContent>
@@ -405,13 +516,12 @@ function PendingWithdrawalsCard({ userId }: { userId: string }) {
 
   return (
     <Card
-      className="border-primary/20"
+      className="border-[#00FF88]/20"
       data-ocid="wallet.pending_withdrawals.card"
     >
       <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-base">
-          <Clock className="h-4 w-4 text-yellow-400" />
-          My Withdrawal Requests
+        <CardTitle className="flex items-center gap-2 text-base text-[#00FF88]">
+          🎟️ My Withdrawal Requests
         </CardTitle>
         <CardDescription>
           Track your recent withdrawal requests and their status
@@ -422,17 +532,20 @@ function PendingWithdrawalsCard({ userId }: { userId: string }) {
           {userDetails.map((d, idx) => (
             <div
               key={d.requestId}
-              className="flex items-center gap-3 p-3 rounded-lg bg-muted/40 border border-border/50"
+              className="flex items-center gap-3 bg-[#16213E] border border-[#00FF88]/20 rounded-xl p-4"
               data-ocid={`wallet.pending_withdrawals.item.${idx + 1}`}
             >
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-sm">
+                    {d.method === "voucher" ? "🎟️" : "💸"}
+                  </span>
                   <span
                     className={`text-xs font-medium px-2 py-0.5 rounded border ${methodColor[d.method]}`}
                   >
                     {methodLabel[d.method]}
                   </span>
-                  <span className="font-bold text-sm">
+                  <span className="font-bold text-sm text-white">
                     ₹{d.amount.toFixed(2)}
                   </span>
                   {d.method === "upi" && d.upiId && (
@@ -440,9 +553,8 @@ function PendingWithdrawalsCard({ userId }: { userId: string }) {
                       {d.upiId}
                     </span>
                   )}
-
                   {d.method === "voucher" && d.voucherCode && (
-                    <span className="font-mono text-xs text-green-400 tracking-wider">
+                    <span className="font-mono text-[#00FF88] tracking-widest text-sm">
                       {d.voucherCode}
                     </span>
                   )}
@@ -451,30 +563,19 @@ function PendingWithdrawalsCard({ userId }: { userId: string }) {
                   {new Date(d.timestamp).toLocaleString("en-IN")}
                 </p>
               </div>
-              <Badge
-                variant={
-                  d.status === "approved"
-                    ? "default"
-                    : d.status === "rejected"
-                      ? "destructive"
-                      : "secondary"
-                }
-                className={d.status === "approved" ? "bg-success" : ""}
-              >
-                {d.status === "pending" ? (
-                  <span className="flex items-center gap-1">
-                    <Clock className="h-3 w-3" />
-                    Pending
-                  </span>
-                ) : d.status === "approved" ? (
-                  <span className="flex items-center gap-1">
-                    <CheckCircle2 className="h-3 w-3" />
-                    Approved
-                  </span>
-                ) : (
-                  "Rejected"
-                )}
-              </Badge>
+              {d.status === "pending" ? (
+                <span className="text-xs font-semibold px-2 py-1 rounded-full bg-yellow-500/20 text-yellow-400 border border-yellow-500/30">
+                  ⏳ Pending
+                </span>
+              ) : d.status === "approved" ? (
+                <span className="text-xs font-semibold px-2 py-1 rounded-full bg-green-500/20 text-green-400 border border-green-500/30">
+                  ✅ Completed
+                </span>
+              ) : (
+                <span className="text-xs font-semibold px-2 py-1 rounded-full bg-red-500/20 text-red-400 border border-red-500/30">
+                  ❌ Failed
+                </span>
+              )}
             </div>
           ))}
         </div>
@@ -484,24 +585,9 @@ function PendingWithdrawalsCard({ userId }: { userId: string }) {
 }
 
 function DepositDialog({ onClose }: { onClose: () => void }) {
-  const [activeTab, setActiveTab] = useState<"upi" | "qr" | "erupi">("upi");
-  const [erupiAmount, setErupiAmount] = useState<number | null>(null);
-  const [erupiCustomAmount, setErupiCustomAmount] = useState("");
-  const [erupiQrGenerated, setErupiQrGenerated] = useState(false);
   const [amount, setAmount] = useState("");
   const [upiId, setUpiId] = useState("");
-  const [qrGenerated, setQrGenerated] = useState(false);
   const depositMutation = useDeposit();
-
-  const qrAmountValue = Number.parseFloat(amount);
-  const upiPaymentString =
-    !Number.isNaN(qrAmountValue) && qrAmountValue > 0
-      ? `upi://pay?pa=khalnayak@okaxis&am=${qrAmountValue}&cu=INR&tn=KhalnayakDeposit`
-      : "";
-
-  const qrImageUrl = upiPaymentString
-    ? `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(upiPaymentString)}&color=00FF88&bgcolor=0A0A0A`
-    : "";
 
   const handleUpiSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -528,26 +614,6 @@ function DepositDialog({ onClose }: { onClose: () => void }) {
     }
   };
 
-  const handleQrPaymentDone = async () => {
-    const amountValue = Number.parseFloat(amount);
-    if (Number.isNaN(amountValue) || amountValue <= 0) {
-      toast.error("Please enter a valid amount first");
-      return;
-    }
-    try {
-      const amountInPaise = BigInt(Math.round(amountValue * 100));
-      await depositMutation.mutateAsync(amountInPaise);
-      toast.success(
-        `Payment confirmation submitted for ₹${amountValue}. Admin will verify and credit.`,
-      );
-      setAmount("");
-      setQrGenerated(false);
-      onClose();
-    } catch (error: any) {
-      toast.error(error?.message || "Failed to submit payment confirmation");
-    }
-  };
-
   return (
     <DialogContent className="max-h-[90vh] overflow-y-auto">
       <DialogHeader>
@@ -563,449 +629,92 @@ function DepositDialog({ onClose }: { onClose: () => void }) {
         </DialogDescription>
       </DialogHeader>
 
-      {/* Tab switcher */}
-      <div className="flex rounded-xl overflow-hidden border border-[#00FF88]/20 bg-[#16213E]">
-        <button
-          type="button"
-          onClick={() => setActiveTab("upi")}
-          className={`flex-1 py-2.5 text-sm font-semibold flex items-center justify-center gap-2 transition-all ${
-            activeTab === "upi"
-              ? "bg-[#00FF88]/20 text-[#00FF88] border-b-2 border-[#00FF88]"
-              : "text-gray-400 hover:text-white"
-          }`}
-          data-ocid="wallet.deposit.upi.tab"
-        >
-          <Smartphone className="h-4 w-4" />💳 UPI
-        </button>
-        <button
-          type="button"
-          onClick={() => setActiveTab("qr")}
-          className={`flex-1 py-2.5 text-sm font-semibold flex items-center justify-center gap-2 transition-all ${
-            activeTab === "qr"
-              ? "bg-[#9d4edd]/20 text-[#9d4edd] border-b-2 border-[#9d4edd]"
-              : "text-gray-400 hover:text-white"
-          }`}
-          data-ocid="wallet.deposit.qr.tab"
-        >
-          <Zap className="h-4 w-4" />📷 QR Code
-        </button>
-        <button
-          type="button"
-          onClick={() => setActiveTab("erupi")}
-          className={`flex-1 py-2.5 text-sm font-semibold flex items-center justify-center gap-2 transition-all ${
-            activeTab === "erupi"
-              ? "bg-[#FF6B35]/20 text-[#FF6B35] border-b-2 border-[#FF6B35]"
-              : "text-gray-400 hover:text-white"
-          }`}
-          data-ocid="wallet.deposit.erupi.tab"
-        >
-          🏦 e-RUPI
-        </button>
-      </div>
-
-      {/* UPI Tab */}
-      {activeTab === "upi" && (
-        <form
-          onSubmit={handleUpiSubmit}
-          className="space-y-4"
-          data-ocid="wallet.deposit.upi.panel"
-        >
-          <div className="space-y-2">
-            <Label
-              htmlFor="depositUpiId"
-              style={{ fontFamily: "Rajdhani, sans-serif" }}
-            >
-              UPI ID
-            </Label>
-            <Input
-              id="depositUpiId"
-              value={upiId}
-              onChange={(e) => setUpiId(e.target.value)}
-              placeholder="yourname@oksbi"
-              className="font-mono border-[#00FF88]/30 bg-[#16213E] focus:border-[#00FF88]"
-              data-ocid="wallet.deposit.upi_id.input"
-              required
-            />
-            <p className="text-xs text-muted-foreground">
-              Supported: GPay, PhonePe, Paytm (e.g. name@okaxis, number@paytm)
-            </p>
-          </div>
-
-          <div className="space-y-2">
-            <Label
-              htmlFor="depositAmount"
-              style={{ fontFamily: "Rajdhani, sans-serif" }}
-            >
-              Amount (₹)
-            </Label>
-            <Input
-              id="depositAmount"
-              type="number"
-              step="1"
-              min="10"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              placeholder="Enter amount (min ₹10)"
-              className="border-[#00FF88]/30 bg-[#16213E] focus:border-[#00FF88]"
-              data-ocid="wallet.deposit.amount.input"
-              required
-            />
-          </div>
-
-          <div className="grid grid-cols-4 gap-1">
-            {[100, 500, 1000, 2000].map((preset) => (
-              <button
-                key={preset}
-                type="button"
-                onClick={() => setAmount(preset.toString())}
-                className="py-1.5 text-xs font-semibold rounded-lg border border-[#00FF88]/30 text-[#00FF88] bg-[#00FF88]/5 hover:bg-[#00FF88]/15 transition-colors"
-              >
-                ₹{preset}
-              </button>
-            ))}
-          </div>
-
-          <div className="p-3 rounded-lg bg-blue-950/30 border border-blue-500/20 text-xs text-blue-300 space-y-1">
-            <p className="font-semibold">📌 How it works:</p>
-            <p>1. Enter UPI ID &amp; amount → Submit request</p>
-            <p>
-              2. Pay ₹{amount || "X"} to{" "}
-              <span className="font-mono">khalnayak@okaxis</span>
-            </p>
-            <p>3. Admin verifies &amp; credits your wallet</p>
-          </div>
-
-          <Button
-            type="submit"
-            className="w-full font-bold"
-            style={{
-              background: "linear-gradient(135deg, #00FF88, #00cc6a)",
-              color: "#0A0A0A",
-              fontFamily: "Orbitron, sans-serif",
-            }}
-            disabled={depositMutation.isPending}
-            data-ocid="wallet.deposit.upi.submit_button"
+      <form
+        onSubmit={handleUpiSubmit}
+        className="space-y-4"
+        data-ocid="wallet.deposit.upi.panel"
+      >
+        <div className="space-y-2">
+          <Label
+            htmlFor="depositUpiId"
+            style={{ fontFamily: "Rajdhani, sans-serif" }}
           >
-            {depositMutation.isPending
-              ? "Submitting..."
-              : "⚡ SUBMIT UPI REQUEST"}
-          </Button>
-        </form>
-      )}
+            UPI ID
+          </Label>
+          <Input
+            id="depositUpiId"
+            value={upiId}
+            onChange={(e) => setUpiId(e.target.value)}
+            placeholder="yourname@oksbi"
+            className="font-mono border-[#00FF88]/30 bg-[#16213E] focus:border-[#00FF88]"
+            data-ocid="wallet.deposit.upi_id.input"
+            required
+          />
+          <p className="text-xs text-muted-foreground">
+            Supported: GPay, PhonePe, Paytm (e.g. name@okaxis, number@paytm)
+          </p>
+        </div>
 
-      {/* QR Code Tab */}
-      {activeTab === "qr" && (
-        <div className="space-y-4" data-ocid="wallet.deposit.qr.panel">
-          <div className="space-y-2">
-            <Label
-              htmlFor="qrAmount"
-              style={{ fontFamily: "Rajdhani, sans-serif" }}
-            >
-              Amount (₹)
-            </Label>
-            <Input
-              id="qrAmount"
-              type="number"
-              step="1"
-              min="10"
-              value={amount}
-              onChange={(e) => {
-                setAmount(e.target.value);
-                setQrGenerated(false);
-              }}
-              placeholder="Enter amount (min ₹10)"
-              className="border-[#9d4edd]/30 bg-[#16213E] focus:border-[#9d4edd]"
-              data-ocid="wallet.deposit.qr_amount.input"
-            />
-          </div>
+        <div className="space-y-2">
+          <Label
+            htmlFor="depositAmount"
+            style={{ fontFamily: "Rajdhani, sans-serif" }}
+          >
+            Amount (₹)
+          </Label>
+          <Input
+            id="depositAmount"
+            type="number"
+            step="1"
+            min="10"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            placeholder="Enter amount (min ₹10)"
+            className="border-[#00FF88]/30 bg-[#16213E] focus:border-[#00FF88]"
+            data-ocid="wallet.deposit.amount.input"
+            required
+          />
+        </div>
 
-          <div className="grid grid-cols-4 gap-1">
-            {[100, 500, 1000, 2000].map((preset) => (
-              <button
-                key={preset}
-                type="button"
-                onClick={() => {
-                  setAmount(preset.toString());
-                  setQrGenerated(false);
-                }}
-                className="py-1.5 text-xs font-semibold rounded-lg border border-[#9d4edd]/30 text-[#9d4edd] bg-[#9d4edd]/5 hover:bg-[#9d4edd]/15 transition-colors"
-              >
-                ₹{preset}
-              </button>
-            ))}
-          </div>
-
-          {!qrGenerated ? (
+        <div className="grid grid-cols-4 gap-1">
+          {[100, 500, 1000, 2000].map((preset) => (
             <button
+              key={preset}
               type="button"
-              onClick={() => {
-                const v = Number.parseFloat(amount);
-                if (Number.isNaN(v) || v < 10) {
-                  toast.error("Please enter a valid amount (min ₹10)");
-                  return;
-                }
-                setQrGenerated(true);
-              }}
-              className="w-full py-3 font-bold rounded-xl border-2 border-[#9d4edd] text-[#9d4edd] bg-[#9d4edd]/10 hover:bg-[#9d4edd]/20 transition-all"
-              style={{ fontFamily: "Orbitron, sans-serif", fontSize: "13px" }}
-              data-ocid="wallet.deposit.generate_qr.button"
+              onClick={() => setAmount(preset.toString())}
+              className="py-1.5 text-xs font-semibold rounded-lg border border-[#00FF88]/30 text-[#00FF88] bg-[#00FF88]/5 hover:bg-[#00FF88]/15 transition-colors"
             >
-              📷 GENERATE QR CODE
+              ₹{preset}
             </button>
-          ) : (
-            <div className="space-y-4">
-              {/* QR Code Display */}
-              <div
-                className="flex flex-col items-center gap-3 p-4 rounded-xl border border-[#9d4edd]/40 bg-[#16213E]"
-                data-ocid="wallet.deposit.qr.card"
-              >
-                <p className="text-xs text-[#9d4edd] font-semibold uppercase tracking-wider">
-                  Scan to Pay ₹{amount}
-                </p>
-                <div
-                  className="rounded-xl overflow-hidden border-2 border-[#00FF88]/40 p-2 bg-white"
-                  style={{ boxShadow: "0 0 20px rgba(0,255,136,0.2)" }}
-                >
-                  <img
-                    src={qrImageUrl}
-                    alt={`QR Code for ₹${amount} UPI payment`}
-                    width={200}
-                    height={200}
-                    className="block"
-                  />
-                </div>
-                <div className="text-center space-y-1">
-                  <p className="text-sm font-semibold text-white">
-                    Pay to:{" "}
-                    <span className="text-[#00FF88] font-mono">
-                      khalnayak@okaxis
-                    </span>
-                  </p>
-                  <p className="text-xs text-gray-400">
-                    Amount: ₹{amount} · UPI
-                  </p>
-                </div>
-              </div>
-
-              <div className="p-3 rounded-lg bg-purple-950/30 border border-purple-500/20 text-xs text-purple-300 space-y-1">
-                <p className="font-semibold">📌 Steps to complete payment:</p>
-                <p>1. Open GPay / PhonePe / Paytm</p>
-                <p>2. Scan the QR code above</p>
-                <p>3. Pay ₹{amount} and complete the payment</p>
-                <p>4. Come back &amp; click "✅ Payment Done" below</p>
-              </div>
-
-              <Button
-                onClick={handleQrPaymentDone}
-                className="w-full font-bold"
-                style={{
-                  background: "linear-gradient(135deg, #00FF88, #00cc6a)",
-                  color: "#0A0A0A",
-                  fontFamily: "Orbitron, sans-serif",
-                }}
-                disabled={depositMutation.isPending}
-                data-ocid="wallet.deposit.payment_done.button"
-              >
-                {depositMutation.isPending
-                  ? "Confirming..."
-                  : "✅ PAYMENT DONE"}
-              </Button>
-
-              <button
-                type="button"
-                onClick={() => setQrGenerated(false)}
-                className="w-full text-xs text-gray-400 hover:text-white py-1 transition-colors"
-                data-ocid="wallet.deposit.qr_back.button"
-              >
-                ← Change Amount
-              </button>
-            </div>
-          )}
+          ))}
         </div>
-      )}
 
-      {/* e-RUPI Voucher Tab */}
-      {activeTab === "erupi" && (
-        <div className="space-y-4" data-ocid="wallet.deposit.erupi.panel">
-          {!erupiQrGenerated ? (
-            <>
-              <div className="p-3 rounded-xl bg-[#FF6B35]/10 border border-[#FF6B35]/30">
-                <p
-                  className="text-sm font-bold text-[#FF6B35]"
-                  style={{ fontFamily: "Orbitron, sans-serif" }}
-                >
-                  🏦 e-RUPI Voucher (No Bank Needed)
-                </p>
-                <p className="text-xs text-gray-400 mt-1">
-                  NPCI Government Digital Voucher • One-time use • 24hr validity
-                </p>
-              </div>
-
-              <div className="space-y-2">
-                <Label
-                  style={{ fontFamily: "Rajdhani, sans-serif" }}
-                  className="text-sm font-semibold"
-                >
-                  Select Amount (₹10 – ₹500)
-                </Label>
-                <div className="grid grid-cols-3 gap-2">
-                  {[10, 25, 50, 100, 200, 500].map((preset, idx) => (
-                    <button
-                      key={preset}
-                      type="button"
-                      onClick={() => {
-                        setErupiAmount(preset);
-                        setErupiCustomAmount("");
-                      }}
-                      className={`py-2 text-sm font-bold rounded-lg border transition-all ${
-                        erupiAmount === preset
-                          ? "border-[#FF6B35] bg-[#FF6B35]/20 text-[#FF6B35]"
-                          : "border-[#FF6B35]/20 text-gray-300 bg-[#16213E] hover:border-[#FF6B35]/50"
-                      }`}
-                      data-ocid={`wallet.deposit.erupi_amount.button.${idx + 1}`}
-                    >
-                      ₹{preset}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="space-y-1">
-                <Label
-                  style={{ fontFamily: "Rajdhani, sans-serif" }}
-                  className="text-xs text-gray-400"
-                >
-                  Or enter custom amount
-                </Label>
-                <Input
-                  type="number"
-                  min="10"
-                  max="500"
-                  value={erupiCustomAmount}
-                  onChange={(e) => {
-                    setErupiCustomAmount(e.target.value);
-                    setErupiAmount(null);
-                  }}
-                  placeholder="₹10 – ₹500"
-                  className="border-[#FF6B35]/30 bg-[#16213E] focus:border-[#FF6B35]"
-                  data-ocid="wallet.deposit.erupi_amount.input"
-                />
-              </div>
-
-              <button
-                type="button"
-                onClick={() => {
-                  const amt =
-                    erupiAmount ?? Number.parseFloat(erupiCustomAmount);
-                  if (Number.isNaN(amt) || amt < 10 || amt > 500) {
-                    toast.error(
-                      "Please select or enter a valid amount (₹10–₹500)",
-                    );
-                    return;
-                  }
-                  setErupiAmount(amt);
-                  setErupiQrGenerated(true);
-                }}
-                className="w-full py-3 rounded-xl font-bold text-sm transition-all"
-                style={{
-                  background: "linear-gradient(135deg, #FF6B35, #E84393)",
-                  color: "#fff",
-                  fontFamily: "Orbitron, sans-serif",
-                }}
-                data-ocid="wallet.deposit.generate_erupi.button"
-              >
-                🏦 GENERATE e-RUPI QR
-              </button>
-            </>
-          ) : (
-            <div className="space-y-4" data-ocid="wallet.deposit.erupi.card">
-              <div className="p-3 rounded-xl bg-[#FF6B35]/10 border border-[#FF6B35]/30 text-center space-y-1">
-                <p
-                  className="text-sm font-bold text-[#FF6B35]"
-                  style={{ fontFamily: "Orbitron, sans-serif" }}
-                >
-                  e-RUPI Voucher QR
-                </p>
-                <div className="flex items-center justify-center gap-3 text-xs text-gray-400">
-                  <span className="bg-[#FF6B35]/20 text-[#FF6B35] px-2 py-0.5 rounded-full font-semibold">
-                    ⏰ Valid for 24 hours
-                  </span>
-                  <span className="bg-purple-500/20 text-purple-300 px-2 py-0.5 rounded-full font-semibold">
-                    🔒 One-time use
-                  </span>
-                </div>
-              </div>
-
-              <div className="flex flex-col items-center gap-3">
-                <div className="p-3 rounded-2xl bg-white">
-                  <img
-                    src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(`upi://pay?pa=khalnayak@upi&pn=KhalnayakEsports&am=${erupiAmount}&cu=INR&tn=eRUPI-VOUCHER-${Math.random().toString(36).slice(2, 8).toUpperCase()}`)}&color=FF6B35&bgcolor=FFFFFF`}
-                    alt={`e-RUPI QR for ₹${erupiAmount}`}
-                    className="w-[200px] h-[200px]"
-                  />
-                </div>
-                <p className="text-xs text-gray-400 text-center">
-                  Scan with any UPI app (GPay, PhonePe, Paytm)
-                </p>
-                <p
-                  className="text-lg font-bold text-[#FF6B35]"
-                  style={{ fontFamily: "Orbitron, sans-serif" }}
-                >
-                  ₹{erupiAmount}
-                </p>
-              </div>
-
-              <div className="p-3 rounded-lg bg-blue-950/30 border border-blue-500/20 text-xs text-blue-300 space-y-1">
-                <p className="font-semibold">📌 Steps:</p>
-                <p>1. Open any UPI app</p>
-                <p>2. Scan QR code above</p>
-                <p>3. Complete payment of ₹{erupiAmount}</p>
-                <p>4. Click "Payment Done" below</p>
-              </div>
-
-              <Button
-                type="button"
-                className="w-full font-bold"
-                style={{
-                  background: "linear-gradient(135deg, #00FF88, #00cc6a)",
-                  color: "#0A0A0A",
-                  fontFamily: "Orbitron, sans-serif",
-                }}
-                disabled={depositMutation.isPending}
-                onClick={async () => {
-                  try {
-                    const amountInPaise = BigInt(
-                      Math.round((erupiAmount ?? 0) * 100),
-                    );
-                    await depositMutation.mutateAsync(amountInPaise);
-                    toast.success(`✅ ₹${erupiAmount} added to your wallet!`);
-                    setErupiQrGenerated(false);
-                    setErupiAmount(null);
-                    setErupiCustomAmount("");
-                    onClose();
-                  } catch (err: any) {
-                    toast.error(err?.message || "Failed to confirm payment");
-                  }
-                }}
-                data-ocid="wallet.deposit.erupi_payment_done.button"
-              >
-                {depositMutation.isPending
-                  ? "Processing..."
-                  : "✅ PAYMENT DONE"}
-              </Button>
-
-              <button
-                type="button"
-                onClick={() => setErupiQrGenerated(false)}
-                className="w-full text-xs text-gray-400 hover:text-white py-1 transition-colors"
-                data-ocid="wallet.deposit.erupi_back.button"
-              >
-                ← Change Amount
-              </button>
-            </div>
-          )}
+        <div className="p-3 rounded-lg bg-blue-950/30 border border-blue-500/20 text-xs text-blue-300 space-y-1">
+          <p className="font-semibold">📌 How it works:</p>
+          <p>1. Enter UPI ID &amp; amount → Submit request</p>
+          <p>
+            2. Pay ₹{amount || "X"} to{" "}
+            <span className="font-mono">khalnayak@okaxis</span>
+          </p>
+          <p>3. Admin verifies &amp; credits your wallet</p>
         </div>
-      )}
+
+        <Button
+          type="submit"
+          className="w-full font-bold"
+          style={{
+            background: "linear-gradient(135deg, #00FF88, #00cc6a)",
+            color: "#0A0A0A",
+            fontFamily: "Orbitron, sans-serif",
+          }}
+          disabled={depositMutation.isPending}
+          data-ocid="wallet.deposit.upi.submit_button"
+        >
+          {depositMutation.isPending
+            ? "Submitting..."
+            : "⚡ SUBMIT UPI REQUEST"}
+        </Button>
+      </form>
     </DialogContent>
   );
 }

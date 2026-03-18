@@ -1,4 +1,4 @@
-import { useInternetIdentity } from "@/hooks/useInternetIdentity";
+import { useOtpAuth } from "@/hooks/useOtpAuth";
 import {
   useGetCallerNotifications,
   useMarkNotificationAsRead,
@@ -7,7 +7,7 @@ import { useEffect } from "react";
 import { toast } from "sonner";
 
 export function NotificationPoller() {
-  const { identity } = useInternetIdentity();
+  const { identity } = useOtpAuth();
   const { data: notifications } = useGetCallerNotifications();
   const markAsReadMutation = useMarkNotificationAsRead();
 

@@ -9,7 +9,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useInternetIdentity } from "@/hooks/useInternetIdentity";
+import { useOtpAuth } from "@/hooks/useOtpAuth";
 import {
   useGetCallerTeamRegistrations,
   useGetTeamRegistrations,
@@ -89,21 +89,34 @@ function FreeMatchCard({
       })
     : "Time TBD";
 
-  const statusColor =
+  const _statusColor =
     status === "Live"
       ? "bg-yellow-500/20 text-yellow-400 border-yellow-500/30"
       : "bg-secondary/20 text-secondary border-secondary/30";
 
   return (
     <Card
-      className="border-border/40 bg-card/60 overflow-hidden"
       data-ocid={`free_match.card.${index}`}
+      style={{
+        background: "#16213E",
+        borderRadius: 12,
+        border: "1px solid rgba(0,255,136,0.2)",
+        marginBottom: 12,
+        overflow: "hidden",
+      }}
     >
       <CardContent className="p-4 space-y-3">
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <h3 className="font-bold font-display text-base leading-snug truncate">
+              <h3
+                className="font-bold text-base leading-snug truncate"
+                style={{
+                  fontFamily: "'Orbitron', sans-serif",
+                  color: "#FFFFFF",
+                  textTransform: "uppercase",
+                }}
+              >
                 {match.name}
               </h3>
               <span
@@ -125,12 +138,48 @@ function FreeMatchCard({
               {match.mode} • Prize: {match.prizePool}
             </p>
           </div>
-          <Badge
-            variant="outline"
-            className={`text-[10px] uppercase tracking-wide shrink-0 ${statusColor}`}
+          <span
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 4,
+              padding: "3px 10px",
+              borderRadius: 20,
+              fontSize: 10,
+              fontWeight: 700,
+              fontFamily: "'Rajdhani', sans-serif",
+              textTransform: "uppercase",
+              letterSpacing: "0.05em",
+              flexShrink: 0,
+              background:
+                status === "Live"
+                  ? "rgba(255,68,68,0.15)"
+                  : "rgba(255,215,0,0.15)",
+              color: status === "Live" ? "#FF4444" : "#FFD700",
+              border:
+                status === "Live"
+                  ? "1px solid rgba(255,68,68,0.5)"
+                  : "1px solid rgba(255,215,0,0.5)",
+            }}
           >
-            {status}
-          </Badge>
+            {status === "Live" ? (
+              <>
+                <span
+                  style={{
+                    width: 6,
+                    height: 6,
+                    borderRadius: "50%",
+                    background: "#FF4444",
+                    display: "inline-block",
+                    animation: "pulse 1s cubic-bezier(0.4,0,0.6,1) infinite",
+                  }}
+                />
+                LIVE
+              </>
+            ) : (
+              status
+            )}
+          </span>
         </div>
 
         <div className="text-xs text-muted-foreground/70">
@@ -431,16 +480,20 @@ function MatchCard({ tournament, registeredCount, index }: MatchCardProps) {
     <>
       <Card
         data-ocid={`my_matches.card.${index}`}
-        className="rounded-xl border-border/40 bg-card/50 p-0 overflow-hidden transition-all duration-300"
-        style={
-          isLive
-            ? {
-                boxShadow:
-                  "0 0 20px oklch(0.75 0.18 195 / 0.3), 0 0 1px oklch(0.75 0.18 195 / 0.6)",
-                border: "1px solid oklch(0.75 0.18 195 / 0.45)",
-              }
-            : { border: "1px solid oklch(0.25 0.05 285 / 0.6)" }
-        }
+        className="p-0 overflow-hidden transition-all duration-300"
+        style={{
+          background: "#16213E",
+          borderRadius: 12,
+          marginBottom: 12,
+          border: isLive
+            ? "1px solid rgba(255,68,68,0.5)"
+            : isCompleted
+              ? "1px solid rgba(0,255,136,0.25)"
+              : "1px solid rgba(0,255,136,0.2)",
+          boxShadow: isLive
+            ? "0 0 20px rgba(255,68,68,0.15)"
+            : "0 4px 15px rgba(0,255,136,0.08)",
+        }}
       >
         <CardContent className="p-4 md:p-5">
           {/* Top row: name + starting-soon indicator */}
@@ -448,17 +501,56 @@ function MatchCard({ tournament, registeredCount, index }: MatchCardProps) {
             <div className="min-w-0">
               {/* Status + Starting Soon badges */}
               <div className="flex items-center gap-2 flex-wrap mb-1.5">
-                <Badge
-                  className={
-                    isLive
-                      ? "bg-primary/20 text-primary border border-primary/40 uppercase text-[10px] tracking-widest"
+                <span
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 4,
+                    padding: "3px 10px",
+                    borderRadius: 20,
+                    fontSize: 10,
+                    fontWeight: 700,
+                    fontFamily: "'Rajdhani', sans-serif",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.08em",
+                    background: isLive
+                      ? "rgba(255,68,68,0.15)"
                       : isCompleted
-                        ? "bg-muted text-muted-foreground uppercase text-[10px] tracking-widest"
-                        : "bg-secondary/20 text-secondary border border-secondary/40 uppercase text-[10px] tracking-widest"
-                  }
+                        ? "rgba(0,255,136,0.12)"
+                        : "rgba(255,215,0,0.15)",
+                    color: isLive
+                      ? "#FF4444"
+                      : isCompleted
+                        ? "#00FF88"
+                        : "#FFD700",
+                    border: isLive
+                      ? "1px solid rgba(255,68,68,0.5)"
+                      : isCompleted
+                        ? "1px solid rgba(0,255,136,0.4)"
+                        : "1px solid rgba(255,215,0,0.5)",
+                  }}
                 >
-                  {isLive ? "🔴 Live" : isCompleted ? "Completed" : "Upcoming"}
-                </Badge>
+                  {isLive ? (
+                    <>
+                      <span
+                        style={{
+                          width: 6,
+                          height: 6,
+                          borderRadius: "50%",
+                          background: "#FF4444",
+                          display: "inline-block",
+                          animation:
+                            "pulse 1s cubic-bezier(0.4,0,0.6,1) infinite",
+                        }}
+                      />
+                      LIVE
+                    </>
+                  ) : isCompleted ? (
+                    "✅ COMPLETED"
+                  ) : (
+                    "⏰ UPCOMING"
+                  )}
+                </span>
                 <Badge
                   variant="outline"
                   className="text-[10px] tracking-wide uppercase border-border/50 text-muted-foreground"
@@ -479,7 +571,14 @@ function MatchCard({ tournament, registeredCount, index }: MatchCardProps) {
                 )}
               </div>
 
-              <h3 className="font-display font-bold text-base md:text-lg leading-tight truncate">
+              <h3
+                className="font-bold text-base md:text-lg leading-tight truncate"
+                style={{
+                  fontFamily: "'Orbitron', sans-serif",
+                  color: "#FFFFFF",
+                  textTransform: "uppercase",
+                }}
+              >
                 {tournament.name}
               </h3>
               <p className="text-xs text-muted-foreground flex items-center gap-1.5 mt-1">
@@ -600,7 +699,7 @@ function MatchCard({ tournament, registeredCount, index }: MatchCardProps) {
 // ── MyMatchesPage ─────────────────────────────────────────────────────────────
 
 export function MyMatchesPage() {
-  const { identity, login } = useInternetIdentity();
+  const { identity, login } = useOtpAuth();
   const [freeMatches] = useState<FreeMyMatch[]>(() => loadFreeMyMatches());
   const { data: myRegistrations, isLoading: regLoading } =
     useGetCallerTeamRegistrations();
@@ -671,6 +770,7 @@ export function MyMatchesPage() {
     <div
       className="container py-8 md:py-12 space-y-8"
       data-ocid="my_matches.page"
+      style={{ minHeight: "100vh", background: "#0A0A0A" }}
     >
       {/* Header */}
       <div className="flex items-center gap-3">
@@ -684,10 +784,24 @@ export function MyMatchesPage() {
           <Swords className="h-5 w-5 text-primary" />
         </div>
         <div>
-          <h1 className="text-3xl md:text-4xl font-bold font-display">
-            My Matches
+          <h1
+            className="text-3xl md:text-4xl font-bold"
+            style={{
+              fontFamily: "'Orbitron', sans-serif",
+              color: "#00FF88",
+              textTransform: "uppercase",
+              textShadow: "0 0 16px rgba(0,255,136,0.4)",
+            }}
+          >
+            ⚔️ My Matches
           </h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
+          <p
+            className="text-sm mt-0.5"
+            style={{
+              fontFamily: "'Rajdhani', sans-serif",
+              color: "rgba(255,255,255,0.5)",
+            }}
+          >
             Your registered tournaments — access room details and results here
           </p>
         </div>

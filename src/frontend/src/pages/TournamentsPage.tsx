@@ -617,31 +617,9 @@ function FreeTournamentCard({ t }: { t: FreeTournament }) {
 
   return (
     <>
-      <div
-        className="rounded-[12px] overflow-hidden transition-all duration-200"
-        style={{
-          background: "rgba(16,24,48,0.85)",
-          backdropFilter: "blur(12px)",
-          WebkitBackdropFilter: "blur(12px)",
-          border: `1px solid ${accent}33`,
-          boxShadow: "0 4px 20px rgba(0,0,0,0.5)",
-        }}
-        onMouseEnter={(e) => {
-          (e.currentTarget as HTMLElement).style.boxShadow =
-            `0 8px 32px ${accent}33, 0 4px 20px rgba(0,0,0,0.5)`;
-          (e.currentTarget as HTMLElement).style.borderColor = `${accent}66`;
-        }}
-        onMouseLeave={(e) => {
-          (e.currentTarget as HTMLElement).style.boxShadow =
-            "0 4px 20px rgba(0,0,0,0.5)";
-          (e.currentTarget as HTMLElement).style.borderColor = `${accent}33`;
-        }}
-      >
+      <div className="fire-card">
         {/* Top gradient bar */}
-        <div
-          className="h-1 w-full"
-          style={{ background: `linear-gradient(90deg, ${accent}, #9d4edd)` }}
-        />
+        <div className="fire-card-topbar" />
 
         <div className="p-4 space-y-3">
           {/* Badges row */}
@@ -650,11 +628,9 @@ function FreeTournamentCard({ t }: { t: FreeTournament }) {
             <span
               className="text-xs font-bold uppercase px-2 py-0.5 rounded-full"
               style={{
-                background: isSolo
-                  ? "rgba(255,215,0,0.12)"
-                  : "rgba(0,255,136,0.12)",
-                color: isSolo ? "#ffd700" : "#00FF88",
-                border: `1px solid ${isSolo ? "rgba(255,215,0,0.35)" : "rgba(0,255,136,0.35)"}`,
+                background: "rgba(255,140,0,0.12)",
+                color: "#FF8C00",
+                border: "1px solid rgba(255,140,0,0.35)",
               }}
             >
               {isSolo ? "👤 SOLO" : "👥 TEAM"}
@@ -662,9 +638,9 @@ function FreeTournamentCard({ t }: { t: FreeTournament }) {
             <span
               className="text-xs font-medium px-2 py-0.5 rounded-full"
               style={{
-                background: "rgba(157,78,221,0.15)",
-                color: "#c084fc",
-                border: "1px solid rgba(157,78,221,0.3)",
+                background: "rgba(255,140,0,0.15)",
+                color: "#FF8C00",
+                border: "1px solid rgba(255,140,0,0.3)",
               }}
             >
               {t.mode} {getTournamentTypeLabel(t.tournamentType)}
@@ -674,7 +650,10 @@ function FreeTournamentCard({ t }: { t: FreeTournament }) {
           {/* Name */}
           <h3
             className="font-display font-bold text-white leading-tight"
-            style={{ fontSize: "clamp(1rem,4vw,1.15rem)" }}
+            style={{
+              fontSize: "clamp(1rem,4vw,1.15rem)",
+              textShadow: "0 0 12px rgba(255,140,0,0.4)",
+            }}
           >
             {t.name}
           </h3>
@@ -686,8 +665,8 @@ function FreeTournamentCard({ t }: { t: FreeTournament }) {
           <div
             className="rounded-lg p-3 space-y-2"
             style={{
-              background: "rgba(255,255,255,0.04)",
-              border: "1px solid rgba(255,255,255,0.07)",
+              background: "rgba(80,20,0,0.30)",
+              border: "1px solid rgba(255,100,0,0.15)",
             }}
           >
             <div className="flex justify-between text-sm">
@@ -719,8 +698,8 @@ function FreeTournamentCard({ t }: { t: FreeTournament }) {
             style={{
               background: isFull
                 ? "rgba(255,50,50,0.1)"
-                : "rgba(0,255,136,0.07)",
-              border: `1px solid ${isFull ? "rgba(255,50,50,0.3)" : "rgba(0,255,136,0.2)"}`,
+                : "rgba(255,100,0,0.08)",
+              border: `1px solid ${isFull ? "rgba(255,50,50,0.3)" : "rgba(255,100,0,0.25)"}`,
               fontFamily: "'Rajdhani', sans-serif",
             }}
           >
@@ -730,24 +709,64 @@ function FreeTournamentCard({ t }: { t: FreeTournament }) {
                 {joinCount}/{t.maxPlayers} FULL
               </span>
             ) : (
-              <span style={{ color: "#00FF88" }}>
+              <span style={{ color: "#FF8C00" }}>
                 {joinCount}/{t.maxPlayers} &nbsp;·&nbsp; Only {spotsLeft} Spots
                 Left
               </span>
             )}
           </div>
 
+          {/* Progress bar — spots filled */}
+          {(() => {
+            const pct = Math.min(100, (joinCount / t.maxPlayers) * 100);
+            return (
+              <div>
+                <div
+                  style={{
+                    height: 4,
+                    background: "#1a1a2e",
+                    borderRadius: 2,
+                    marginTop: 4,
+                  }}
+                >
+                  <div
+                    style={{
+                      height: 4,
+                      width: `${pct}%`,
+                      background: "linear-gradient(90deg, #9d4edd, #00FF88)",
+                      borderRadius: 2,
+                      transition: "width 0.4s ease",
+                    }}
+                  />
+                </div>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    fontSize: 11,
+                    color: "rgba(255,255,255,0.45)",
+                    marginTop: 4,
+                    fontFamily: "'Rajdhani', sans-serif",
+                  }}
+                >
+                  <span>{joinCount} joined</span>
+                  <span>{spotsLeft} spots left</span>
+                </div>
+              </div>
+            );
+          })()}
+
           {/* Prize Distribution */}
           <div
             className="rounded-lg p-3 space-y-1.5"
             style={{
-              background: "rgba(255,215,0,0.05)",
-              border: "1px solid rgba(255,215,0,0.18)",
+              background: "rgba(60,15,0,0.35)",
+              border: "1px solid rgba(255,100,0,0.20)",
             }}
           >
             <p
               className="text-xs font-bold uppercase tracking-wide mb-2"
-              style={{ color: "#ffd700" }}
+              style={{ color: "#FF8C00" }}
             >
               🏆 Prize Distribution
             </p>
@@ -771,7 +790,7 @@ function FreeTournamentCard({ t }: { t: FreeTournament }) {
                 </div>
                 <span
                   className="font-bold text-xs shrink-0"
-                  style={{ color: "#00FF88" }}
+                  style={{ color: "#FFD700" }}
                 >
                   {prize.amount}
                 </span>
@@ -804,14 +823,14 @@ function FreeTournamentCard({ t }: { t: FreeTournament }) {
               className="flex-1 py-2 rounded-lg font-bold text-xs uppercase tracking-wide transition-all"
               style={{
                 background: matchStarted
-                  ? "linear-gradient(135deg, #ffd700, #ff8c00)"
+                  ? "linear-gradient(135deg, #FF8C00, #8B0000)"
                   : "rgba(255,255,255,0.06)",
-                color: matchStarted ? "#0A0A0A" : "rgba(255,255,255,0.25)",
+                color: matchStarted ? "#ffffff" : "rgba(255,255,255,0.25)",
                 border: matchStarted
-                  ? "1px solid #ffd700"
+                  ? "1px solid #FF8C00"
                   : "1px solid rgba(255,255,255,0.1)",
                 boxShadow: matchStarted
-                  ? "0 0 12px rgba(255,215,0,0.5)"
+                  ? "0 0 12px rgba(255,68,0,0.5)"
                   : "none",
                 cursor: matchStarted ? "pointer" : "not-allowed",
                 fontFamily: "'Orbitron', sans-serif",
@@ -870,9 +889,9 @@ function FreeTournamentCard({ t }: { t: FreeTournament }) {
               style={{
                 background: isFull
                   ? "rgba(255,255,255,0.08)"
-                  : `linear-gradient(135deg, ${accent}, #00cc6a)`,
-                color: isFull ? "rgba(255,255,255,0.3)" : "#0A0A0A",
-                boxShadow: isFull ? "none" : `0 0 16px ${accent}66`,
+                  : "linear-gradient(135deg, #FF8C00, #8B0000)",
+                color: isFull ? "rgba(255,255,255,0.3)" : "#ffffff",
+                boxShadow: isFull ? "none" : "0 0 16px rgba(255,140,0,0.5)",
                 fontFamily: "'Orbitron', sans-serif",
                 cursor: isFull ? "not-allowed" : "pointer",
               }}
@@ -920,38 +939,82 @@ function FreeTournamentCard({ t }: { t: FreeTournament }) {
                 border: "1px solid rgba(255,255,255,0.1)",
               }}
             >
-              <div className="flex justify-between items-center">
-                <span style={{ color: "rgba(255,255,255,0.5)", fontSize: 13 }}>
+              {/* Room ID row */}
+              <div className="space-y-1">
+                <span style={{ color: "rgba(255,255,255,0.5)", fontSize: 12 }}>
                   Room ID
                 </span>
-                <span className="font-mono font-bold text-white">{roomId}</span>
+                <div className="flex items-center justify-between gap-2">
+                  <span
+                    className="font-mono font-bold text-white text-lg"
+                    style={{ letterSpacing: "0.05em" }}
+                  >
+                    {roomId}
+                  </span>
+                  <button
+                    type="button"
+                    style={{
+                      fontFamily: "'Orbitron', sans-serif",
+                      fontSize: 11,
+                      fontWeight: 700,
+                      padding: "5px 12px",
+                      borderRadius: 7,
+                      border: "1.5px solid #00FF88",
+                      background: "rgba(0,255,136,0.13)",
+                      color: "#00FF88",
+                      cursor: "pointer",
+                      whiteSpace: "nowrap",
+                    }}
+                    onClick={() => {
+                      navigator.clipboard.writeText(roomId ?? "").then(() => {
+                        toast.success("✅ Copied!", { duration: 2000 });
+                      });
+                    }}
+                  >
+                    📋 COPY ROOM ID
+                  </button>
+                </div>
               </div>
-              <div className="flex justify-between items-center">
-                <span style={{ color: "rgba(255,255,255,0.5)", fontSize: 13 }}>
+              {/* Password row */}
+              <div className="space-y-1">
+                <span style={{ color: "rgba(255,255,255,0.5)", fontSize: 12 }}>
                   Password
                 </span>
-                <span className="font-mono font-bold text-white">
-                  {roomPassword || "—"}
-                </span>
+                <div className="flex items-center justify-between gap-2">
+                  <span
+                    className="font-mono font-bold text-white text-lg"
+                    style={{ letterSpacing: "0.05em" }}
+                  >
+                    {roomPassword || "—"}
+                  </span>
+                  <button
+                    type="button"
+                    style={{
+                      fontFamily: "'Orbitron', sans-serif",
+                      fontSize: 11,
+                      fontWeight: 700,
+                      padding: "5px 12px",
+                      borderRadius: 7,
+                      border: "1.5px solid #9d4edd",
+                      background: "rgba(157,78,221,0.13)",
+                      color: "#9d4edd",
+                      cursor: roomPassword ? "pointer" : "not-allowed",
+                      opacity: roomPassword ? 1 : 0.5,
+                      whiteSpace: "nowrap",
+                    }}
+                    disabled={!roomPassword}
+                    onClick={() => {
+                      if (!roomPassword) return;
+                      navigator.clipboard.writeText(roomPassword).then(() => {
+                        toast.success("✅ Copied!", { duration: 2000 });
+                      });
+                    }}
+                  >
+                    📋 COPY PASSWORD
+                  </button>
+                </div>
               </div>
             </div>
-            <button
-              type="button"
-              className="w-full py-2 rounded-lg font-bold text-sm"
-              style={{
-                background: "linear-gradient(135deg, #9d4edd, #6a0dad)",
-                color: "#fff",
-                fontFamily: "'Orbitron', sans-serif",
-              }}
-              onClick={() => {
-                const text = `Room ID: ${roomId}\nPassword: ${roomPassword}`;
-                navigator.clipboard.writeText(text).then(() => {
-                  toast.success("📋 Copied to clipboard!");
-                });
-              }}
-            >
-              📋 COPY
-            </button>
             <button
               type="button"
               className="w-full py-1.5 rounded-lg text-sm"
@@ -985,6 +1048,7 @@ export function TournamentsPage() {
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [section, setSection] = useState<"free" | "paid">("free");
+  const [filterChip, setFilterChip] = useState("ALL");
   const [publishedIds, setPublishedIds] = useState<Set<string>>(() => {
     const ids = new Set<string>();
     for (const t of FREE_TOURNAMENTS) {
@@ -1082,6 +1146,52 @@ export function TournamentsPage() {
               data-ocid="tournaments.section.tab"
             >
               {tab === "free" ? "🎁 Free Tournaments" : "💰 Paid Tournaments"}
+            </button>
+          ))}
+        </div>
+
+        {/* Filter chips row — visual mode filter */}
+        <div
+          style={{
+            overflowX: "auto",
+            display: "flex",
+            gap: 8,
+            padding: "0 0 12px",
+            msOverflowStyle: "none",
+            scrollbarWidth: "none",
+          }}
+          className="scrollbar-hide"
+          data-ocid="tournaments.mode_filter.panel"
+        >
+          {["ALL", "BG", "4V4", "1V1", "2V2"].map((chip) => (
+            <button
+              key={chip}
+              type="button"
+              onClick={() => setFilterChip(chip)}
+              style={{
+                flexShrink: 0,
+                padding: "6px 16px",
+                borderRadius: 20,
+                background:
+                  filterChip === chip ? "#00FF88" : "rgba(255,255,255,0.08)",
+                color: filterChip === chip ? "#0A0A0A" : "#888",
+                fontFamily: "'Orbitron', sans-serif",
+                fontSize: 11,
+                fontWeight: 700,
+                border:
+                  filterChip === chip
+                    ? "none"
+                    : "1px solid rgba(255,255,255,0.12)",
+                boxShadow:
+                  filterChip === chip ? "0 0 12px rgba(0,255,136,0.4)" : "none",
+                cursor: "pointer",
+                textTransform: "uppercase",
+                letterSpacing: 1,
+                transition: "all 0.15s ease",
+              }}
+              data-ocid="tournaments.mode_filter.tab"
+            >
+              {chip}
             </button>
           ))}
         </div>
@@ -1292,71 +1402,33 @@ function TournamentCard({ tournament }: { tournament: Tournament }) {
           : "🥈";
 
   return (
-    <div
-      className="rounded-[12px] overflow-hidden transition-all duration-200"
-      style={{
-        background: "rgba(16,24,48,0.85)",
-        backdropFilter: "blur(12px)",
-        WebkitBackdropFilter: "blur(12px)",
-        border: isOngoing
-          ? "1px solid rgba(239,68,68,0.5)"
-          : "1px solid rgba(0,255,136,0.18)",
-        boxShadow: isOngoing
-          ? "0 4px 24px rgba(239,68,68,0.2)"
-          : "0 4px 20px rgba(0,0,0,0.5)",
-      }}
-      onMouseEnter={(e) => {
-        const el = e.currentTarget as HTMLElement;
-        el.style.boxShadow = isOngoing
-          ? "0 8px 32px rgba(239,68,68,0.3)"
-          : "0 8px 32px rgba(0,255,136,0.15), 0 4px 20px rgba(0,0,0,0.5)";
-        el.style.borderColor = isOngoing
-          ? "rgba(239,68,68,0.8)"
-          : "rgba(0,255,136,0.4)";
-      }}
-      onMouseLeave={(e) => {
-        const el = e.currentTarget as HTMLElement;
-        el.style.boxShadow = isOngoing
-          ? "0 4px 24px rgba(239,68,68,0.2)"
-          : "0 4px 20px rgba(0,0,0,0.5)";
-        el.style.borderColor = isOngoing
-          ? "rgba(239,68,68,0.5)"
-          : "rgba(0,255,136,0.18)";
-      }}
-    >
-      <div
-        className="h-1 w-full"
-        style={{
-          background: isOngoing
-            ? "linear-gradient(90deg, #ef4444, #ff6b6b)"
-            : isCompleted
-              ? "linear-gradient(90deg, #555, #777)"
-              : "linear-gradient(90deg, #00FF88, #9d4edd)",
-        }}
-      />
+    <div className="fire-card">
+      <div className="fire-card-topbar" />
 
       <div className="p-4 space-y-3">
         <div className="flex items-center justify-between">
-          <span
-            className="text-xs font-bold uppercase px-2 py-0.5 rounded-full"
-            style={{
-              background: isOngoing
-                ? "rgba(239,68,68,0.2)"
-                : isCompleted
-                  ? "rgba(100,100,100,0.2)"
-                  : "rgba(0,255,136,0.12)",
-              color: isOngoing ? "#ff6b6b" : isCompleted ? "#888" : "#00FF88",
-              border: `1px solid ${isOngoing ? "rgba(239,68,68,0.4)" : isCompleted ? "rgba(100,100,100,0.3)" : "rgba(0,255,136,0.3)"}`,
-            }}
-          >
-            {isOngoing ? "🔴 LIVE" : isCompleted ? "✅ DONE" : "⏰ UPCOMING"}
-          </span>
+          {isOngoing ? (
+            <span className="fire-badge-live">🔴 LIVE</span>
+          ) : isCompleted ? (
+            <span className="fire-badge-completed">✅ DONE</span>
+          ) : (
+            <span
+              className="text-xs font-bold uppercase px-2 py-0.5 rounded-full"
+              style={{
+                background: "rgba(255,140,0,0.12)",
+                color: "#FF8C00",
+                border: "1px solid rgba(255,140,0,0.35)",
+              }}
+            >
+              ⏰ UPCOMING
+            </span>
+          )}
           <span
             className="text-xs font-medium px-2 py-0.5 rounded-full"
             style={{
-              background: "rgba(157,78,221,0.15)",
-              color: "#c084fc",
-              border: "1px solid rgba(157,78,221,0.3)",
+              background: "rgba(255,140,0,0.15)",
+              color: "#FF8C00",
+              border: "1px solid rgba(255,140,0,0.3)",
             }}
           >
             {modeIcon} {getTournamentTypeLabel(tournament.tournamentType)}
@@ -1365,7 +1437,10 @@ function TournamentCard({ tournament }: { tournament: Tournament }) {
 
         <h3
           className="font-display font-bold text-white leading-tight"
-          style={{ fontSize: "clamp(1rem, 4vw, 1.15rem)" }}
+          style={{
+            fontSize: "clamp(1rem, 4vw, 1.15rem)",
+            textShadow: "0 0 12px rgba(255,140,0,0.35)",
+          }}
         >
           {tournament.name}
         </h3>
@@ -1396,8 +1471,8 @@ function TournamentCard({ tournament }: { tournament: Tournament }) {
         <div
           className="rounded-lg p-3 space-y-2"
           style={{
-            background: "rgba(255,255,255,0.04)",
-            border: "1px solid rgba(255,255,255,0.07)",
+            background: "rgba(80,20,0,0.30)",
+            border: "1px solid rgba(255,100,0,0.15)",
           }}
         >
           <div className="flex justify-between text-sm">
@@ -1408,7 +1483,7 @@ function TournamentCard({ tournament }: { tournament: Tournament }) {
           </div>
           <div className="flex justify-between text-sm">
             <span style={{ color: "rgba(255,255,255,0.5)" }}>Prize Pool</span>
-            <span className="font-bold" style={{ color: "#00FF88" }}>
+            <span className="font-bold" style={{ color: "#FFD700" }}>
               {formatCurrency(tournament.prizePool)}
             </span>
           </div>
@@ -1424,6 +1499,43 @@ function TournamentCard({ tournament }: { tournament: Tournament }) {
             </span>
           </div>
         </div>
+
+        {/* Progress bar — teams registered */}
+        {(() => {
+          const totalTeams = Number(tournament.maxTeams);
+          // Use a simple visual based on status; real count not available on list
+          const pct = isCompleted ? 100 : isOngoing ? 75 : 30;
+          return (
+            <div style={{ marginBottom: 12 }}>
+              <div
+                style={{ height: 4, background: "#1a1a2e", borderRadius: 2 }}
+              >
+                <div
+                  style={{
+                    height: 4,
+                    width: `${pct}%`,
+                    background: "linear-gradient(90deg, #9d4edd, #00FF88)",
+                    borderRadius: 2,
+                    transition: "width 0.4s ease",
+                  }}
+                />
+              </div>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  fontSize: 11,
+                  color: "rgba(255,255,255,0.45)",
+                  marginTop: 4,
+                  fontFamily: "'Rajdhani', sans-serif",
+                }}
+              >
+                <span>0/{totalTeams} teams</span>
+                <span>{totalTeams} spots total</span>
+              </div>
+            </div>
+          );
+        })()}
 
         <Link
           to="/tournament/$id"

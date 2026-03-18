@@ -1,5 +1,5 @@
-import { useInternetIdentity } from "@/hooks/useInternetIdentity";
 import { useLocalAuth } from "@/hooks/useLocalAuth";
+import { useOtpAuth } from "@/hooks/useOtpAuth";
 import { useGetTournaments } from "@/hooks/useQueries";
 import { decodeTournament, formatCurrency } from "@/utils/format";
 import { Link } from "@tanstack/react-router";
@@ -9,7 +9,7 @@ import { toast } from "sonner";
 // ─── Top Bar ──────────────────────────────────────────────────────────────────
 
 function TopBar() {
-  const { identity } = useInternetIdentity();
+  const { identity } = useOtpAuth();
   const { isLoggedIn } = useLocalAuth();
 
   return (
@@ -231,7 +231,7 @@ function HeroSection() {
         style={{ maxWidth: 400, position: "relative", zIndex: 1 }}
       >
         <Link
-          to="/register"
+          to="/login"
           data-ocid="home.hero.get_started.primary_button"
           style={{ flex: 1 }}
         >
@@ -349,6 +349,54 @@ const STATIC_UPCOMING = [
     to: "/tournaments",
   },
 ];
+
+// ─── Stats Section ──────────────────────────────────────────────────────────────
+
+function StatsSection() {
+  const stats = [
+    { label: "TOTAL PLAYERS", value: "12,450+", icon: "👥" },
+    { label: "TOURNAMENTS", value: "234+", icon: "🏆" },
+    { label: "PRIZE POOL", value: "₹50K+", icon: "💰" },
+  ];
+  return (
+    <section className="px-4 pb-6" data-ocid="home.stats.section">
+      <div className="grid grid-cols-3 gap-3">
+        {stats.map((s) => (
+          <div
+            key={s.label}
+            className="gaming-card text-center"
+            style={{ padding: "12px 8px" }}
+          >
+            <div style={{ fontSize: 22, marginBottom: 4 }}>{s.icon}</div>
+            <div
+              style={{
+                fontFamily: "'Orbitron', sans-serif",
+                fontWeight: 900,
+                fontSize: "clamp(11px, 3vw, 16px)",
+                color: "#00FF88",
+                textShadow: "0 0 10px rgba(0,255,136,0.5)",
+              }}
+            >
+              {s.value}
+            </div>
+            <div
+              style={{
+                fontFamily: "'Rajdhani', sans-serif",
+                fontSize: 10,
+                color: "rgba(255,255,255,0.55)",
+                textTransform: "uppercase",
+                letterSpacing: "0.05em",
+                marginTop: 2,
+              }}
+            >
+              {s.label}
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
 
 function UpcomingTournamentsSection() {
   const { data: tournaments } = useGetTournaments();
@@ -569,6 +617,7 @@ export function HomePage() {
     >
       <TopBar />
       <HeroSection />
+      <StatsSection />
       <UpcomingTournamentsSection />
     </div>
   );
