@@ -31,6 +31,46 @@ import {
 import { useState } from "react";
 import { HeaderInstallButton } from "./InstallPrompt";
 
+// ─── KL Esports Life Text Logo ─────────────────────────────────────────────────
+export function KLEsportsLogo({ className }: { className?: string }) {
+  return (
+    <span
+      className={className}
+      style={{
+        fontFamily: "'Orbitron', 'Rajdhani', sans-serif",
+        fontWeight: 900,
+        letterSpacing: "0.06em",
+        textTransform: "uppercase",
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 3,
+        lineHeight: 1,
+      }}
+    >
+      <span
+        style={{
+          color: "#00FF88",
+          textShadow:
+            "0 0 10px rgba(0,255,136,0.9), 0 0 20px rgba(0,255,136,0.5)",
+        }}
+      >
+        KL
+      </span>
+      <span
+        style={{
+          background: "linear-gradient(90deg, #9d4edd, #c77dff)",
+          WebkitBackgroundClip: "text",
+          WebkitTextFillColor: "transparent",
+          backgroundClip: "text",
+          filter: "drop-shadow(0 0 6px rgba(157,78,221,0.7))",
+        }}
+      >
+        Esports Life
+      </span>
+    </span>
+  );
+}
+
 export function Header() {
   const { identity, clear } = useInternetIdentity();
   const { profile } = useIIProfile();
@@ -40,7 +80,6 @@ export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const router = useRouter();
 
-  // Automatically create profile + wallet for new users on first login
   useAutoSetupProfile();
 
   const isLoggedIn = !!identity && !identity.getPrincipal().isAnonymous();
@@ -66,21 +105,10 @@ export function Header() {
   return (
     <header className="sticky top-0 z-50 w-full border-b border-primary/20 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
       <div className="container flex h-14 sm:h-16 items-center justify-between px-3 sm:px-8">
+        {/* Logo */}
         <Link to="/" className="flex items-center space-x-2 group">
-          <img
-            src="/assets/generated/kl-esports-life-logo-transparent.dim_400x300.png"
-            alt="Khalnayak Espots"
-            className="h-8 w-8 sm:h-10 sm:w-10 object-contain transition-all group-hover:drop-shadow-[0_0_10px_rgba(0,245,255,0.8)]"
-            style={{
-              filter: "drop-shadow(0 0 4px rgba(0,245,255,0.5))",
-            }}
-          />
-          <span className="text-xl font-bold font-display glow-cyan hidden sm:inline">
-            KHALNAYAK
-          </span>
-          <span className="text-xl font-bold font-display text-secondary hidden sm:inline">
-            ESPOTS
-          </span>
+          {/* Text logo — always visible */}
+          <KLEsportsLogo className="text-base sm:text-lg" />
         </Link>
 
         {/* Desktop Navigation */}
@@ -98,12 +126,10 @@ export function Header() {
         </nav>
 
         <div className="flex items-center space-x-4">
-          {/* PWA Install Button */}
           <HeaderInstallButton />
 
           {isLoggedIn ? (
             <>
-              {/* Token Balance */}
               <Link to="/earn">
                 <Button
                   variant="outline"
@@ -115,7 +141,6 @@ export function Header() {
                 </Button>
               </Link>
 
-              {/* Wallet Balance */}
               <Link to="/wallet">
                 <Button
                   variant="outline"
@@ -129,7 +154,6 @@ export function Header() {
                 </Button>
               </Link>
 
-              {/* User Menu */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
@@ -171,8 +195,7 @@ export function Header() {
                       className="cursor-pointer"
                       data-ocid="header.link"
                     >
-                      <User className="mr-2 h-4 w-4" />
-                      My Profile
+                      <User className="mr-2 h-4 w-4" /> My Profile
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
@@ -181,8 +204,7 @@ export function Header() {
                       className="cursor-pointer"
                       data-ocid="header.link"
                     >
-                      <Wallet className="mr-2 h-4 w-4" />
-                      Wallet
+                      <Wallet className="mr-2 h-4 w-4" /> Wallet
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
@@ -191,8 +213,7 @@ export function Header() {
                       className="cursor-pointer text-primary"
                       data-ocid="header.my_matches.link"
                     >
-                      <Swords className="mr-2 h-4 w-4" />
-                      My Matches
+                      <Swords className="mr-2 h-4 w-4" /> My Matches
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
@@ -201,8 +222,8 @@ export function Header() {
                       className="cursor-pointer text-yellow-400"
                       data-ocid="header.link"
                     >
-                      <Coins className="mr-2 h-4 w-4" />
-                      Earn Tokens ({tokenBalance} 🪙)
+                      <Coins className="mr-2 h-4 w-4" /> Earn Tokens (
+                      {tokenBalance} 🪙)
                     </Link>
                   </DropdownMenuItem>
                   {isAdmin && (
@@ -214,8 +235,7 @@ export function Header() {
                           className="cursor-pointer text-primary"
                           data-ocid="header.link"
                         >
-                          <Shield className="mr-2 h-4 w-4" />
-                          Admin Panel
+                          <Shield className="mr-2 h-4 w-4" /> Admin Panel
                         </Link>
                       </DropdownMenuItem>
                     </>
@@ -226,8 +246,7 @@ export function Header() {
                     className="cursor-pointer text-destructive"
                     data-ocid="header.delete_button"
                   >
-                    <LogOut className="mr-2 h-4 w-4" />
-                    Logout
+                    <LogOut className="mr-2 h-4 w-4" /> Logout
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -242,7 +261,6 @@ export function Header() {
             </Button>
           )}
 
-          {/* Mobile Menu */}
           <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
             <SheetTrigger asChild className="md:hidden">
               <Button variant="ghost" size="icon">

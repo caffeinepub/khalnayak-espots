@@ -5,8 +5,8 @@
     <meta http-equiv="Cache-Control" content="public, max-age=3600" />
 
     <!-- Primary Meta -->
-    <meta name="description" content="Khalnayak Espots - Free Fire Tournament Platform. Compete, win prizes, and climb the leaderboard!" />
-    <meta name="keywords" content="free fire, tournament, esports, gaming, battle royale, prizes, khalnayak" />
+    <meta name="description" content="KL TOURNAMENTS - Free Fire Tournament Platform. Compete, win prizes, and dominate the battleground!" />
+    <meta name="keywords" content="free fire, tournament, esports, gaming, battle royale, prizes, KL tournaments" />
     <meta name="author" content="KL Softwer" />
     <meta name="robots" content="index, follow" />
 
@@ -19,39 +19,44 @@
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="apple-mobile-web-app-title" content="Khalnayak" />
-    <meta name="application-name" content="Khalnayak Espots" />
+    <meta name="apple-mobile-web-app-title" content="KL" />
+    <meta name="application-name" content="KL TOURNAMENTS" />
     <meta name="msapplication-TileColor" content="#000000" />
+    <meta name="msapplication-TileImage" content="/assets/generated/kl-icon-192.dim_192x192.png" />
     <meta name="msapplication-tap-highlight" content="no" />
 
-    <!-- Apple Touch Icons (Safari PWA) -->
-    <link rel="apple-touch-icon" href="/assets/generated/pwa-icon-192.dim_192x192.png" />
-    <link rel="apple-touch-icon" sizes="192x192" href="/assets/generated/pwa-icon-192.dim_192x192.png" />
-    <link rel="apple-touch-icon" sizes="512x512" href="/assets/generated/pwa-icon-512-transparent.dim_512x512.png" />
+    <!-- Apple Touch Icons (iOS PWA) -->
+    <link rel="apple-touch-icon" href="/assets/generated/kl-icon-192.dim_192x192.png" />
+    <link rel="apple-touch-icon" sizes="64x64" href="/assets/generated/kl-icon-64.dim_64x64.png" />
+    <link rel="apple-touch-icon" sizes="128x128" href="/assets/generated/kl-icon-128.dim_128x128.png" />
+    <link rel="apple-touch-icon" sizes="192x192" href="/assets/generated/kl-icon-192.dim_192x192.png" />
+    <link rel="apple-touch-icon" sizes="512x512" href="/assets/generated/kl-icon-512.dim_512x512.png" />
+
+    <!-- Apple Splash Screen -->
+    <link rel="apple-touch-startup-image" href="/assets/generated/kl-splash.dim_1080x1920.png" />
 
     <!-- Favicon -->
-    <link rel="icon" type="image/png" sizes="192x192" href="/assets/generated/pwa-icon-192.dim_192x192.png" />
-    <link rel="icon" type="image/png" sizes="512x512" href="/assets/generated/pwa-icon-512-transparent.dim_512x512.png" />
-    <link rel="shortcut icon" href="/assets/generated/pwa-icon-192.dim_192x192.png" />
+    <link rel="icon" type="image/png" sizes="64x64" href="/assets/generated/kl-icon-64.dim_64x64.png" />
+    <link rel="icon" type="image/png" sizes="128x128" href="/assets/generated/kl-icon-128.dim_128x128.png" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/assets/generated/kl-icon-192.dim_192x192.png" />
+    <link rel="icon" type="image/png" sizes="512x512" href="/assets/generated/kl-icon-512.dim_512x512.png" />
+    <link rel="shortcut icon" href="/assets/generated/kl-icon-192.dim_192x192.png" />
 
     <!-- Open Graph / Social -->
     <meta property="og:type" content="website" />
-    <meta property="og:title" content="Khalnayak Espots - Free Fire Tournament Platform" />
-    <meta property="og:description" content="Compete in Free Fire tournaments, win real prizes, and climb the leaderboard!" />
-    <meta property="og:image" content="/assets/generated/pwa-icon-512-transparent.dim_512x512.png" />
-    <meta property="og:site_name" content="Khalnayak Espots" />
+    <meta property="og:title" content="KL TOURNAMENTS - Free Fire Tournament Platform" />
+    <meta property="og:description" content="Compete in Free Fire tournaments, win real prizes, and dominate the battleground!" />
+    <meta property="og:image" content="/assets/generated/kl-icon-512.dim_512x512.png" />
+    <meta property="og:site_name" content="KL TOURNAMENTS" />
+    <meta property="og:url" content="https://khalnayak-espots-8pl.caffeine.xyz" />
 
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Khalnayak Espots" />
+    <meta name="twitter:title" content="KL TOURNAMENTS" />
     <meta name="twitter:description" content="Free Fire Tournament Platform - Compete, Win, Dominate!" />
-    <meta name="twitter:image" content="/assets/generated/pwa-icon-512-transparent.dim_512x512.png" />
+    <meta name="twitter:image" content="/assets/generated/kl-icon-512.dim_512x512.png" />
 
-    <!-- Apple Splash Screens (portrait) -->
-    <meta name="apple-touch-startup-image" content="/assets/generated/pwa-icon-512-transparent.dim_512x512.png" />
-
-    <!-- Google AdSense / AdMob Web Integration -->
-    <!-- Publisher ID: ca-pub-9216368060577966 (derived from AdMob App ID) -->
+    <!-- Google AdSense -->
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9216368060577966"
       crossorigin="anonymous"></script>
 
@@ -63,7 +68,33 @@
       rel="stylesheet"
     />
 
-    <title>Khalnayak Espots - Free Fire Tournament Platform</title>
+    <!-- Service Worker Registration -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function() {
+          // Register main service worker (sw.js)
+          navigator.serviceWorker.register('/sw.js', { scope: '/' })
+            .then(function(registration) {
+              console.log('[SW] sw.js Registered:', registration.scope);
+              registration.update();
+            })
+            .catch(function(err) {
+              console.log('[SW] sw.js Registration failed:', err);
+            });
+
+          // Register PWABuilder service worker (service-worker.js)
+          navigator.serviceWorker.register('/service-worker.js', { scope: '/' })
+            .then(function(registration) {
+              console.log('[SW] service-worker.js Registered:', registration.scope);
+            })
+            .catch(function(err) {
+              console.log('[SW] service-worker.js Registration failed:', err);
+            });
+        });
+      }
+    </script>
+
+    <title>KL TOURNAMENTS</title>
   </head>
   <body>
     <div id="root"></div>

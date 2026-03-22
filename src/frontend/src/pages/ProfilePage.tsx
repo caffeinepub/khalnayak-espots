@@ -14,6 +14,7 @@ import {
   useGetTournaments,
 } from "@/hooks/useQueries";
 import { type ReferralStats, getUserReferralStats } from "@/hooks/useReferral";
+import { getReferralSettings } from "@/hooks/useReferralSettings";
 import { useTokens } from "@/hooks/useTokens";
 import { type PlayVoucher, getMyVouchers } from "@/pages/WalletPage";
 import { formatCurrency, getTournamentStatusLabel } from "@/utils/format";
@@ -37,7 +38,7 @@ import {
   XCircle,
 } from "lucide-react";
 import { useState } from "react";
-import { SiFacebook, SiInstagram, SiWhatsapp } from "react-icons/si";
+import { SiFacebook, SiGmail, SiInstagram, SiWhatsapp } from "react-icons/si";
 import { toast } from "sonner";
 
 export function ProfilePage() {
@@ -129,6 +130,49 @@ export function ProfilePage() {
       .writeText(text)
       .then(() => toast.success(label))
       .catch(() => toast.error("Copy failed"));
+  };
+
+  // Referral link
+  const referralLink = `https://khalnayak.app/ref/${profile.referral_code}`;
+  const referralSettings = getReferralSettings();
+  const referralEnabled = referralSettings.enabled;
+  const shareMessage = `Join me on Khalnayak Espots! Use my referral code ${profile.referral_code} and get ₹2 bonus. Download here: ${referralLink}`;
+  const shareMessageEncoded = encodeURIComponent(shareMessage);
+
+  const handleWhatsAppShare = () => {
+    window.open(`https://wa.me/?text=${shareMessageEncoded}`, "_blank");
+  };
+
+  const handleGmailShare = () => {
+    const subject = encodeURIComponent("Join Khalnayak Espots & Get ₹2 Bonus!");
+    const body = shareMessageEncoded;
+    window.open(
+      `https://mail.google.com/mail/?view=cm&fs=1&su=${subject}&body=${body}`,
+      "_blank",
+    );
+  };
+
+  const handleInstagramShare = () => {
+    // Instagram doesn't support direct web share; copy link instead
+    navigator.clipboard
+      .writeText(shareMessage)
+      .then(() => toast.success("📷 Message copied! Paste it on Instagram."))
+      .catch(() => toast.error("Copy failed"));
+  };
+
+  const handleFacebookShare = () => {
+    const url = encodeURIComponent(referralLink);
+    const quote = encodeURIComponent(
+      `Join Khalnayak Espots! Use code ${profile.referral_code} and get ₹2 bonus.`,
+    );
+    window.open(
+      `https://www.facebook.com/sharer/sharer.php?u=${url}&quote=${quote}`,
+      "_blank",
+    );
+  };
+
+  const handleCopyLink = () => {
+    copyToClipboard(referralLink, "✅ Referral link copied!");
   };
 
   return (
@@ -332,108 +376,306 @@ export function ProfilePage() {
         </CardContent>
       </Card>
 
-      {/* Referral Code */}
-      <Card
-        className="gaming-card mb-6"
-        style={{
-          background: "rgba(10,10,10,0.9)",
-          border: "1.5px solid rgba(157,78,221,0.25)",
-        }}
-      >
-        <CardHeader className="pb-2">
-          <CardTitle
-            className="text-sm tracking-widest uppercase"
-            style={{ fontFamily: "'Orbitron', sans-serif", color: "#9d4edd" }}
-          >
-            🔗 Referral Code
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div
-            className="flex items-center gap-3 p-3 rounded-xl mb-3"
+      {referralEnabled && (
+        <>
+          {/* ===== REFERRAL SECTION (Enhanced) ===== */}
+          <Card
+            className="gaming-card mb-6"
             style={{
-              background: "rgba(157,78,221,0.1)",
-              border: "1px solid rgba(157,78,221,0.3)",
+              background: "rgba(10,10,10,0.95)",
+              border: "1.5px solid rgba(157,78,221,0.35)",
+              boxShadow: "0 0 24px rgba(157,78,221,0.12)",
             }}
           >
-            <code
-              className="flex-1 text-lg font-bold tracking-widest text-center"
-              style={{ color: "#9d4edd", fontFamily: "monospace" }}
-            >
-              {profile.referral_code}
-            </code>
-            <Button
-              variant="ghost"
-              size="icon"
-              data-ocid="profile.button"
-              onClick={() =>
-                copyToClipboard(
-                  profile.referral_code,
-                  "✅ Referral code copied!",
-                )
-              }
-            >
-              <Copy className="h-4 w-4" style={{ color: "#9d4edd" }} />
-            </Button>
-          </div>
-          <div className="flex items-center gap-2">
-            <span
-              className="text-xs"
-              style={{ color: "rgba(255,255,255,0.4)" }}
-            >
-              Share:
-            </span>
-            <button
-              type="button"
-              data-ocid="profile.button"
-              onClick={() =>
-                window.open(
-                  `https://wa.me/?text=Join%20KL%20Esports%20Life%20with%20my%20code%20${profile.referral_code}`,
-                  "_blank",
-                )
-              }
-              style={{ color: "#25D366" }}
-            >
-              <SiWhatsapp className="h-5 w-5" />
-            </button>
-            <button
-              type="button"
-              data-ocid="profile.button"
-              onClick={() =>
-                window.open(
-                  `https://t.me/share/url?url=Join%20KL%20Esports%20with%20code%20${profile.referral_code}`,
-                  "_blank",
-                )
-              }
-              style={{ color: "#2AABEE" }}
-            >
-              <Send className="h-5 w-5" />
-            </button>
-            <button
-              type="button"
-              data-ocid="profile.button"
-              onClick={() =>
-                window.open(
-                  `https://www.facebook.com/sharer/sharer.php?u=klespots&quote=Join+with+code+${profile.referral_code}`,
-                  "_blank",
-                )
-              }
-              style={{ color: "#1877F2" }}
-            >
-              <SiFacebook className="h-5 w-5" />
-            </button>
-          </div>
-          {referralStats.totalReferrals > 0 && (
-            <p
-              className="text-xs mt-3"
-              style={{ color: "rgba(255,255,255,0.4)" }}
-            >
-              Total referrals: {referralStats.totalReferrals} • Earned:{" "}
-              {formatCurrency(BigInt(Math.floor(referralStats.totalEarnings)))}
-            </p>
-          )}
-        </CardContent>
-      </Card>
+            <CardHeader className="pb-2">
+              <CardTitle
+                className="text-sm tracking-widest uppercase"
+                style={{
+                  fontFamily: "'Orbitron', sans-serif",
+                  color: "#9d4edd",
+                }}
+              >
+                🔗 Your Referral Code
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {/* Code Display */}
+              <div
+                className="flex items-center justify-between p-4 rounded-xl mb-3"
+                style={{
+                  background:
+                    "linear-gradient(135deg, rgba(157,78,221,0.12), rgba(10,10,10,0.8))",
+                  border: "1.5px solid rgba(157,78,221,0.4)",
+                  boxShadow: "0 0 16px rgba(157,78,221,0.1)",
+                }}
+              >
+                <code
+                  className="text-2xl font-bold tracking-[0.3em]"
+                  style={{ color: "#9d4edd", fontFamily: "monospace" }}
+                >
+                  {profile.referral_code}
+                </code>
+                <Button
+                  size="sm"
+                  data-ocid="profile.button"
+                  onClick={handleCopyLink}
+                  style={{
+                    background: "linear-gradient(135deg, #9d4edd, #7c3aed)",
+                    color: "white",
+                    border: "none",
+                    borderRadius: 8,
+                    fontFamily: "'Orbitron', sans-serif",
+                    fontSize: 11,
+                    letterSpacing: 1,
+                  }}
+                >
+                  📋 COPY LINK
+                </Button>
+              </div>
+
+              {/* Referral Link (small) */}
+              <div
+                className="flex items-center gap-2 px-3 py-2 rounded-lg mb-4"
+                style={{
+                  background: "rgba(157,78,221,0.06)",
+                  border: "1px solid rgba(157,78,221,0.15)",
+                }}
+              >
+                <span style={{ color: "rgba(255,255,255,0.35)", fontSize: 11 }}>
+                  🔗
+                </span>
+                <code
+                  className="text-xs flex-1 truncate"
+                  style={{
+                    color: "rgba(157,78,221,0.8)",
+                    fontFamily: "monospace",
+                  }}
+                >
+                  {referralLink}
+                </code>
+              </div>
+
+              {/* Share Buttons */}
+              <p
+                className="text-xs font-bold uppercase tracking-widest mb-3"
+                style={{
+                  color: "rgba(255,255,255,0.5)",
+                  fontFamily: "'Orbitron', sans-serif",
+                }}
+              >
+                Share with Friends:
+              </p>
+              <div className="grid grid-cols-5 gap-2 mb-5">
+                {/* WhatsApp */}
+                <button
+                  type="button"
+                  data-ocid="profile.button"
+                  onClick={handleWhatsAppShare}
+                  className="flex flex-col items-center gap-1 p-2 rounded-xl transition-all hover:scale-105"
+                  style={{
+                    background: "rgba(37,211,102,0.12)",
+                    border: "1px solid rgba(37,211,102,0.3)",
+                  }}
+                >
+                  <SiWhatsapp
+                    className="h-6 w-6"
+                    style={{ color: "#25D366" }}
+                  />
+                  <span
+                    style={{
+                      fontSize: 9,
+                      color: "#25D366",
+                      fontFamily: "'Rajdhani', sans-serif",
+                      fontWeight: 600,
+                    }}
+                  >
+                    WhatsApp
+                  </span>
+                </button>
+
+                {/* Gmail */}
+                <button
+                  type="button"
+                  data-ocid="profile.button"
+                  onClick={handleGmailShare}
+                  className="flex flex-col items-center gap-1 p-2 rounded-xl transition-all hover:scale-105"
+                  style={{
+                    background: "rgba(234,67,53,0.12)",
+                    border: "1px solid rgba(234,67,53,0.3)",
+                  }}
+                >
+                  <SiGmail className="h-6 w-6" style={{ color: "#EA4335" }} />
+                  <span
+                    style={{
+                      fontSize: 9,
+                      color: "#EA4335",
+                      fontFamily: "'Rajdhani', sans-serif",
+                      fontWeight: 600,
+                    }}
+                  >
+                    Gmail
+                  </span>
+                </button>
+
+                {/* Instagram */}
+                <button
+                  type="button"
+                  data-ocid="profile.button"
+                  onClick={handleInstagramShare}
+                  className="flex flex-col items-center gap-1 p-2 rounded-xl transition-all hover:scale-105"
+                  style={{
+                    background: "rgba(225,48,108,0.12)",
+                    border: "1px solid rgba(225,48,108,0.3)",
+                  }}
+                >
+                  <SiInstagram
+                    className="h-6 w-6"
+                    style={{ color: "#E1306C" }}
+                  />
+                  <span
+                    style={{
+                      fontSize: 9,
+                      color: "#E1306C",
+                      fontFamily: "'Rajdhani', sans-serif",
+                      fontWeight: 600,
+                    }}
+                  >
+                    Insta
+                  </span>
+                </button>
+
+                {/* Facebook */}
+                <button
+                  type="button"
+                  data-ocid="profile.button"
+                  onClick={handleFacebookShare}
+                  className="flex flex-col items-center gap-1 p-2 rounded-xl transition-all hover:scale-105"
+                  style={{
+                    background: "rgba(24,119,242,0.12)",
+                    border: "1px solid rgba(24,119,242,0.3)",
+                  }}
+                >
+                  <SiFacebook
+                    className="h-6 w-6"
+                    style={{ color: "#1877F2" }}
+                  />
+                  <span
+                    style={{
+                      fontSize: 9,
+                      color: "#1877F2",
+                      fontFamily: "'Rajdhani', sans-serif",
+                      fontWeight: 600,
+                    }}
+                  >
+                    Facebook
+                  </span>
+                </button>
+
+                {/* Copy Link */}
+                <button
+                  type="button"
+                  data-ocid="profile.button"
+                  onClick={handleCopyLink}
+                  className="flex flex-col items-center gap-1 p-2 rounded-xl transition-all hover:scale-105"
+                  style={{
+                    background: "rgba(0,255,136,0.1)",
+                    border: "1px solid rgba(0,255,136,0.3)",
+                  }}
+                >
+                  <Copy className="h-6 w-6" style={{ color: "#00FF88" }} />
+                  <span
+                    style={{
+                      fontSize: 9,
+                      color: "#00FF88",
+                      fontFamily: "'Rajdhani', sans-serif",
+                      fontWeight: 600,
+                    }}
+                  >
+                    Copy Link
+                  </span>
+                </button>
+              </div>
+
+              {/* How to Refer Guide */}
+              <div
+                className="rounded-xl p-4"
+                style={{
+                  background:
+                    "linear-gradient(135deg, rgba(0,255,136,0.05), rgba(157,78,221,0.05))",
+                  border: "1px solid rgba(0,255,136,0.15)",
+                }}
+              >
+                <p
+                  className="text-xs font-bold uppercase tracking-widest mb-3"
+                  style={{
+                    fontFamily: "'Orbitron', sans-serif",
+                    color: "#00FF88",
+                  }}
+                >
+                  📢 How to Refer &amp; Earn
+                </p>
+                <div className="flex flex-col gap-2">
+                  {[
+                    {
+                      step: "1",
+                      icon: "🔑",
+                      text: "Get your unique referral code above",
+                    },
+                    {
+                      step: "2",
+                      icon: "📲",
+                      text: "Share with friends on WhatsApp, Instagram, etc.",
+                    },
+                    {
+                      step: "3",
+                      icon: "✅",
+                      text: "Friend registers using your code",
+                    },
+                    {
+                      step: "4",
+                      icon: "💰",
+                      text: "You get ₹2 in wallet instantly!",
+                    },
+                  ].map(({ step, icon, text }) => (
+                    <div key={step} className="flex items-center gap-3">
+                      <div
+                        className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
+                        style={{
+                          background:
+                            "linear-gradient(135deg, #00FF88, #9d4edd)",
+                          color: "#0a0a0a",
+                          fontFamily: "'Orbitron', sans-serif",
+                        }}
+                      >
+                        {step}
+                      </div>
+                      <p
+                        className="text-xs"
+                        style={{ color: "rgba(255,255,255,0.75)" }}
+                      >
+                        <span className="mr-1">{icon}</span>
+                        {text}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {referralStats.totalReferrals > 0 && (
+                <p
+                  className="text-xs mt-3 text-center"
+                  style={{ color: "rgba(255,255,255,0.4)" }}
+                >
+                  Total referrals: {referralStats.totalReferrals} • Earned:{" "}
+                  {formatCurrency(
+                    BigInt(Math.floor(referralStats.totalEarnings)),
+                  )}
+                </p>
+              )}
+            </CardContent>
+          </Card>
+        </>
+      )}
 
       {/* Token Balance */}
       <Card

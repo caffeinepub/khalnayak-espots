@@ -22,13 +22,6 @@ const rajdhani: React.CSSProperties = {
   fontFamily: "'Rajdhani', sans-serif",
 };
 
-// Top Earners mock data
-const TOP_EARNERS = [
-  { rank: 1, name: "FireMaster99", tokens: 142, medal: "🥇" },
-  { rank: 2, name: "SnipeKing_07", tokens: 118, medal: "🥈" },
-  { rank: 3, name: "BladeRunner_X", tokens: 97, medal: "🥉" },
-];
-
 export function EarnPage() {
   const { identity, login } = useOtpAuth();
   const tokens = useTokens();
@@ -448,61 +441,37 @@ function TopEarnersSection() {
     <div
       className="rounded-2xl p-5 space-y-3"
       style={{
-        background: darkCard,
-        border: `1.5px solid ${neonPurple}66`,
-        boxShadow: `0 0 24px ${neonPurple}22`,
+        background: "rgba(22,33,62,0.85)",
+        border: "1.5px solid rgba(157,78,221,0.4)",
+        boxShadow: "0 0 24px rgba(157,78,221,0.13)",
       }}
       data-ocid="earn.panel"
     >
-      <p style={{ ...orbitron, color: neonPurple, fontSize: 13 }}>
-        🏆 TOP EARNERS TODAY
-      </p>
-      <div className="space-y-2">
-        {TOP_EARNERS.map((e, i) => (
-          <div
-            key={e.rank}
-            className="flex items-center justify-between rounded-xl px-4 py-3"
-            style={{
-              background: i === 0 ? `${neonGreen}18` : `${neonPurple}11`,
-              border: `1px solid ${i === 0 ? neonGreen : neonPurple}44`,
-            }}
-            data-ocid={`earn.item.${i + 1}`}
-          >
-            <div className="flex items-center gap-3">
-              <span style={{ fontSize: 22 }}>{e.medal}</span>
-              <p
-                style={{
-                  ...rajdhani,
-                  color: i === 0 ? neonGreen : "#ccc",
-                  fontSize: 16,
-                  fontWeight: 600,
-                }}
-              >
-                {e.name}
-              </p>
-            </div>
-            <p
-              style={{
-                ...orbitron,
-                color: i === 0 ? neonGreen : neonPurple,
-                fontSize: 14,
-              }}
-            >
-              {e.tokens} 🪙
-            </p>
-          </div>
-        ))}
-      </div>
       <p
         style={{
-          ...rajdhani,
-          color: "#666",
-          fontSize: 12,
-          textAlign: "center",
+          fontFamily: "'Orbitron', sans-serif",
+          color: "#9d4edd",
+          fontSize: 13,
         }}
       >
-        Resets daily at midnight • Top earner wins bonus tokens!
+        🏆 TOP EARNERS TODAY
       </p>
+      <div style={{ textAlign: "center", padding: "24px 0", color: "#555" }}>
+        <p style={{ fontSize: 32, marginBottom: 8 }}>📊</p>
+        <p style={{ fontFamily: "'Rajdhani', sans-serif", fontSize: 15 }}>
+          No earnings yet
+        </p>
+        <p
+          style={{
+            fontFamily: "'Rajdhani', sans-serif",
+            fontSize: 12,
+            color: "#444",
+            marginTop: 4,
+          }}
+        >
+          Be the first to earn tokens!
+        </p>
+      </div>
     </div>
   );
 }

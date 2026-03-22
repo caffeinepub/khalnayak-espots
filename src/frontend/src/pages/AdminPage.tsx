@@ -26,6 +26,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import {
   Table,
   TableBody,
@@ -65,6 +66,10 @@ import {
   useUpdateTournamentStatus,
 } from "@/hooks/useQueries";
 import { type ReferralRecord, getReferralStats } from "@/hooks/useReferral";
+import {
+  getReferralSettings,
+  saveReferralSettings,
+} from "@/hooks/useReferralSettings";
 import { useTokens } from "@/hooks/useTokens";
 import type {
   PlayVoucher,
@@ -3386,6 +3391,29 @@ function ReferralsTab() {
   const stats = getReferralStats();
   const fraudOnly = stats.allReferrals.filter((r) => r.status === "fraud");
 
+  // Referral Settings local state
+  const initSettings = getReferralSettings();
+  const [refEnabled, setRefEnabled] = useState(initSettings.enabled);
+  const [referrerReward, setReferrerReward] = useState(
+    initSettings.referrerReward.toString(),
+  );
+  const [newUserBonus, setNewUserBonus] = useState(
+    initSettings.newUserBonus.toString(),
+  );
+  const [minUsers, setMinUsers] = useState(
+    initSettings.minUsersRequired.toString(),
+  );
+
+  const handleSaveSettings = () => {
+    saveReferralSettings({
+      enabled: refEnabled,
+      referrerReward: Number.parseFloat(referrerReward) || 1.5,
+      newUserBonus: Number.parseFloat(newUserBonus) || 0.5,
+      minUsersRequired: Number.parseInt(minUsers) || 0,
+    });
+    toast.success("✅ Referral settings saved!");
+  };
+
   const maskName = (name: string) => {
     if (!name || name.length < 2) return "****";
     return `${name.slice(0, 2)}****`;
@@ -3403,6 +3431,220 @@ function ReferralsTab() {
 
   return (
     <div className="space-y-6">
+      {/* ─── Referral Settings Card ─────────────────────────────── */}
+      <div
+        className="rounded-2xl p-5"
+        style={{
+          background: "rgba(10,10,10,0.92)",
+          border: "1.5px solid rgba(0,255,136,0.35)",
+          boxShadow: "0 0 24px rgba(0,255,136,0.1)",
+        }}
+      >
+        <p
+          className="mb-4 text-sm tracking-widest uppercase"
+          style={{ fontFamily: "'Orbitron', sans-serif", color: "#00FF88" }}
+        >
+          🔗 REFERRAL SETTINGS
+        </p>
+
+        {/* Enable Toggle */}
+        <div
+          className="flex items-center justify-between mb-5 p-3 rounded-xl"
+          style={{
+            background: "rgba(0,255,136,0.06)",
+            border: "1px solid rgba(0,255,136,0.15)",
+          }}
+        >
+          <div>
+            <p
+              style={{
+                fontFamily: "'Rajdhani', sans-serif",
+                color: "#fff",
+                fontSize: 15,
+                fontWeight: 700,
+              }}
+            >
+              Enable Referral Program
+            </p>
+            <p
+              style={{
+                fontFamily: "'Rajdhani', sans-serif",
+                color: "rgba(255,255,255,0.45)",
+                fontSize: 12,
+              }}
+            >
+              {refEnabled
+                ? "Program is active — users can earn referral rewards"
+                : "Program disabled — referral section hidden from profiles"}
+            </p>
+          </div>
+          <Switch
+            checked={refEnabled}
+            onCheckedChange={setRefEnabled}
+            data-ocid="admin.referral.switch"
+          />
+        </div>
+
+        {/* Reward Inputs */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-5">
+          <div>
+            <Label
+              className="text-xs mb-1 block"
+              style={{
+                fontFamily: "'Rajdhani', sans-serif",
+                color: "rgba(255,255,255,0.6)",
+                letterSpacing: "0.05em",
+              }}
+            >
+              REFERRER REWARD (₹)
+            </Label>
+            <div className="flex items-center gap-2">
+              <span style={{ color: "#00FF88", fontSize: 18, fontWeight: 700 }}>
+                ₹
+              </span>
+              <Input
+                type="number"
+                step="0.01"
+                min="0"
+                value={referrerReward}
+                onChange={(e) => setReferrerReward(e.target.value)}
+                className="bg-black/40 border-green-500/30 text-white"
+                style={{ fontFamily: "'Orbitron', sans-serif" }}
+                data-ocid="admin.referral.input"
+              />
+            </div>
+          </div>
+          <div>
+            <Label
+              className="text-xs mb-1 block"
+              style={{
+                fontFamily: "'Rajdhani', sans-serif",
+                color: "rgba(255,255,255,0.6)",
+                letterSpacing: "0.05em",
+              }}
+            >
+              NEW USER BONUS (₹)
+            </Label>
+            <div className="flex items-center gap-2">
+              <span style={{ color: "#9d4edd", fontSize: 18, fontWeight: 700 }}>
+                ₹
+              </span>
+              <Input
+                type="number"
+                step="0.01"
+                min="0"
+                value={newUserBonus}
+                onChange={(e) => setNewUserBonus(e.target.value)}
+                className="bg-black/40 border-purple-500/30 text-white"
+                style={{ fontFamily: "'Orbitron', sans-serif" }}
+                data-ocid="admin.referral.input"
+              />
+            </div>
+          </div>
+          <div>
+            <Label
+              className="text-xs mb-1 block"
+              style={{
+                fontFamily: "'Rajdhani', sans-serif",
+                color: "rgba(255,255,255,0.6)",
+                letterSpacing: "0.05em",
+              }}
+            >
+              MINIMUM USERS REQUIRED
+            </Label>
+            <Input
+              type="number"
+              min="0"
+              value={minUsers}
+              onChange={(e) => setMinUsers(e.target.value)}
+              className="bg-black/40 border-slate-500/30 text-white"
+              style={{ fontFamily: "'Orbitron', sans-serif" }}
+              data-ocid="admin.referral.input"
+            />
+          </div>
+        </div>
+
+        {/* Stats row */}
+        <div className="grid grid-cols-2 gap-3 mb-5">
+          <div
+            className="rounded-xl p-3 text-center"
+            style={{
+              background: "rgba(0,255,136,0.06)",
+              border: "1px solid rgba(0,255,136,0.15)",
+            }}
+          >
+            <p
+              style={{
+                fontFamily: "'Orbitron', sans-serif",
+                color: "#00FF88",
+                fontSize: 22,
+                fontWeight: 900,
+              }}
+            >
+              {stats.totalReferrals}
+            </p>
+            <p
+              style={{
+                fontFamily: "'Rajdhani', sans-serif",
+                color: "rgba(255,255,255,0.5)",
+                fontSize: 11,
+                textTransform: "uppercase",
+                letterSpacing: "0.05em",
+              }}
+            >
+              Total Referrals
+            </p>
+          </div>
+          <div
+            className="rounded-xl p-3 text-center"
+            style={{
+              background: "rgba(157,78,221,0.06)",
+              border: "1px solid rgba(157,78,221,0.15)",
+            }}
+          >
+            <p
+              style={{
+                fontFamily: "'Orbitron', sans-serif",
+                color: "#9d4edd",
+                fontSize: 22,
+                fontWeight: 900,
+              }}
+            >
+              ₹{stats.totalEarnings.toFixed(2)}
+            </p>
+            <p
+              style={{
+                fontFamily: "'Rajdhani', sans-serif",
+                color: "rgba(255,255,255,0.5)",
+                fontSize: 11,
+                textTransform: "uppercase",
+                letterSpacing: "0.05em",
+              }}
+            >
+              Total Rewards Paid
+            </p>
+          </div>
+        </div>
+
+        {/* Save Button */}
+        <Button
+          onClick={handleSaveSettings}
+          className="w-full font-bold tracking-widest"
+          style={{
+            fontFamily: "'Orbitron', sans-serif",
+            background: "linear-gradient(90deg, #00FF88, #00cc6a)",
+            color: "#0a0a0a",
+            border: "none",
+            borderRadius: 10,
+            letterSpacing: "0.1em",
+            boxShadow: "0 0 20px rgba(0,255,136,0.4)",
+          }}
+          data-ocid="admin.referral.save_button"
+        >
+          💾 SAVE CHANGES
+        </Button>
+      </div>
+
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card className="border-green-500/30 bg-green-950/20">

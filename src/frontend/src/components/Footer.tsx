@@ -1,6 +1,58 @@
 import { Heart } from "lucide-react";
 import { SiDiscord, SiInstagram, SiWhatsapp, SiYoutube } from "react-icons/si";
 
+function KLFooterLogo() {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+      <span
+        style={{
+          fontFamily: "'Orbitron', sans-serif",
+          fontWeight: 900,
+          fontSize: 20,
+          letterSpacing: "0.08em",
+          textTransform: "uppercase",
+          lineHeight: 1.1,
+          display: "flex",
+          alignItems: "center",
+          gap: 4,
+        }}
+      >
+        <span
+          style={{
+            color: "#00FF88",
+            textShadow:
+              "0 0 12px rgba(0,255,136,0.9), 0 0 24px rgba(0,255,136,0.5)",
+          }}
+        >
+          KL
+        </span>
+        <span
+          style={{
+            background: "linear-gradient(90deg, #9d4edd, #c77dff)",
+            WebkitBackgroundClip: "text",
+            WebkitTextFillColor: "transparent",
+            backgroundClip: "text",
+            filter: "drop-shadow(0 0 6px rgba(157,78,221,0.7))",
+          }}
+        >
+          Esports Life
+        </span>
+      </span>
+      <span
+        style={{
+          fontFamily: "'Rajdhani', sans-serif",
+          fontSize: 11,
+          letterSpacing: "2px",
+          textTransform: "uppercase",
+          color: "rgba(255,255,255,0.35)",
+        }}
+      >
+        Khalnayak Espots
+      </span>
+    </div>
+  );
+}
+
 export function Footer() {
   return (
     <footer className="border-t border-primary/20 bg-card mt-auto">
@@ -8,15 +60,8 @@ export function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {/* Brand */}
           <div>
-            <img
-              src="/assets/generated/kl-esports-life-logo-transparent.dim_400x300.png"
-              alt="KL Esports Life"
-              className="h-16 w-auto object-contain mb-3"
-            />
-            <h3 className="text-xl font-bold font-display text-primary mb-2">
-              KHALNAYAK ESPOTS
-            </h3>
-            <p className="text-sm text-muted-foreground">
+            <KLFooterLogo />
+            <p className="text-sm text-muted-foreground mt-3">
               India's premier Free Fire tournament platform. Join tournaments,
               compete with the best, and win exciting prizes.
             </p>
@@ -61,7 +106,7 @@ export function Footer() {
                 href="https://www.instagram.com/khalnayak_esports007?igsh=MWdqOWJ4MW1wbzM4bQ=="
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-muted-foreground hover:text-pink-500 transition-colors drop-shadow-[0_0_6px_rgba(236,72,153,0.7)]"
+                className="text-muted-foreground hover:text-pink-500 transition-colors"
                 aria-label="Instagram"
                 data-ocid="footer.instagram.link"
               >
@@ -71,7 +116,7 @@ export function Footer() {
                 href="https://www.youtube.com/@khalnayak_Esports"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-muted-foreground hover:text-red-500 transition-colors drop-shadow-[0_0_6px_rgba(239,68,68,0.7)]"
+                className="text-muted-foreground hover:text-red-500 transition-colors"
                 aria-label="YouTube"
                 data-ocid="footer.youtube.link"
               >
@@ -81,7 +126,7 @@ export function Footer() {
                 href="https://discord.gg/2Xwhz7Pzjz"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-muted-foreground hover:text-indigo-400 transition-colors drop-shadow-[0_0_6px_rgba(129,140,248,0.7)]"
+                className="text-muted-foreground hover:text-indigo-400 transition-colors"
                 aria-label="Discord"
                 data-ocid="footer.discord.link"
               >
@@ -91,7 +136,7 @@ export function Footer() {
                 href="https://chat.whatsapp.com/FPfcFZV5YDL7wsAClH7AYN?mode=gi_t"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-muted-foreground hover:text-green-400 transition-colors drop-shadow-[0_0_6px_rgba(74,222,128,0.7)]"
+                className="text-muted-foreground hover:text-green-400 transition-colors"
                 aria-label="WhatsApp"
                 data-ocid="footer.whatsapp.link"
               >
@@ -102,7 +147,7 @@ export function Footer() {
         </div>
 
         <div className="mt-8 pt-6 border-t border-primary/10 text-center">
-          <p className="flex items-center justify-center gap-1 text-base font-semibold text-primary drop-shadow-[0_0_8px_var(--tw-shadow-color)] [--tw-shadow-color:hsl(var(--primary)/0.8)]">
+          <p className="flex items-center justify-center gap-1 text-base font-semibold text-primary">
             © 2026. Built with{" "}
             <Heart className="h-4 w-4 text-secondary fill-secondary" /> using KL
             Softwer

@@ -1,44 +1,79 @@
 {
-  "name": "Khalnayak Espots",
-  "short_name": "Khalnayak",
-  "description": "Free Fire Tournament Platform",
+  "name": "KL TOURNAMENTS",
+  "short_name": "KL",
+  "description": "KL TOURNAMENTS - Free Fire Tournament Platform. Compete, win prizes, and dominate the battleground!",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
   "theme_color": "#0A0A0A",
   "background_color": "#000000",
   "lang": "en",
-  "scope": "/",
+  "dir": "ltr",
   "categories": ["games", "sports", "entertainment"],
+  "id": "/",
   "icons": [
     {
-      "src": "/assets/generated/khalnayak-espots-logo.dim_512x512.png",
-      "sizes": "192x192",
+      "src": "/assets/generated/kl-icon-64.dim_64x64.png",
+      "sizes": "64x64",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
-      "src": "/assets/generated/khalnayak-espots-logo.dim_512x512.png",
+      "src": "/assets/generated/kl-icon-128.dim_128x128.png",
+      "sizes": "128x128",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/assets/generated/kl-icon-192.dim_192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/assets/generated/kl-icon-192.dim_192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/assets/generated/kl-icon-512.dim_512x512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "/assets/generated/kl-icon-512.dim_512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ],
-  "screenshots": [],
+  "screenshots": [
+    {
+      "src": "/assets/generated/kl-splash.dim_1080x1920.png",
+      "sizes": "1080x1920",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "KL TOURNAMENTS Splash Screen"
+    }
+  ],
   "shortcuts": [
     {
       "name": "Tournaments",
-      "short_name": "Tournaments",
+      "short_name": "Play",
       "description": "View all tournaments",
       "url": "/tournaments",
-      "icons": [{ "src": "/assets/generated/khalnayak-espots-logo.dim_512x512.png", "sizes": "192x192" }]
+      "icons": [{ "src": "/assets/generated/kl-icon-192.dim_192x192.png", "sizes": "192x192", "type": "image/png" }]
     },
     {
       "name": "Wallet",
       "short_name": "Wallet",
       "description": "Manage your wallet",
       "url": "/wallet",
-      "icons": [{ "src": "/assets/generated/khalnayak-espots-logo.dim_512x512.png", "sizes": "192x192" }]
+      "icons": [{ "src": "/assets/generated/kl-icon-192.dim_192x192.png", "sizes": "192x192", "type": "image/png" }]
     }
-  ]
+  ],
+  "prefer_related_applications": false
 }

@@ -2,6 +2,106 @@ import { Button } from "@/components/ui/button";
 import { useInternetIdentity } from "@/hooks/useInternetIdentity";
 import { Loader2, Shield } from "lucide-react";
 
+function KLLoginLogo() {
+  return (
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        gap: 6,
+      }}
+    >
+      {/* Circle emblem */}
+      <div
+        style={{
+          width: 80,
+          height: 80,
+          borderRadius: "50%",
+          background: "rgba(0,255,136,0.08)",
+          border: "2px solid rgba(0,255,136,0.4)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          boxShadow:
+            "0 0 30px rgba(0,255,136,0.25), inset 0 0 20px rgba(0,255,136,0.05)",
+          animation: "kl-logo-pulse 3s ease-in-out infinite",
+        }}
+      >
+        <span
+          style={{
+            fontFamily: "'Orbitron', sans-serif",
+            fontWeight: 900,
+            fontSize: 28,
+            color: "#00FF88",
+            textShadow:
+              "0 0 15px rgba(0,255,136,1), 0 0 30px rgba(0,255,136,0.6)",
+            letterSpacing: "-1px",
+            lineHeight: 1,
+          }}
+        >
+          KL
+        </span>
+      </div>
+      {/* Brand name */}
+      <div style={{ textAlign: "center" }}>
+        <div
+          style={{
+            fontFamily: "'Orbitron', sans-serif",
+            fontWeight: 900,
+            fontSize: "clamp(16px, 5vw, 22px)",
+            letterSpacing: "0.08em",
+            textTransform: "uppercase",
+            lineHeight: 1.1,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 6,
+          }}
+        >
+          <span
+            style={{
+              color: "#00FF88",
+              textShadow: "0 0 12px rgba(0,255,136,0.9)",
+            }}
+          >
+            KL
+          </span>
+          <span
+            style={{
+              background: "linear-gradient(90deg, #9d4edd, #c77dff)",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              backgroundClip: "text",
+              filter: "drop-shadow(0 0 6px rgba(157,78,221,0.7))",
+            }}
+          >
+            Esports Life
+          </span>
+        </div>
+        <p
+          style={{
+            fontFamily: "'Rajdhani', sans-serif",
+            fontSize: 11,
+            letterSpacing: "2.5px",
+            textTransform: "uppercase",
+            color: "rgba(255,255,255,0.35)",
+            marginTop: 4,
+          }}
+        >
+          DOMINATE THE BATTLEGROUND
+        </p>
+      </div>
+      <style>{`
+        @keyframes kl-logo-pulse {
+          0%, 100% { box-shadow: 0 0 30px rgba(0,255,136,0.25), inset 0 0 20px rgba(0,255,136,0.05); }
+          50% { box-shadow: 0 0 50px rgba(0,255,136,0.45), inset 0 0 30px rgba(0,255,136,0.1); }
+        }
+      `}</style>
+    </div>
+  );
+}
+
 export function LoginPage() {
   const { login, isLoggingIn } = useInternetIdentity();
 
@@ -26,42 +126,16 @@ export function LoginPage() {
       <div
         className="relative z-10 w-full max-w-sm"
         style={{
-          background: "rgba(10,10,10,0.88)",
+          background: "rgba(10,10,10,0.90)",
           border: "1.5px solid rgba(0,255,136,0.25)",
-          borderRadius: 18,
-          boxShadow:
-            "0 0 40px rgba(0,255,136,0.08), 0 8px 40px rgba(0,0,0,0.7)",
+          borderRadius: 20,
+          boxShadow: "0 0 60px rgba(0,255,136,0.1), 0 8px 40px rgba(0,0,0,0.8)",
           padding: "2.5rem 2rem",
         }}
       >
         {/* Logo */}
         <div className="flex flex-col items-center mb-8">
-          <img
-            src="/assets/generated/kl-esports-life-logo-transparent.dim_400x300.png"
-            alt="KL Esports Life"
-            className="w-20 h-20 object-contain mb-3"
-            style={{ filter: "drop-shadow(0 0 12px rgba(0,255,136,0.7))" }}
-          />
-          <h1
-            className="text-2xl font-bold tracking-widest uppercase"
-            style={{
-              fontFamily: "'Orbitron', sans-serif",
-              background: "linear-gradient(90deg, #00FF88, #9d4edd)",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-            }}
-          >
-            KL Esports Life
-          </h1>
-          <p
-            className="text-xs tracking-widest mt-1"
-            style={{
-              color: "rgba(255,255,255,0.4)",
-              fontFamily: "'Rajdhani', sans-serif",
-            }}
-          >
-            DOMINATE THE BATTLEGROUND
-          </p>
+          <KLLoginLogo />
         </div>
 
         <div
@@ -85,22 +159,26 @@ export function LoginPage() {
             </span>
           </div>
 
+          {/* Primary Login Button */}
           <Button
             data-ocid="login.primary_button"
-            className="w-full h-12 text-base font-bold tracking-widest uppercase"
+            className="w-full h-14 text-base font-bold tracking-widest uppercase"
             disabled={isLoggingIn}
             onClick={() => login()}
             style={{
               background: isLoggingIn
                 ? "rgba(0,255,136,0.3)"
-                : "linear-gradient(90deg, #00FF88, #9d4edd)",
+                : "linear-gradient(135deg, #00FF88 0%, #00cc66 60%, #9d4edd 100%)",
               color: "#0a0a0a",
               border: "none",
-              borderRadius: 10,
+              borderRadius: 12,
               fontFamily: "'Orbitron', sans-serif",
-              fontSize: "0.8rem",
-              boxShadow: isLoggingIn ? "none" : "0 0 20px rgba(0,255,136,0.4)",
+              fontSize: "0.82rem",
+              boxShadow: isLoggingIn
+                ? "none"
+                : "0 0 30px rgba(0,255,136,0.5), 0 4px 20px rgba(0,0,0,0.4)",
               transition: "all 0.3s ease",
+              letterSpacing: "0.05em",
             }}
           >
             {isLoggingIn ? (
@@ -109,7 +187,7 @@ export function LoginPage() {
                 Connecting...
               </>
             ) : (
-              "🔐 Login with Internet Identity"
+              "🚀 Login with Internet Identity"
             )}
           </Button>
 

@@ -5,22 +5,14 @@ export function SplashScreen() {
   const [fading, setFading] = useState(false);
 
   useEffect(() => {
-    // Only show once per session
     const alreadyShown = sessionStorage.getItem("pwa_splash_shown");
     if (alreadyShown) return;
 
     setVisible(true);
     sessionStorage.setItem("pwa_splash_shown", "true");
 
-    // Start fade-out at 2s
-    const fadeTimer = setTimeout(() => {
-      setFading(true);
-    }, 2000);
-
-    // Fully hide at 2.5s (after fade transition)
-    const hideTimer = setTimeout(() => {
-      setVisible(false);
-    }, 2500);
+    const fadeTimer = setTimeout(() => setFading(true), 2200);
+    const hideTimer = setTimeout(() => setVisible(false), 2800);
 
     return () => {
       clearTimeout(fadeTimer);
@@ -43,87 +35,133 @@ export function SplashScreen() {
         alignItems: "center",
         justifyContent: "center",
         padding: "24px",
-        transition: "opacity 0.5s ease",
+        transition: "opacity 0.6s ease",
         opacity: fading ? 0 : 1,
         pointerEvents: fading ? "none" : "all",
       }}
     >
-      {/* Background grid atmosphere */}
+      {/* Atmospheric grid */}
       <div
         style={{
           position: "absolute",
           inset: 0,
           backgroundImage:
-            "linear-gradient(rgba(0,245,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(0,245,255,0.03) 1px, transparent 1px)",
+            "linear-gradient(rgba(0,255,136,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(0,255,136,0.03) 1px, transparent 1px)",
           backgroundSize: "50px 50px",
           pointerEvents: "none",
         }}
       />
 
-      {/* Center content */}
+      {/* Center logo */}
       <div
         style={{
           position: "relative",
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
-          gap: "24px",
+          gap: 20,
           zIndex: 1,
         }}
       >
-        {/* Shield logo with pulsing glow */}
+        {/* Pulsing glow ring */}
         <div style={{ position: "relative", display: "inline-flex" }}>
-          {/* Outer pulsing ring */}
           <div
             style={{
               position: "absolute",
-              inset: "-20px",
+              inset: "-24px",
               borderRadius: "50%",
-              border: "1px solid rgba(0,245,255,0.15)",
+              border: "1px solid rgba(0,255,136,0.15)",
               animation: "splash-pulse-ring 2s ease-in-out infinite",
             }}
           />
-          {/* Inner glow ring */}
           <div
             style={{
               position: "absolute",
-              inset: "-8px",
+              inset: "-10px",
               borderRadius: "50%",
-              border: "1.5px solid rgba(0,245,255,0.4)",
-              boxShadow: "0 0 32px rgba(0,245,255,0.3)",
+              border: "1.5px solid rgba(0,255,136,0.4)",
+              boxShadow: "0 0 32px rgba(0,255,136,0.3)",
               animation: "splash-glow-ring 2s ease-in-out infinite",
             }}
           />
-          {/* Logo image */}
-          <img
-            src="/assets/generated/kl-esports-life-logo-transparent.dim_400x300.png"
-            alt="Khalnayak Espots"
+          {/* Logo circle container */}
+          <div
             style={{
-              width: 160,
-              height: 160,
-              objectFit: "contain",
-              filter:
-                "drop-shadow(0 0 20px rgba(0,245,255,0.7)) drop-shadow(0 0 40px rgba(0,245,255,0.3))",
-              animation: "splash-glow-ring 2s ease-in-out infinite",
+              width: 120,
+              height: 120,
+              borderRadius: "50%",
+              background: "rgba(0,255,136,0.06)",
+              border: "2px solid rgba(0,255,136,0.3)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              boxShadow: "0 0 40px rgba(0,255,136,0.2)",
             }}
-          />
+          >
+            <span
+              style={{
+                fontFamily: "'Orbitron', sans-serif",
+                fontWeight: 900,
+                fontSize: 36,
+                color: "#00FF88",
+                textShadow:
+                  "0 0 20px rgba(0,255,136,1), 0 0 40px rgba(0,255,136,0.6)",
+                letterSpacing: "-2px",
+                lineHeight: 1,
+              }}
+            >
+              KL
+            </span>
+          </div>
         </div>
 
-        {/* Tagline under logo */}
-        <p
-          style={{
-            fontFamily: "'Rajdhani', sans-serif",
-            fontSize: "13px",
-            fontWeight: 500,
-            letterSpacing: "3px",
-            textTransform: "uppercase",
-            color: "rgba(148,163,184,0.8)",
-            marginTop: "4px",
-            textAlign: "center",
-          }}
-        >
-          India's Premier Gaming Platform
-        </p>
+        {/* Brand name */}
+        <div style={{ textAlign: "center" }}>
+          <div
+            style={{
+              fontFamily: "'Orbitron', sans-serif",
+              fontWeight: 900,
+              fontSize: "clamp(18px, 5vw, 26px)",
+              letterSpacing: "0.1em",
+              textTransform: "uppercase",
+              lineHeight: 1.1,
+            }}
+          >
+            <span
+              style={{
+                color: "#00FF88",
+                textShadow:
+                  "0 0 15px rgba(0,255,136,0.9), 0 0 30px rgba(0,255,136,0.5)",
+              }}
+            >
+              KL
+            </span>{" "}
+            <span
+              style={{
+                background: "linear-gradient(90deg, #9d4edd, #c77dff)",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                backgroundClip: "text",
+                filter: "drop-shadow(0 0 8px rgba(157,78,221,0.7))",
+              }}
+            >
+              Esports Life
+            </span>
+          </div>
+          <p
+            style={{
+              fontFamily: "'Rajdhani', sans-serif",
+              fontSize: 12,
+              fontWeight: 500,
+              letterSpacing: "3px",
+              textTransform: "uppercase",
+              color: "rgba(148,163,184,0.7)",
+              marginTop: 8,
+            }}
+          >
+            India's Premier Gaming Platform
+          </p>
+        </div>
       </div>
 
       {/* Loading bar */}
@@ -140,7 +178,7 @@ export function SplashScreen() {
         <div
           style={{
             height: "2px",
-            background: "rgba(0,245,255,0.15)",
+            background: "rgba(0,255,136,0.15)",
             borderRadius: "999px",
             overflow: "hidden",
           }}
@@ -148,24 +186,23 @@ export function SplashScreen() {
           <div
             style={{
               height: "100%",
-              background: "linear-gradient(90deg, #00f5ff, #ff006e)",
-              boxShadow: "0 0 8px rgba(0,245,255,0.8)",
+              background: "linear-gradient(90deg, #00FF88, #9d4edd)",
+              boxShadow: "0 0 8px rgba(0,255,136,0.8)",
               borderRadius: "999px",
-              animation: "splash-load-bar 2s linear forwards",
+              animation: "splash-load-bar 2.2s linear forwards",
             }}
           />
         </div>
       </div>
 
-      {/* Keyframe animations injected inline */}
       <style>{`
         @keyframes splash-pulse-ring {
           0%, 100% { transform: scale(1); opacity: 0.4; }
           50% { transform: scale(1.12); opacity: 0.1; }
         }
         @keyframes splash-glow-ring {
-          0%, 100% { box-shadow: 0 0 24px rgba(0,245,255,0.35); }
-          50% { box-shadow: 0 0 40px rgba(0,245,255,0.65); }
+          0%, 100% { box-shadow: 0 0 24px rgba(0,255,136,0.35); }
+          50% { box-shadow: 0 0 40px rgba(0,255,136,0.65); }
         }
         @keyframes splash-load-bar {
           from { width: 0%; }
