@@ -2,14 +2,18 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useIIProfile } from "@/hooks/useIIProfile";
+import {
+  findPrincipalByReferralCode,
+  useIIProfile,
+} from "@/hooks/useIIProfile";
 import { fetchFFPlayerByUID } from "@/utils/freefirePlayerLookup";
 import { useNavigate } from "@tanstack/react-router";
 import { Loader2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 
 export function ProfileSetupPage() {
-  const { saveProfile } = useIIProfile();
+  const { saveProfile, principal } = useIIProfile();
   const navigate = useNavigate();
 
   const [displayName, setDisplayName] = useState("");
@@ -21,7 +25,14 @@ export function ProfileSetupPage() {
   >("idle");
   const [confirmed, setConfirmed] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [referralCode, setReferralCode] = useState("");
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Read referral code from sessionStorage (set when user clicked /ref/CODE link)
+  useEffect(() => {
+    const stored = sessionStorage.getItem("kle_pending_referral");
+    if (stored) setReferralCode(stored);
+  }, []);
 
   useEffect(() => {
     if (!uid) {
@@ -62,12 +73,33 @@ export function ProfileSetupPage() {
   const handleSubmit = async () => {
     if (!canSubmit) return;
     setSubmitting(true);
-    saveProfile({
+
+    // Resolve referral code to referrer's principal
+    let referredBy: string | undefined;
+    if (referralCode) {
+      const referrerPrincipal = findPrincipalByReferralCode(referralCode);
+      if (referrerPrincipal && referrerPrincipal !== principal) {
+        referredBy = referrerPrincipal;
+      }
+    }
+
+    const result = saveProfile({
       display_name: displayName.trim(),
       freefire_uid: uid,
       freefire_nickname: nickname,
       freefire_level: level,
+      referred_by: referredBy,
     });
+
+    // Clear pending referral
+    sessionStorage.removeItem("kle_pending_referral");
+
+    if (result.isNewUser && result.referralProcessed) {
+      toast.success("🎁 Welcome bonus! ₹0.50 added to your wallet!", {
+        duration: 4000,
+      });
+    }
+
     await navigate({ to: "/profile" });
     setSubmitting(false);
   };
@@ -120,6 +152,22 @@ export function ProfileSetupPage() {
         >
           Complete your profile to start playing
         </p>
+
+        {/* Referral banner */}
+        {referralCode && (
+          <div
+            className="mb-4 px-3 py-2 rounded-lg text-xs text-center"
+            style={{
+              background: "rgba(0,255,136,0.08)",
+              border: "1px solid rgba(0,255,136,0.3)",
+              color: "#00FF88",
+              fontFamily: "'Rajdhani', sans-serif",
+            }}
+          >
+            🎁 Referral code <strong>{referralCode}</strong> applied — you'll
+            get ₹0.50 welcome bonus!
+          </div>
+        )}
 
         <div className="flex flex-col gap-4">
           {/* Display Name */}

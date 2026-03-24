@@ -9,6 +9,7 @@ import {
 } from "@tanstack/react-router";
 import { Loader2 } from "lucide-react";
 import React, { Suspense, useEffect } from "react";
+import { toast } from "sonner";
 import { BanNotification } from "./components/BanNotification";
 import { BottomNavBar } from "./components/BottomNavBar";
 import { Footer } from "./components/Footer";
@@ -66,7 +67,40 @@ const ProfileSetupPage = React.lazy(() =>
   })),
 );
 
-const AUTH_EXEMPT_PATHS = ["/login", "/setup-profile"];
+// Referral redirect page: /ref/:code -> store code in sessionStorage -> redirect to /login
+function ReferralRedirectPage() {
+  const navigate = useNavigate();
+
+  React.useEffect(() => {
+    const pathParts = window.location.pathname.split("/");
+    const codeFromPath = pathParts[pathParts.length - 1];
+    const params = new URLSearchParams(window.location.search);
+    const code =
+      codeFromPath !== "ref" ? codeFromPath : params.get("ref") || "";
+    if (code && code !== "ref") {
+      sessionStorage.setItem("kle_pending_referral", code.toUpperCase());
+    }
+    void navigate({ to: "/login" });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [navigate]);
+
+  return (
+    <div className="battleground-bg min-h-screen flex items-center justify-center">
+      <div
+        className="text-center"
+        style={{ color: "#00FF88", fontFamily: "'Orbitron', sans-serif" }}
+      >
+        <Loader2
+          className="h-8 w-8 animate-spin mx-auto mb-3"
+          style={{ color: "#00FF88" }}
+        />
+        <p className="text-sm">Loading referral...</p>
+      </div>
+    </div>
+  );
+}
+
+const AUTH_EXEMPT_PATHS = ["/login", "/setup-profile", "/ref"];
 
 function PageLoadingSpinner() {
   return (
@@ -145,6 +179,14 @@ function AppContent() {
       profile &&
       (path === "/login" || path === "/setup-profile")
     ) {
+      // If there is a pending referral but user already has a profile, show message and clear it
+      const pendingReferral = sessionStorage.getItem("kle_pending_referral");
+      if (pendingReferral) {
+        sessionStorage.removeItem("kle_pending_referral");
+        toast.info("Referral link used, but you're already registered.", {
+          duration: 4000,
+        });
+      }
       void navigate({ to: "/" });
     }
   }, [identity, isInitializing, profile, profileLoading, path, navigate]);
@@ -254,6 +296,12 @@ const setupProfileRoute = createRoute({
   component: ProfileSetupPage,
 });
 
+const refRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/ref/",
+  component: ReferralRedirectPage,
+});
+
 const routeTree = rootRoute.addChildren([
   indexRoute,
   tournamentsRoute,
@@ -267,6 +315,7 @@ const routeTree = rootRoute.addChildren([
   myMatchesRoute,
   loginRoute,
   setupProfileRoute,
+  refRoute,
 ]);
 
 const router = createRouter({ routeTree });

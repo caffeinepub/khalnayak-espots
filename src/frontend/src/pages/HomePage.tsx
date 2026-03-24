@@ -1,6 +1,6 @@
 import { useIIProfile } from "@/hooks/useIIProfile";
 import { useInternetIdentity } from "@/hooks/useInternetIdentity";
-import { useGetPlatformStats, useGetTournaments } from "@/hooks/useQueries";
+import { useGetTournaments } from "@/hooks/useQueries";
 import { decodeTournament, formatCurrency } from "@/utils/format";
 import { Link } from "@tanstack/react-router";
 import { Bell, User, Users, Zap } from "lucide-react";
@@ -67,10 +67,10 @@ function TopBar() {
       className="sticky top-0 z-50 flex items-center justify-between px-4"
       style={{
         height: 60,
-        background: "rgba(10,10,10,0.95)",
+        background: "rgba(255,255,255,0.97)",
         backdropFilter: "blur(20px)",
         WebkitBackdropFilter: "blur(20px)",
-        borderBottom: "1px solid rgba(0,255,136,0.18)",
+        borderBottom: "1px solid #E0E0E0",
       }}
       data-ocid="home.topbar.panel"
     >
@@ -94,11 +94,11 @@ function TopBar() {
               onClick={() => toast.info("No new notifications")}
               data-ocid="home.topbar.notifications.button"
               style={{
-                background: "rgba(255,255,255,0.06)",
-                border: "1px solid rgba(255,255,255,0.1)",
+                background: "rgba(0,0,0,0.04)",
+                border: "1px solid #E0E0E0",
                 borderRadius: 10,
                 padding: 8,
-                color: "#888",
+                color: "#666666",
                 cursor: "pointer",
                 transition: "all 0.2s",
                 lineHeight: 0,
@@ -161,9 +161,9 @@ function TopBar() {
               cursor: isLoggingIn ? "wait" : "pointer",
               background: isLoggingIn
                 ? "rgba(0,255,136,0.3)"
-                : "linear-gradient(135deg, #00FF88 0%, #00cc66 100%)",
-              color: "#0A0A0A",
-              boxShadow: isLoggingIn ? "none" : "0 0 16px rgba(0,255,136,0.5)",
+                : "linear-gradient(135deg, #00FF88 0%, #9d4edd 100%)",
+              color: "#FFFFFF",
+              boxShadow: isLoggingIn ? "none" : "0 0 16px rgba(0,255,136,0.4)",
               transition: "all 0.2s ease",
               whiteSpace: "nowrap",
               opacity: isLoggingIn ? 0.7 : 1,
@@ -188,7 +188,7 @@ function HeroSection() {
       className="relative px-4 py-10 flex flex-col items-center text-center overflow-hidden"
       style={{
         background:
-          "linear-gradient(180deg, rgba(0,255,136,0.04) 0%, rgba(10,10,10,0) 60%)",
+          "linear-gradient(180deg, rgba(0,255,136,0.06) 0%, rgba(255,255,255,0) 60%)",
         minHeight: 280,
       }}
     >
@@ -203,7 +203,7 @@ function HeroSection() {
           width: 280,
           height: 180,
           background:
-            "radial-gradient(ellipse, rgba(0,255,136,0.12) 0%, transparent 70%)",
+            "radial-gradient(ellipse, rgba(0,255,136,0.10) 0%, transparent 70%)",
           pointerEvents: "none",
         }}
       />
@@ -217,8 +217,8 @@ function HeroSection() {
           lineHeight: 1.1,
           textTransform: "uppercase",
           letterSpacing: "0.04em",
-          color: "#FFFFFF",
-          textShadow: "0 0 30px rgba(0,255,136,0.4), 0 2px 8px rgba(0,0,0,0.8)",
+          color: "#333333",
+          textShadow: "0 0 20px rgba(0,255,136,0.2)",
           marginBottom: 12,
           position: "relative",
           zIndex: 1,
@@ -234,7 +234,7 @@ function HeroSection() {
             WebkitBackgroundClip: "text",
             WebkitTextFillColor: "transparent",
             backgroundClip: "text",
-            filter: "drop-shadow(0 0 20px rgba(0,255,136,0.6))",
+            filter: "drop-shadow(0 0 20px rgba(0,255,136,0.4))",
           }}
         >
           BATTLEGROUND
@@ -245,7 +245,7 @@ function HeroSection() {
         style={{
           fontFamily: "'Rajdhani', sans-serif",
           fontSize: "clamp(13px, 3.5vw, 16px)",
-          color: "rgba(255,255,255,0.6)",
+          color: "#666666",
           letterSpacing: "0.08em",
           textTransform: "uppercase",
           marginBottom: 28,
@@ -283,10 +283,10 @@ function HeroSection() {
               background: isLoggingIn
                 ? "rgba(0,255,136,0.3)"
                 : "linear-gradient(135deg, #00FF88 0%, #00cc66 60%, #9d4edd 100%)",
-              color: "#0A0A0A",
+              color: "#FFFFFF",
               boxShadow: isLoggingIn
                 ? "none"
-                : "0 0 30px rgba(0,255,136,0.6), 0 4px 20px rgba(0,0,0,0.5)",
+                : "0 0 24px rgba(0,255,136,0.4), 0 4px 16px rgba(0,0,0,0.12)",
               transition: "all 0.3s ease",
               display: "flex",
               alignItems: "center",
@@ -318,10 +318,10 @@ function HeroSection() {
                   border: "none",
                   cursor: "pointer",
                   background:
-                    "linear-gradient(135deg, #00FF88 0%, #00cc66 100%)",
-                  color: "#0A0A0A",
+                    "linear-gradient(135deg, #00FF88 0%, #9d4edd 100%)",
+                  color: "#FFFFFF",
                   boxShadow:
-                    "0 0 20px rgba(0,255,136,0.5), 0 4px 16px rgba(0,0,0,0.4)",
+                    "0 0 16px rgba(0,255,136,0.35), 0 4px 12px rgba(0,0,0,0.1)",
                   transition: "all 0.25s ease",
                   display: "flex",
                   alignItems: "center",
@@ -368,7 +368,7 @@ function HeroSection() {
             style={{
               fontFamily: "'Rajdhani', sans-serif",
               fontSize: 12,
-              color: "rgba(255,255,255,0.35)",
+              color: "#999999",
               letterSpacing: "0.04em",
               textAlign: "center",
             }}
@@ -376,73 +376,6 @@ function HeroSection() {
             🔒 Face ID / Fingerprint / Passkey — No password needed
           </p>
         )}
-      </div>
-    </section>
-  );
-}
-
-// ─── Stats Section ─────────────────────────────────────────────────────────────
-
-function StatsSection() {
-  const { data: platformStats } = useGetPlatformStats();
-  const stats = [
-    {
-      label: "TOTAL PLAYERS",
-      value: platformStats
-        ? Number(platformStats.totalPlayers).toLocaleString()
-        : "0",
-      icon: "👥",
-    },
-    {
-      label: "TOURNAMENTS",
-      value: platformStats
-        ? Number(platformStats.totalTournaments).toString()
-        : "0",
-      icon: "🏆",
-    },
-    {
-      label: "PRIZE DISTRIBUTED",
-      value: platformStats
-        ? `₹${Number(platformStats.totalPrizeDistributed)}`
-        : "₹0",
-      icon: "💰",
-    },
-  ];
-  return (
-    <section className="px-4 pb-6" data-ocid="home.stats.section">
-      <div className="grid grid-cols-3 gap-3">
-        {stats.map((s) => (
-          <div
-            key={s.label}
-            className="gaming-card text-center"
-            style={{ padding: "12px 8px" }}
-          >
-            <div style={{ fontSize: 22, marginBottom: 4 }}>{s.icon}</div>
-            <div
-              style={{
-                fontFamily: "'Orbitron', sans-serif",
-                fontWeight: 900,
-                fontSize: "clamp(11px, 3vw, 16px)",
-                color: "#00FF88",
-                textShadow: "0 0 10px rgba(0,255,136,0.5)",
-              }}
-            >
-              {s.value}
-            </div>
-            <div
-              style={{
-                fontFamily: "'Rajdhani', sans-serif",
-                fontSize: 10,
-                color: "rgba(255,255,255,0.55)",
-                textTransform: "uppercase",
-                letterSpacing: "0.05em",
-                marginTop: 2,
-              }}
-            >
-              {s.label}
-            </div>
-          </div>
-        ))}
       </div>
     </section>
   );
@@ -470,7 +403,7 @@ function UpcomingTournamentsSection() {
             fontSize: "clamp(13px, 3.5vw, 16px)",
             textTransform: "uppercase",
             letterSpacing: "0.1em",
-            color: "#FFFFFF",
+            color: "#333333",
           }}
           data-ocid="home.upcoming.heading"
         >
@@ -516,7 +449,7 @@ function UpcomingTournamentsSection() {
             style={{
               textAlign: "center",
               padding: "24px",
-              color: "#666",
+              color: "#666666",
               fontFamily: "'Rajdhani', sans-serif",
             }}
           >
@@ -548,11 +481,9 @@ function TournamentCard({
     <div
       className="rounded-[12px] p-4 transition-all duration-200"
       style={{
-        background: "rgba(22,33,62,0.75)",
-        backdropFilter: "blur(16px)",
-        WebkitBackdropFilter: "blur(16px)",
-        border: "1px solid rgba(0,255,136,0.2)",
-        boxShadow: "0 4px 20px rgba(0,0,0,0.5)",
+        background: "#F5F5F5",
+        border: "1px solid #E0E0E0",
+        boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
       }}
       data-ocid={`home.upcoming.item.${idx}`}
     >
@@ -563,7 +494,7 @@ function TournamentCard({
               fontFamily: "'Orbitron', 'Rajdhani', sans-serif",
               fontWeight: 800,
               fontSize: "clamp(13px, 3.5vw, 15px)",
-              color: "#FFFFFF",
+              color: "#333333",
               textTransform: "uppercase",
               letterSpacing: "0.03em",
               marginBottom: 6,
@@ -576,7 +507,7 @@ function TournamentCard({
             style={{
               fontFamily: "'Rajdhani', sans-serif",
               fontSize: 12,
-              color: "rgba(255,255,255,0.55)",
+              color: "#666666",
               letterSpacing: "0.04em",
               marginBottom: 8,
             }}
@@ -615,9 +546,9 @@ function TournamentCard({
               borderRadius: 10,
               border: "none",
               cursor: "pointer",
-              background: "linear-gradient(135deg, #00FF88 0%, #00cc66 100%)",
-              color: "#0A0A0A",
-              boxShadow: "0 0 16px rgba(0,255,136,0.45)",
+              background: "linear-gradient(135deg, #00FF88 0%, #9d4edd 100%)",
+              color: "#FFFFFF",
+              boxShadow: "0 0 12px rgba(0,255,136,0.3)",
               transition: "all 0.2s ease",
               display: "flex",
               alignItems: "center",
@@ -640,11 +571,10 @@ export function HomePage() {
   return (
     <div
       className="min-h-screen overflow-x-hidden"
-      style={{ background: "#0A0A0A", paddingBottom: 80 }}
+      style={{ background: "#FFFFFF", paddingBottom: 80 }}
     >
       <TopBar />
       <HeroSection />
-      <StatsSection />
       <UpcomingTournamentsSection />
     </div>
   );

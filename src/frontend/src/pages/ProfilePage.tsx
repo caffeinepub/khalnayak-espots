@@ -133,10 +133,10 @@ export function ProfilePage() {
   };
 
   // Referral link
-  const referralLink = `https://khalnayak.app/ref/${profile.referral_code}`;
+  const referralLink = `https://khalnayak-espots-8pl.caffeine.xyz/ref/${profile.referral_code}`;
   const referralSettings = getReferralSettings();
   const referralEnabled = referralSettings.enabled;
-  const shareMessage = `Join me on Khalnayak Espots! Use my referral code ${profile.referral_code} and get ₹2 bonus. Download here: ${referralLink}`;
+  const shareMessage = `Join me on Khalnayak Espots! Use my referral code ${profile.referral_code} and get ₹0.50 welcome bonus! Download here: ${referralLink}`;
   const shareMessageEncoded = encodeURIComponent(shareMessage);
 
   const handleWhatsAppShare = () => {
@@ -163,7 +163,7 @@ export function ProfilePage() {
   const handleFacebookShare = () => {
     const url = encodeURIComponent(referralLink);
     const quote = encodeURIComponent(
-      `Join Khalnayak Espots! Use code ${profile.referral_code} and get ₹2 bonus.`,
+      `Join Khalnayak Espots! Use code ${profile.referral_code} and get ₹0.50 welcome bonus!`,
     );
     window.open(
       `https://www.facebook.com/sharer/sharer.php?u=${url}&quote=${quote}`,

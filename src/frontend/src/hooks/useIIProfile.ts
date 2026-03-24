@@ -10,6 +10,9 @@ export interface IIUserProfile {
   wallet_balance: number;
   referral_code: string;
   created_at: number;
+  referred_by?: string; // referrer's principal
+  referral_earnings?: number; // total earned from referrals
+  welcome_bonus?: number; // welcome bonus received
 }
 
 function generateReferralCode(): string {
@@ -17,6 +20,68 @@ function generateReferralCode(): string {
 }
 
 const PROFILE_KEY_PREFIX = "kle_ii_profile_";
+const REFERRAL_CODE_INDEX = "kle_referral_code_index";
+
+// Build a code→principal lookup map
+function getReferralCodeIndex(): Record<string, string> {
+  try {
+    const raw = localStorage.getItem(REFERRAL_CODE_INDEX);
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return {};
+  }
+}
+
+function setReferralCodeIndex(code: string, principal: string) {
+  const index = getReferralCodeIndex();
+  index[code] = principal;
+  localStorage.setItem(REFERRAL_CODE_INDEX, JSON.stringify(index));
+}
+
+export function findPrincipalByReferralCode(code: string): string | null {
+  const index = getReferralCodeIndex();
+  return index[code.toUpperCase()] ?? null;
+}
+
+export function getProfileByPrincipal(principal: string): IIUserProfile | null {
+  try {
+    const raw = localStorage.getItem(PROFILE_KEY_PREFIX + principal);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+export function updateProfileBalance(
+  principal: string,
+  delta: number,
+  description?: string,
+) {
+  const key = PROFILE_KEY_PREFIX + principal;
+  const raw = localStorage.getItem(key);
+  if (!raw) return;
+  try {
+    const p: IIUserProfile = JSON.parse(raw);
+    p.wallet_balance = (p.wallet_balance ?? 0) + delta;
+    if (description) {
+      // Append to transaction log key
+      const txKey = `kle_tx_${principal}`;
+      const txRaw = localStorage.getItem(txKey);
+      const txList = txRaw ? JSON.parse(txRaw) : [];
+      txList.push({
+        id: Date.now(),
+        type: delta > 0 ? "credit" : "debit",
+        amount: Math.abs(delta),
+        description,
+        date: new Date().toISOString(),
+      });
+      localStorage.setItem(txKey, JSON.stringify(txList));
+    }
+    localStorage.setItem(key, JSON.stringify(p));
+  } catch {
+    // ignore
+  }
+}
 
 export function useIIProfile() {
   const { identity, isInitializing } = useInternetIdentity();
@@ -25,8 +90,7 @@ export function useIIProfile() {
 
   const principal = identity?.getPrincipal().toText();
 
-  useEffect(() => {
-    if (isInitializing) return;
+  const loadProfile = useCallback(() => {
     if (!principal) {
       setProfile(null);
       setProfileLoading(false);
@@ -44,31 +108,112 @@ export function useIIProfile() {
       setProfile(null);
     }
     setProfileLoading(false);
-  }, [principal, isInitializing]);
+  }, [principal]);
+
+  useEffect(() => {
+    if (isInitializing) return;
+    loadProfile();
+  }, [isInitializing, loadProfile]);
 
   const saveProfile = useCallback(
     (
       data: Omit<
         IIUserProfile,
-        "principal" | "wallet_balance" | "referral_code" | "created_at"
-      >,
-    ) => {
-      if (!principal) return;
+        | "principal"
+        | "wallet_balance"
+        | "referral_code"
+        | "created_at"
+        | "referral_earnings"
+        | "welcome_bonus"
+      > & { referred_by?: string },
+    ): { isNewUser: boolean; referralProcessed: boolean } => {
+      if (!principal) return { isNewUser: false, referralProcessed: false };
+
+      // Check if this is truly a new user (no existing profile)
+      const existingKey = PROFILE_KEY_PREFIX + principal;
+      const existingRaw = localStorage.getItem(existingKey);
+      if (existingRaw) {
+        // Existing user — just update, no rewards
+        return { isNewUser: false, referralProcessed: false };
+      }
+
+      const referralCode = generateReferralCode();
+      let welcomeBonus = 0;
+      let referralProcessed = false;
+
       const newProfile: IIUserProfile = {
         principal,
         ...data,
         wallet_balance: 0,
-        referral_code: generateReferralCode(),
+        referral_code: referralCode,
         created_at: Date.now(),
       };
-      localStorage.setItem(
-        PROFILE_KEY_PREFIX + principal,
-        JSON.stringify(newProfile),
-      );
+
+      // Register code→principal mapping
+      setReferralCodeIndex(referralCode, principal);
+
+      // Process referral if referred_by is provided
+      if (data.referred_by && data.referred_by !== principal) {
+        const referrerProfile = getProfileByPrincipal(data.referred_by);
+        if (referrerProfile) {
+          // Give referrer ₹1.50
+          updateProfileBalance(
+            data.referred_by,
+            1.5,
+            `🎉 Referral bonus — invited ${data.display_name}`,
+          );
+          // Update referral_earnings on referrer
+          const referrerKey = PROFILE_KEY_PREFIX + data.referred_by;
+          const referrerRaw = localStorage.getItem(referrerKey);
+          if (referrerRaw) {
+            try {
+              const rp: IIUserProfile = JSON.parse(referrerRaw);
+              rp.referral_earnings = (rp.referral_earnings ?? 0) + 1.5;
+              localStorage.setItem(referrerKey, JSON.stringify(rp));
+            } catch {
+              // ignore
+            }
+          }
+          // Give new user ₹0.50 welcome bonus
+          welcomeBonus = 0.5;
+          newProfile.wallet_balance = 0.5;
+          newProfile.referred_by = data.referred_by;
+          newProfile.welcome_bonus = 0.5;
+          referralProcessed = true;
+        }
+      }
+
+      localStorage.setItem(existingKey, JSON.stringify(newProfile));
+
+      // Record welcome bonus transaction if applicable
+      if (welcomeBonus > 0) {
+        const txKey = `kle_tx_${principal}`;
+        const txList: Array<{
+          id: number;
+          type: string;
+          amount: number;
+          description: string;
+          date: string;
+        }> = [];
+        txList.push({
+          id: Date.now(),
+          type: "credit",
+          amount: welcomeBonus,
+          description: "🎁 Welcome bonus — referral reward",
+          date: new Date().toISOString(),
+        });
+        localStorage.setItem(txKey, JSON.stringify(txList));
+      }
+
       setProfile(newProfile);
+      return { isNewUser: true, referralProcessed };
     },
     [principal],
   );
 
-  return { profile, profileLoading, saveProfile, principal };
+  const refreshProfile = useCallback(() => {
+    loadProfile();
+  }, [loadProfile]);
+
+  return { profile, profileLoading, saveProfile, principal, refreshProfile };
 }
