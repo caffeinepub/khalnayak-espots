@@ -20,8 +20,8 @@ import { PushNotificationManager } from "./components/PushNotificationManager";
 import { SplashScreen } from "./components/SplashScreen";
 import { VpnBlocker } from "./components/VpnBlocker";
 import { Toaster } from "./components/ui/sonner";
+import { useFirebaseAuth } from "./hooks/useFirebaseAuth";
 import { useIIProfile } from "./hooks/useIIProfile";
-import { useInternetIdentity } from "./hooks/useInternetIdentity";
 
 // ── Lazy-loaded pages ──────────────────────────────────────────────────────────
 const AdminPage = React.lazy(() =>
@@ -67,7 +67,7 @@ const ProfileSetupPage = React.lazy(() =>
   })),
 );
 
-// Referral redirect page: /ref/:code -> store code in sessionStorage -> redirect to /login
+// Referral redirect page
 function ReferralRedirectPage() {
   const navigate = useNavigate();
 
@@ -162,7 +162,7 @@ const queryClient = new QueryClient({
 });
 
 function AppContent() {
-  const { identity, isInitializing } = useInternetIdentity();
+  const { identity, isInitializing } = useFirebaseAuth();
   const { profile, profileLoading } = useIIProfile();
   const navigate = useNavigate();
 
@@ -179,7 +179,6 @@ function AppContent() {
       profile &&
       (path === "/login" || path === "/setup-profile")
     ) {
-      // If there is a pending referral but user already has a profile, show message and clear it
       const pendingReferral = sessionStorage.getItem("kle_pending_referral");
       if (pendingReferral) {
         sessionStorage.removeItem("kle_pending_referral");

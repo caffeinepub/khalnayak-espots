@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { useInternetIdentity } from "./useInternetIdentity";
+import { useFirebaseAuth } from "./useFirebaseAuth";
 
 export interface IIUserProfile {
   principal: string;
@@ -10,9 +10,9 @@ export interface IIUserProfile {
   wallet_balance: number;
   referral_code: string;
   created_at: number;
-  referred_by?: string; // referrer's principal
-  referral_earnings?: number; // total earned from referrals
-  welcome_bonus?: number; // welcome bonus received
+  referred_by?: string;
+  referral_earnings?: number;
+  welcome_bonus?: number;
 }
 
 function generateReferralCode(): string {
@@ -22,7 +22,6 @@ function generateReferralCode(): string {
 const PROFILE_KEY_PREFIX = "kle_ii_profile_";
 const REFERRAL_CODE_INDEX = "kle_referral_code_index";
 
-// Build a code→principal lookup map
 function getReferralCodeIndex(): Record<string, string> {
   try {
     const raw = localStorage.getItem(REFERRAL_CODE_INDEX);
@@ -64,7 +63,6 @@ export function updateProfileBalance(
     const p: IIUserProfile = JSON.parse(raw);
     p.wallet_balance = (p.wallet_balance ?? 0) + delta;
     if (description) {
-      // Append to transaction log key
       const txKey = `kle_tx_${principal}`;
       const txRaw = localStorage.getItem(txKey);
       const txList = txRaw ? JSON.parse(txRaw) : [];
@@ -84,11 +82,11 @@ export function updateProfileBalance(
 }
 
 export function useIIProfile() {
-  const { identity, isInitializing } = useInternetIdentity();
+  const { user, isInitializing } = useFirebaseAuth();
   const [profile, setProfile] = useState<IIUserProfile | null>(null);
   const [profileLoading, setProfileLoading] = useState(true);
 
-  const principal = identity?.getPrincipal().toText();
+  const principal = user?.uid;
 
   const loadProfile = useCallback(() => {
     if (!principal) {
@@ -129,11 +127,9 @@ export function useIIProfile() {
     ): { isNewUser: boolean; referralProcessed: boolean } => {
       if (!principal) return { isNewUser: false, referralProcessed: false };
 
-      // Check if this is truly a new user (no existing profile)
       const existingKey = PROFILE_KEY_PREFIX + principal;
       const existingRaw = localStorage.getItem(existingKey);
       if (existingRaw) {
-        // Existing user — just update, no rewards
         return { isNewUser: false, referralProcessed: false };
       }
 
@@ -149,20 +145,16 @@ export function useIIProfile() {
         created_at: Date.now(),
       };
 
-      // Register code→principal mapping
       setReferralCodeIndex(referralCode, principal);
 
-      // Process referral if referred_by is provided
       if (data.referred_by && data.referred_by !== principal) {
         const referrerProfile = getProfileByPrincipal(data.referred_by);
         if (referrerProfile) {
-          // Give referrer ₹1.50
           updateProfileBalance(
             data.referred_by,
             1.5,
             `🎉 Referral bonus — invited ${data.display_name}`,
           );
-          // Update referral_earnings on referrer
           const referrerKey = PROFILE_KEY_PREFIX + data.referred_by;
           const referrerRaw = localStorage.getItem(referrerKey);
           if (referrerRaw) {
@@ -174,7 +166,6 @@ export function useIIProfile() {
               // ignore
             }
           }
-          // Give new user ₹0.50 welcome bonus
           welcomeBonus = 0.5;
           newProfile.wallet_balance = 0.5;
           newProfile.referred_by = data.referred_by;
@@ -185,7 +176,6 @@ export function useIIProfile() {
 
       localStorage.setItem(existingKey, JSON.stringify(newProfile));
 
-      // Record welcome bonus transaction if applicable
       if (welcomeBonus > 0) {
         const txKey = `kle_tx_${principal}`;
         const txList: Array<{

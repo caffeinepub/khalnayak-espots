@@ -1,31 +1,33 @@
-# Khalnayak Espots
+# KL TOURNAMENTS
 
 ## Current State
-
-The app has Internet Identity login in `LoginPage.tsx` and a `ProfileSetupPage.tsx` with display name + Free Fire UID form. However, several files still import `useOtpAuth` (from `useOtpAuth.ts`) and `useLocalAuth` (from `useLocalAuth.ts`), which are leftover from previous Firebase/MSG91 implementations. Firebase-related code exists in `src/lib/firebase.ts` and the two legacy hooks.
+App uses Internet Identity (DFINITY @dfinity/auth-client) for login. The `useInternetIdentity` hook manages auth state, `useIIProfile` manages user profiles stored in localStorage keyed by principal. LoginPage shows a single "Login with Internet Identity" button.
 
 ## Requested Changes (Diff)
 
 ### Add
-- Nothing new to add (system already exists)
+- Firebase SDK (`firebase` npm package) with provided config
+- `useFirebaseAuth` hook that provides same interface as `useInternetIdentity` (identity/login/clear/isLoggingIn/isInitializing)
+- Google Sign-In button on LoginPage
+- Firebase config file at `src/lib/firebase.ts`
 
 ### Modify
-- Replace all `useOtpAuth` imports in: `useQueries.ts`, `HomePage.tsx`, `PushNotificationManager.tsx`, `NotificationPoller.tsx`, `useTokens.ts`, `BanNotification.tsx`, `TournamentDetailPage.tsx`, `EarnPage.tsx`, `MyMatchesPage.tsx` — migrate to `useInternetIdentity` + `useIIProfile`
+- `LoginPage.tsx` — Replace II button with Google Sign-In button (Firebase Google Auth popup)
+- `App.tsx` — Replace `useInternetIdentity` with `useFirebaseAuth`; replace `InternetIdentityProvider` usage
+- `useIIProfile.ts` — Replace `identity.getPrincipal().toText()` with Firebase `user.uid`; adapt to Firebase auth state
+- `ProfileSetupPage.tsx` — Use Firebase auth user instead of II identity
+- `package.json` — Add `firebase` dependency
 
 ### Remove
-- `src/frontend/src/lib/firebase.ts` — delete Firebase REST API integration
-- `src/frontend/src/hooks/useOtpAuth.ts` — delete MSG91/OTP hook  
-- `src/frontend/src/hooks/useLocalAuth.ts` — delete email/password local auth hook
-- `src/frontend/src/pages/RegisterPage.tsx` — delete registration page (not needed)
+- All `useInternetIdentity` imports and usage
+- `InternetIdentityProvider` wrapper
+- `@dfinity/auth-client` usage from auth flow (keep dfinity packages for backend calls if needed)
 
 ## Implementation Plan
-
-1. For each file using `useOtpAuth`, replace usage pattern:
-   - `currentUser` from OtpAuth → use `profile` from `useIIProfile`
-   - `isLoggedIn` → `!!identity && !identity.getPrincipal().isAnonymous()`
-   - `isInitializing` → from `useInternetIdentity`
-   - `identity` → from `useInternetIdentity`
-   - `logout`/`clear` → `clear` from `useInternetIdentity` + navigate to /login
-2. For files using `currentUser.username` → use `profile.display_name`
-3. For files using `currentUser.referralCode` → use `profile.referral_code`  
-4. Delete legacy files: firebase.ts, useOtpAuth.ts, useLocalAuth.ts
+1. Add `firebase` to package.json dependencies
+2. Create `src/lib/firebase.ts` with the provided Firebase config and initialize app, auth
+3. Create `src/hooks/useFirebaseAuth.ts` — wraps Firebase Google Sign-In, exposes: `user`, `login()`, `clear()`, `isLoggingIn`, `isInitializing`, `isLoginSuccess`
+4. Update `useIIProfile.ts` — use `useFirebaseAuth` instead of `useInternetIdentity`; derive principal/uid from Firebase `user.uid`
+5. Update `LoginPage.tsx` — Google Sign-In button with Firebase branding
+6. Update `App.tsx` — use `useFirebaseAuth` instead of `useInternetIdentity`; remove InternetIdentityProvider
+7. Update `ProfileSetupPage.tsx` — use `useFirebaseAuth`

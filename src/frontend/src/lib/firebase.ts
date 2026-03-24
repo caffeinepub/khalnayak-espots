@@ -1,34 +1,17 @@
-// Firebase removed — Internet Identity is used instead
-export const auth = {
-  currentUser: null as null | { uid: string; email: string },
+import { getApps, initializeApp } from "firebase/app";
+import { getAuth } from "firebase/auth";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCMUzl4o8WGxbk3DVo97Bz-6wQ2-AsXyzA",
+  authDomain: "kl-tournament.firebaseapp.com",
+  projectId: "kl-tournament",
+  storageBucket: "kl-tournament.firebasestorage.app",
+  messagingSenderId: "36701184762",
+  appId: "1:36701184762:web:8248ef422c0aba6b729f43",
+  measurementId: "G-8MZPR2LZPC",
 };
-export const db = {};
-export async function saveFirestoreUser() {}
-export async function getFirestoreUser() {
-  return null;
-}
-export async function signInWithPhone(): Promise<{
-  uid: string;
-  isNew: boolean;
-}> {
-  throw new Error("Not implemented — use Internet Identity");
-}
-export async function signUpWithEmail(): Promise<{ uid: string }> {
-  throw new Error("Not implemented — use Internet Identity");
-}
-export async function signInWithEmail(): Promise<{ uid: string }> {
-  throw new Error("Not implemented — use Internet Identity");
-}
-export async function resetPassword(): Promise<void> {
-  throw new Error("Not implemented — use Internet Identity");
-}
-export async function firebaseSignOut(): Promise<void> {}
-export interface FirestoreUser {
-  phone?: string;
-  email?: string;
-  wallet_balance: number;
-  referral_code: string;
-  username: string;
-  created_at: unknown;
-  last_login: unknown;
-}
+
+const app =
+  getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
+export const auth = getAuth(app);
+export default app;

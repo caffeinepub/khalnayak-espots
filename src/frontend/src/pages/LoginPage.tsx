@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { useInternetIdentity } from "@/hooks/useInternetIdentity";
+import { useFirebaseAuth } from "@/hooks/useFirebaseAuth";
 import { Loader2, Shield } from "lucide-react";
 
 function KLLoginLogo() {
@@ -103,7 +103,7 @@ function KLLoginLogo() {
 }
 
 export function LoginPage() {
-  const { login, isLoggingIn } = useInternetIdentity();
+  const { login, isLoggingIn } = useFirebaseAuth();
 
   return (
     <div
@@ -159,36 +159,43 @@ export function LoginPage() {
             </span>
           </div>
 
-          {/* Primary Login Button */}
+          {/* Google Sign-In Button */}
           <Button
             data-ocid="login.primary_button"
-            className="w-full h-14 text-base font-bold tracking-widest uppercase"
+            className="w-full"
             disabled={isLoggingIn}
             onClick={() => login()}
             style={{
-              background: isLoggingIn
-                ? "rgba(0,255,136,0.3)"
-                : "linear-gradient(135deg, #00FF88 0%, #00cc66 60%, #9d4edd 100%)",
-              color: "#0a0a0a",
+              background: isLoggingIn ? "rgba(255,255,255,0.1)" : "white",
+              color: "#1a1a1a",
               border: "none",
               borderRadius: 12,
               fontFamily: "'Orbitron', sans-serif",
               fontSize: "0.82rem",
-              boxShadow: isLoggingIn
-                ? "none"
-                : "0 0 30px rgba(0,255,136,0.5), 0 4px 20px rgba(0,0,0,0.4)",
-              transition: "all 0.3s ease",
+              fontWeight: 700,
               letterSpacing: "0.05em",
+              padding: "0 24px",
+              height: 56,
+              width: "100%",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 10,
+              boxShadow: "0 0 20px rgba(255,255,255,0.15)",
+              transition: "all 0.3s ease",
             }}
           >
             {isLoggingIn ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Connecting...
-              </>
+              <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
-              "🚀 Login with Internet Identity"
+              <img
+                src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
+                alt="G"
+                width={20}
+                height={20}
+              />
             )}
+            {isLoggingIn ? "Connecting..." : "Sign in with Google"}
           </Button>
 
           <p
@@ -199,16 +206,18 @@ export function LoginPage() {
               maxWidth: 260,
             }}
           >
-            Face ID / Fingerprint / Passkey — No password needed
+            Sign in securely with your Google account
           </p>
 
           <div
             className="flex items-center gap-3 mt-2"
             style={{ color: "rgba(255,255,255,0.25)", fontSize: 11 }}
           >
-            <span>🔒 Blockchain-secured</span>
+            <span>🔒 Secure</span>
             <span>•</span>
-            <span>🌐 Decentralized</span>
+            <span>⚡ Fast</span>
+            <span>•</span>
+            <span>🎮 Gaming</span>
           </div>
         </div>
       </div>
