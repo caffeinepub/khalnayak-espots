@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { useFirebaseAuth } from "./useFirebaseAuth";
+import { useUnifiedAuth } from "../context/UnifiedAuthContext";
 
 export interface IIUserProfile {
   principal: string;
@@ -82,11 +82,9 @@ export function updateProfileBalance(
 }
 
 export function useIIProfile() {
-  const { user, isInitializing } = useFirebaseAuth();
+  const { userId: principal, isInitializing } = useUnifiedAuth();
   const [profile, setProfile] = useState<IIUserProfile | null>(null);
   const [profileLoading, setProfileLoading] = useState(true);
-
-  const principal = user?.uid;
 
   const loadProfile = useCallback(() => {
     if (!principal) {

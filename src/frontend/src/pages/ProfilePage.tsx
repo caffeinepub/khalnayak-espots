@@ -5,8 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useUnifiedAuth } from "@/context/UnifiedAuthContext";
 import { useIIProfile } from "@/hooks/useIIProfile";
-import { useInternetIdentity } from "@/hooks/useInternetIdentity";
 import {
   useGetCallerStats,
   useGetCallerTeamRegistrations,
@@ -42,7 +42,7 @@ import { SiFacebook, SiGmail, SiInstagram, SiWhatsapp } from "react-icons/si";
 import { toast } from "sonner";
 
 export function ProfilePage() {
-  const { identity, clear } = useInternetIdentity();
+  const { userId, logoutAll } = useUnifiedAuth();
   const { profile } = useIIProfile();
   const navigate = useNavigate();
   const { data: stats, isLoading: statsLoading } = useGetCallerStats();
@@ -59,12 +59,12 @@ export function ProfilePage() {
     }) || [];
 
   const handleLogout = () => {
-    clear();
+    logoutAll();
     void navigate({ to: "/login" });
     toast.success("Logged out successfully");
   };
 
-  const isLoggedIn = !!identity && !identity.getPrincipal().isAnonymous();
+  const isLoggedIn = !!userId;
 
   // Not logged in
   if (!isLoggedIn) {

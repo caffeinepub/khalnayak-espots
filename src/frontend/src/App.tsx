@@ -20,7 +20,7 @@ import { PushNotificationManager } from "./components/PushNotificationManager";
 import { SplashScreen } from "./components/SplashScreen";
 import { VpnBlocker } from "./components/VpnBlocker";
 import { Toaster } from "./components/ui/sonner";
-import { useFirebaseAuth } from "./hooks/useFirebaseAuth";
+import { useUnifiedAuth } from "./context/UnifiedAuthContext";
 import { useIIProfile } from "./hooks/useIIProfile";
 
 // ── Lazy-loaded pages ──────────────────────────────────────────────────────────
@@ -162,7 +162,7 @@ const queryClient = new QueryClient({
 });
 
 function AppContent() {
-  const { identity, isInitializing } = useFirebaseAuth();
+  const { userId, isInitializing } = useUnifiedAuth();
   const { profile, profileLoading } = useIIProfile();
   const navigate = useNavigate();
 
@@ -170,12 +170,12 @@ function AppContent() {
 
   useEffect(() => {
     if (isInitializing || profileLoading) return;
-    if (!identity && path !== "/login") {
+    if (!userId && path !== "/login") {
       void navigate({ to: "/login" });
-    } else if (identity && !profile && path !== "/setup-profile") {
+    } else if (userId && !profile && path !== "/setup-profile") {
       void navigate({ to: "/setup-profile" });
     } else if (
-      identity &&
+      userId &&
       profile &&
       (path === "/login" || path === "/setup-profile")
     ) {
@@ -188,7 +188,7 @@ function AppContent() {
       }
       void navigate({ to: "/" });
     }
-  }, [identity, isInitializing, profile, profileLoading, path, navigate]);
+  }, [userId, isInitializing, profile, profileLoading, path, navigate]);
 
   if (isInitializing || profileLoading) return <FullScreenSpinner />;
 

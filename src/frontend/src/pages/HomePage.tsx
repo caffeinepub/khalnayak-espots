@@ -1,12 +1,12 @@
+import { useUnifiedAuth } from "@/context/UnifiedAuthContext";
 import { useIIProfile } from "@/hooks/useIIProfile";
-import { useInternetIdentity } from "@/hooks/useInternetIdentity";
 import { useGetTournaments } from "@/hooks/useQueries";
 import { decodeTournament, formatCurrency } from "@/utils/format";
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { Bell, User, Users, Zap } from "lucide-react";
 import { toast } from "sonner";
 
-// ─── KL Esports Life Logo Component ──────────────────────────────────────────
+// ─── KL Esports Life Logo Component ─────────────────────────────────────────────────
 
 function KLLogo({ size = "md" }: { size?: "sm" | "md" | "lg" }) {
   const fontSize =
@@ -55,12 +55,13 @@ function KLLogo({ size = "md" }: { size?: "sm" | "md" | "lg" }) {
   );
 }
 
-// ─── Top Bar ──────────────────────────────────────────────────────────────────
+// ─── Top Bar ────────────────────────────────────────────────────────────────────
 
 function TopBar() {
-  const { identity, login, isLoggingIn } = useInternetIdentity();
+  const { userId } = useUnifiedAuth();
   const { profile } = useIIProfile();
-  const isLoggedIn = !!identity && !identity.getPrincipal().isAnonymous();
+  const navigate = useNavigate();
+  const isLoggedIn = !!userId;
 
   return (
     <header
@@ -146,8 +147,7 @@ function TopBar() {
         ) : (
           <button
             type="button"
-            onClick={() => login()}
-            disabled={isLoggingIn}
+            onClick={() => void navigate({ to: "/login" })}
             data-ocid="home.topbar.login.button"
             style={{
               fontFamily: "'Orbitron', 'Rajdhani', sans-serif",
@@ -158,18 +158,15 @@ function TopBar() {
               padding: "8px 14px",
               borderRadius: 10,
               border: "none",
-              cursor: isLoggingIn ? "wait" : "pointer",
-              background: isLoggingIn
-                ? "rgba(0,255,136,0.3)"
-                : "linear-gradient(135deg, #00FF88 0%, #9d4edd 100%)",
+              cursor: "pointer",
+              background: "linear-gradient(135deg, #00FF88 0%, #9d4edd 100%)",
               color: "#FFFFFF",
-              boxShadow: isLoggingIn ? "none" : "0 0 16px rgba(0,255,136,0.4)",
+              boxShadow: "0 0 16px rgba(0,255,136,0.4)",
               transition: "all 0.2s ease",
               whiteSpace: "nowrap",
-              opacity: isLoggingIn ? 0.7 : 1,
             }}
           >
-            {isLoggingIn ? "Connecting..." : "🔐 Login"}
+            🔐 Login
           </button>
         )}
       </div>
@@ -177,11 +174,12 @@ function TopBar() {
   );
 }
 
-// ─── Hero Section ─────────────────────────────────────────────────────────────
+// ─── Hero Section ─────────────────────────────────────────────────────────────────
 
 function HeroSection() {
-  const { identity, login, isLoggingIn } = useInternetIdentity();
-  const isLoggedIn = !!identity && !identity.getPrincipal().isAnonymous();
+  const { userId } = useUnifiedAuth();
+  const navigate = useNavigate();
+  const isLoggedIn = !!userId;
 
   return (
     <section
@@ -263,11 +261,10 @@ function HeroSection() {
         style={{ maxWidth: 360, position: "relative", zIndex: 1 }}
       >
         {!isLoggedIn ? (
-          /* Prominent Internet Identity login button */
+          /* Login button — navigates to login page */
           <button
             type="button"
-            onClick={() => login()}
-            disabled={isLoggingIn}
+            onClick={() => void navigate({ to: "/login" })}
             data-ocid="home.hero.get_started.primary_button"
             style={{
               width: "100%",
@@ -279,26 +276,21 @@ function HeroSection() {
               padding: "15px 24px",
               borderRadius: 14,
               border: "none",
-              cursor: isLoggingIn ? "wait" : "pointer",
-              background: isLoggingIn
-                ? "rgba(0,255,136,0.3)"
-                : "linear-gradient(135deg, #00FF88 0%, #00cc66 60%, #9d4edd 100%)",
+              cursor: "pointer",
+              background:
+                "linear-gradient(135deg, #00FF88 0%, #00cc66 60%, #9d4edd 100%)",
               color: "#FFFFFF",
-              boxShadow: isLoggingIn
-                ? "none"
-                : "0 0 24px rgba(0,255,136,0.4), 0 4px 16px rgba(0,0,0,0.12)",
+              boxShadow:
+                "0 0 24px rgba(0,255,136,0.4), 0 4px 16px rgba(0,0,0,0.12)",
               transition: "all 0.3s ease",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
               gap: 8,
-              opacity: isLoggingIn ? 0.7 : 1,
             }}
           >
             <span style={{ fontSize: "1.1em" }}>🚀</span>
-            {isLoggingIn
-              ? "Connecting to Internet Identity..."
-              : "Login with Internet Identity"}
+            LOGIN / SIGN IN
           </button>
         ) : (
           /* Logged-in CTAs */
@@ -373,7 +365,7 @@ function HeroSection() {
               textAlign: "center",
             }}
           >
-            🔒 Face ID / Fingerprint / Passkey — No password needed
+            🔒 Face ID / Fingerprint / Google — No password needed
           </p>
         )}
       </div>
@@ -381,7 +373,7 @@ function HeroSection() {
   );
 }
 
-// ─── Upcoming Tournaments ──────────────────────────────────────────────────────
+// ─── Upcoming Tournaments ───────────────────────────────────────────────────────
 
 function UpcomingTournamentsSection() {
   const { data: tournaments } = useGetTournaments();
@@ -565,7 +557,7 @@ function TournamentCard({
   );
 }
 
-// ─── Home Page ─────────────────────────────────────────────────────────────────
+// ─── Home Page ────────────────────────────────────────────────────────────────────
 
 export function HomePage() {
   return (

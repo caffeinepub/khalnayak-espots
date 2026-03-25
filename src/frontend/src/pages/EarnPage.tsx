@@ -1,8 +1,9 @@
 import { AdModal } from "@/components/AdModal";
 import { Button } from "@/components/ui/button";
+import { useUnifiedAuth } from "@/context/UnifiedAuthContext";
 import { useAdMob } from "@/hooks/useAdMob";
-import { useOtpAuth } from "@/hooks/useOtpAuth";
 import { useTokens } from "@/hooks/useTokens";
+import { useNavigate } from "@tanstack/react-router";
 import { Loader2, LogIn, Play } from "lucide-react";
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
@@ -12,8 +13,8 @@ const WITHDRAWAL_AD_SECONDS = 60;
 
 const neonGreen = "#00FF88";
 const neonPurple = "#9d4edd";
-const darkCard = "#16213E";
-const darkBg = "#0A0A0A";
+const lightCard = "#F5F5F5";
+const lightBg = "#FFFFFF";
 
 const orbitron: React.CSSProperties = {
   fontFamily: "'Orbitron', sans-serif",
@@ -23,14 +24,15 @@ const rajdhani: React.CSSProperties = {
 };
 
 export function EarnPage() {
-  const { identity, login } = useOtpAuth();
+  const { userId, isInitializing } = useUnifiedAuth();
   const tokens = useTokens();
+  const navigate = useNavigate();
 
-  if (!identity) {
+  if (!userId && !isInitializing) {
     return (
       <div
         className="min-h-screen flex flex-col items-center justify-center gap-6 text-center px-4"
-        style={{ background: darkBg }}
+        style={{ background: lightBg }}
         data-ocid="earn.page"
       >
         <div
@@ -53,12 +55,12 @@ export function EarnPage() {
           >
             EARN REAL MONEY
           </h2>
-          <p style={{ ...rajdhani, color: "#aaa", fontSize: 16 }}>
+          <p style={{ ...rajdhani, color: "#666666", fontSize: 16 }}>
             Watch Ads → Tokens → Cashout
           </p>
         </div>
         <Button
-          onClick={login}
+          onClick={() => navigate({ to: "/login" })}
           size="lg"
           className="font-bold px-8 text-base"
           style={{
@@ -80,7 +82,7 @@ export function EarnPage() {
   return (
     <div
       className="min-h-screen pb-28"
-      style={{ background: darkBg }}
+      style={{ background: lightBg }}
       data-ocid="earn.page"
     >
       {/* Google Fonts */}
@@ -99,7 +101,14 @@ export function EarnPage() {
           >
             💰 EARN REAL MONEY
           </h1>
-          <p style={{ ...rajdhani, color: "#aaa", fontSize: 15, marginTop: 4 }}>
+          <p
+            style={{
+              ...rajdhani,
+              color: "#666666",
+              fontSize: 15,
+              marginTop: 4,
+            }}
+          >
             Watch Ads → Tokens → Cashout
           </p>
         </div>
@@ -108,8 +117,8 @@ export function EarnPage() {
         <div
           className="rounded-2xl p-5 text-center"
           style={{
-            background: darkCard,
-            border: `1.5px solid ${neonGreen}66`,
+            background: lightCard,
+            border: "1.5px solid rgba(0,255,136,0.3)",
             boxShadow: `0 0 32px ${neonGreen}22`,
           }}
           data-ocid="earn.card"
@@ -117,7 +126,7 @@ export function EarnPage() {
           <p
             style={{
               ...rajdhani,
-              color: "#aaa",
+              color: "#666666",
               fontSize: 13,
               letterSpacing: 2,
               textTransform: "uppercase",
@@ -158,8 +167,8 @@ export function EarnPage() {
         <div
           className="rounded-2xl p-5 space-y-3"
           style={{
-            background: darkCard,
-            border: `1.5px solid ${neonPurple}55`,
+            background: lightCard,
+            border: "1.5px solid rgba(157,78,221,0.3)",
           }}
         >
           <div className="flex justify-between items-center">
@@ -173,7 +182,7 @@ export function EarnPage() {
             >
               WITHDRAWAL PROGRESS
             </p>
-            <p style={{ ...rajdhani, color: "#ccc", fontSize: 14 }}>
+            <p style={{ ...rajdhani, color: "#666666", fontSize: 14 }}>
               {tokens.tokensForNextWithdrawal}/{tokens.TOKENS_FOR_WITHDRAWAL}{" "}
               tokens
             </p>
@@ -181,7 +190,7 @@ export function EarnPage() {
           {/* Progress bar */}
           <div
             className="relative h-4 rounded-full overflow-hidden"
-            style={{ background: "#1a1a2e" }}
+            style={{ background: "#E0E0E0" }}
           >
             <div
               className="absolute inset-y-0 left-0 rounded-full transition-all duration-700"
@@ -195,7 +204,7 @@ export function EarnPage() {
           <p
             style={{
               ...rajdhani,
-              color: tokens.canWithdraw ? neonGreen : "#aaa",
+              color: tokens.canWithdraw ? neonGreen : "#666666",
               fontSize: 14,
               textAlign: "center",
             }}
@@ -270,7 +279,7 @@ function WatchAdSection({ onAdComplete }: { onAdComplete: () => void }) {
       <div
         className="rounded-2xl p-5 text-center space-y-3"
         style={{
-          background: darkCard,
+          background: lightCard,
           border: `1.5px solid ${neonGreen}66`,
           boxShadow: `0 0 24px ${neonGreen}22`,
         }}
@@ -307,7 +316,7 @@ function WatchAdSection({ onAdComplete }: { onAdComplete: () => void }) {
             </>
           )}
         </Button>
-        <p style={{ ...rajdhani, color: "#aaa", fontSize: 13 }}>
+        <p style={{ ...rajdhani, color: "#666666", fontSize: 13 }}>
           {adOpen && timer > 0 ? (
             <span style={{ color: neonGreen }}>⏱ {timer} sec remaining...</span>
           ) : (
@@ -364,13 +373,13 @@ function WithdrawalSection({
 
       <div
         className="rounded-2xl p-5 space-y-3"
-        style={{ background: darkCard, border: `1.5px solid ${neonGreen}44` }}
+        style={{ background: lightCard, border: `1.5px solid ${neonGreen}44` }}
         data-ocid="earn.panel"
       >
         <p style={{ ...orbitron, color: neonGreen, fontSize: 13 }}>
           REDEEM TOKENS
         </p>
-        <p style={{ ...rajdhani, color: "#aaa", fontSize: 13 }}>
+        <p style={{ ...rajdhani, color: "#666666", fontSize: 13 }}>
           {tokens.canWithdraw
             ? "✅ Ready! Watch a short ad to redeem ₹1.25 directly to your wallet."
             : `Need ${tokens.tokensNeeded} more tokens to unlock redemption.`}
@@ -388,8 +397,8 @@ function WithdrawalSection({
             opacity: tokens.canWithdraw ? 1 : 0.5,
             transition: "all 0.2s",
             border: `2px solid ${neonGreen}`,
-            background: tokens.canWithdraw ? `${neonGreen}22` : "#1a1a2e",
-            color: tokens.canWithdraw ? neonGreen : "#666",
+            background: tokens.canWithdraw ? `${neonGreen}22` : "#E0E0E0",
+            color: tokens.canWithdraw ? neonGreen : "#999999",
             boxShadow: tokens.canWithdraw ? `0 0 20px ${neonGreen}44` : "none",
           }}
           onClick={handleWithdraw}
@@ -404,20 +413,20 @@ function WithdrawalSection({
           <div
             className="rounded-xl p-3 text-center"
             style={{
-              background: "#1a1a2e",
+              background: "#F0F0F0",
               border: `1px solid ${neonPurple}44`,
             }}
           >
             <div
               className="flex items-center justify-between text-xs mb-1"
-              style={{ ...rajdhani, color: "#888" }}
+              style={{ ...rajdhani, color: "#666666" }}
             >
               <span>{tokens.tokensForNextWithdrawal} tokens</span>
               <span>{tokens.TOKENS_FOR_WITHDRAWAL} needed</span>
             </div>
             <div
               className="relative h-2 rounded-full overflow-hidden"
-              style={{ background: "#111" }}
+              style={{ background: "#E0E0E0" }}
             >
               <div
                 className="absolute inset-y-0 left-0 rounded-full"
@@ -441,9 +450,9 @@ function TopEarnersSection() {
     <div
       className="rounded-2xl p-5 space-y-3"
       style={{
-        background: "rgba(22,33,62,0.85)",
-        border: "1.5px solid rgba(157,78,221,0.4)",
-        boxShadow: "0 0 24px rgba(157,78,221,0.13)",
+        background: lightCard,
+        border: "1.5px solid #E0E0E0",
+        boxShadow: "0 2px 12px rgba(0,0,0,0.06)",
       }}
       data-ocid="earn.panel"
     >
@@ -456,7 +465,7 @@ function TopEarnersSection() {
       >
         🏆 TOP EARNERS TODAY
       </p>
-      <div style={{ textAlign: "center", padding: "24px 0", color: "#555" }}>
+      <div style={{ textAlign: "center", padding: "24px 0", color: "#999999" }}>
         <p style={{ fontSize: 32, marginBottom: 8 }}>📊</p>
         <p style={{ fontFamily: "'Rajdhani', sans-serif", fontSize: 15 }}>
           No earnings yet
@@ -465,7 +474,7 @@ function TopEarnersSection() {
           style={{
             fontFamily: "'Rajdhani', sans-serif",
             fontSize: 12,
-            color: "#444",
+            color: "#BBBBBB",
             marginTop: 4,
           }}
         >

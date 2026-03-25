@@ -9,8 +9,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
+import { useUnifiedAuth } from "@/context/UnifiedAuthContext";
 import { useIIProfile } from "@/hooks/useIIProfile";
-import { useInternetIdentity } from "@/hooks/useInternetIdentity";
 import {
   useAutoSetupProfile,
   useGetCallerWallet,
@@ -31,7 +31,7 @@ import {
 import { useState } from "react";
 import { HeaderInstallButton } from "./InstallPrompt";
 
-// ─── KL Esports Life Text Logo ─────────────────────────────────────────────────
+// ─── KL Esports Life Text Logo ─────────────────────────────────────────────────────────────────
 export function KLEsportsLogo({ className }: { className?: string }) {
   return (
     <span
@@ -72,7 +72,7 @@ export function KLEsportsLogo({ className }: { className?: string }) {
 }
 
 export function Header() {
-  const { identity, clear } = useInternetIdentity();
+  const { userId, logoutAll } = useUnifiedAuth();
   const { profile } = useIIProfile();
   const { data: wallet } = useGetCallerWallet();
   const { data: isAdmin } = useIsCallerAdmin();
@@ -82,14 +82,14 @@ export function Header() {
 
   useAutoSetupProfile();
 
-  const isLoggedIn = !!identity && !identity.getPrincipal().isAnonymous();
+  const isLoggedIn = !!userId;
   const displayName = profile?.display_name || (isLoggedIn ? "Player" : null);
   const displayInitial = displayName
     ? displayName.charAt(0).toUpperCase()
     : null;
 
   const handleLogout = () => {
-    clear();
+    logoutAll();
     setMobileMenuOpen(false);
     void router.navigate({ to: "/login" });
   };

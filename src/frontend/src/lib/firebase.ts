@@ -11,7 +11,8 @@ const firebaseConfig = {
   measurementId: "G-8MZPR2LZPC",
 };
 
-const app =
-  getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
-export const auth = getAuth(app);
-export default app;
+export function getFirebaseAuth() {
+  const app =
+    getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
+  return getAuth(app);
+}

@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
-import { useFirebaseAuth } from "@/hooks/useFirebaseAuth";
-import { Loader2, Shield } from "lucide-react";
+import { useUnifiedAuth } from "@/context/UnifiedAuthContext";
+import { Loader2 } from "lucide-react";
+import { useState } from "react";
 
 function KLLoginLogo() {
   return (
@@ -102,8 +103,49 @@ function KLLoginLogo() {
   );
 }
 
+function GoogleIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true">
+      <path
+        fill="#FFC107"
+        d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 12.955 4 4 12.955 4 24s8.955 20 20 20 20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z"
+      />
+      <path
+        fill="#FF3D00"
+        d="m6.306 14.691 6.571 4.819C14.655 15.108 18.961 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 16.318 4 9.656 8.337 6.306 14.691z"
+      />
+      <path
+        fill="#4CAF50"
+        d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238A11.91 11.91 0 0 1 24 36c-5.202 0-9.619-3.317-11.283-7.946l-6.522 5.025C9.505 39.556 16.227 44 24 44z"
+      />
+      <path
+        fill="#1976D2"
+        d="M43.611 20.083H42V20H24v8h11.303a12.04 12.04 0 0 1-4.087 5.571l.003-.002 6.19 5.238C36.971 39.205 44 34 44 24c0-1.341-.138-2.65-.389-3.917z"
+      />
+    </svg>
+  );
+}
+
 export function LoginPage() {
-  const { login, isLoggingIn } = useFirebaseAuth();
+  const { loginWithGoogle } = useUnifiedAuth();
+  const [googleLoading, setGoogleLoading] = useState(false);
+  const [googleError, setGoogleError] = useState<string | null>(null);
+
+  const handleGoogleLogin = async () => {
+    setGoogleError(null);
+    setGoogleLoading(true);
+    try {
+      await loginWithGoogle();
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Google sign-in failed";
+      // Ignore popup-closed-by-user errors
+      if (!msg.includes("popup-closed") && !msg.includes("cancelled")) {
+        setGoogleError("Sign-in failed. Please try again.");
+      }
+    } finally {
+      setGoogleLoading(false);
+    }
+  };
 
   return (
     <div
@@ -146,57 +188,59 @@ export function LoginPage() {
         />
 
         <div className="flex flex-col items-center gap-4">
-          <div className="flex items-center gap-2 mb-1">
-            <Shield className="w-4 h-4" style={{ color: "#00FF88" }} />
-            <span
-              className="text-sm tracking-wider"
-              style={{
-                color: "rgba(255,255,255,0.7)",
-                fontFamily: "'Rajdhani', sans-serif",
-              }}
-            >
-              SECURE LOGIN
-            </span>
-          </div>
-
           {/* Google Sign-In Button */}
           <Button
-            data-ocid="login.primary_button"
+            type="button"
+            data-ocid="login.google.primary_button"
+            disabled={googleLoading}
+            onClick={handleGoogleLogin}
             className="w-full"
-            disabled={isLoggingIn}
-            onClick={() => login()}
             style={{
-              background: isLoggingIn ? "rgba(255,255,255,0.1)" : "white",
-              color: "#1a1a1a",
-              border: "none",
-              borderRadius: 12,
-              fontFamily: "'Orbitron', sans-serif",
-              fontSize: "0.82rem",
-              fontWeight: 700,
-              letterSpacing: "0.05em",
-              padding: "0 24px",
-              height: 56,
               width: "100%",
+              height: 54,
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
               gap: 10,
-              boxShadow: "0 0 20px rgba(255,255,255,0.15)",
-              transition: "all 0.3s ease",
+              background: googleLoading
+                ? "rgba(255,255,255,0.07)"
+                : "rgba(255,255,255,0.95)",
+              color: googleLoading ? "rgba(60,60,60,0.5)" : "#3c3c3c",
+              border: "1.5px solid rgba(255,255,255,0.2)",
+              borderRadius: 12,
+              cursor: googleLoading ? "wait" : "pointer",
+              fontFamily: "'Rajdhani', 'Roboto', sans-serif",
+              fontSize: "0.95rem",
+              fontWeight: 700,
+              letterSpacing: "0.03em",
+              transition: "all 0.25s ease",
+              boxShadow: googleLoading ? "none" : "0 2px 12px rgba(0,0,0,0.3)",
             }}
           >
-            {isLoggingIn ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <img
-                src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
-                alt="G"
-                width={20}
-                height={20}
+            {googleLoading ? (
+              <Loader2
+                className="h-4 w-4 animate-spin"
+                style={{ color: "#4285F4" }}
               />
+            ) : (
+              <GoogleIcon />
             )}
-            {isLoggingIn ? "Connecting..." : "Sign in with Google"}
+            {googleLoading ? "Signing in..." : "Sign in with Google"}
           </Button>
+
+          {googleError && (
+            <p
+              style={{
+                color: "#FF4444",
+                fontFamily: "'Rajdhani', sans-serif",
+                fontSize: 12,
+                textAlign: "center",
+              }}
+              data-ocid="login.google.error_state"
+            >
+              {googleError}
+            </p>
+          )}
 
           <p
             className="text-center text-xs leading-relaxed"
@@ -217,7 +261,7 @@ export function LoginPage() {
             <span>•</span>
             <span>⚡ Fast</span>
             <span>•</span>
-            <span>🎮 Gaming</span>
+            <span>🌐 Google</span>
           </div>
         </div>
       </div>
