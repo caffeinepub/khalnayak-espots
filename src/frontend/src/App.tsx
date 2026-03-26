@@ -104,8 +104,6 @@ function ReferralRedirectPage() {
 }
 
 const AUTH_EXEMPT_PATHS = ["/login", "/setup-profile", "/ref"];
-// Pages that require login — redirect to login and save the original path
-const PROTECTED_PATHS = ["/earn", "/wallet", "/profile", "/my-matches"];
 const REDIRECT_KEY = "kle_login_redirect";
 
 function PageLoadingSpinner() {
@@ -179,10 +177,7 @@ function AppContent() {
 
     if (!userId) {
       if (path !== "/login") {
-        // Save the page user was trying to access so we can redirect back after login
-        if (PROTECTED_PATHS.some((p) => path.startsWith(p))) {
-          sessionStorage.setItem(REDIRECT_KEY, path);
-        }
+        sessionStorage.setItem(REDIRECT_KEY, path);
         void navigate({ to: "/login" });
       }
     } else if (!profile && path !== "/setup-profile") {

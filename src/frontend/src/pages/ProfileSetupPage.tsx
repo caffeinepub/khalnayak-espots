@@ -28,7 +28,6 @@ export function ProfileSetupPage() {
   const [referralCode, setReferralCode] = useState("");
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Read referral code from sessionStorage (set when user clicked /ref/CODE link)
   useEffect(() => {
     const stored = sessionStorage.getItem("kle_pending_referral");
     if (stored) setReferralCode(stored);
@@ -74,16 +73,16 @@ export function ProfileSetupPage() {
     if (!canSubmit) return;
     setSubmitting(true);
 
-    // Resolve referral code to referrer's principal
+    // Resolve referral code to referrer's principal (now async)
     let referredBy: string | undefined;
     if (referralCode) {
-      const referrerPrincipal = findPrincipalByReferralCode(referralCode);
+      const referrerPrincipal = await findPrincipalByReferralCode(referralCode);
       if (referrerPrincipal && referrerPrincipal !== principal) {
         referredBy = referrerPrincipal;
       }
     }
 
-    const result = saveProfile({
+    const result = await saveProfile({
       display_name: displayName.trim(),
       freefire_uid: uid,
       freefire_nickname: nickname,
@@ -91,7 +90,6 @@ export function ProfileSetupPage() {
       referred_by: referredBy,
     });
 
-    // Clear pending referral
     sessionStorage.removeItem("kle_pending_referral");
 
     if (result.isNewUser && result.referralProcessed) {
@@ -153,7 +151,6 @@ export function ProfileSetupPage() {
           Complete your profile to start playing
         </p>
 
-        {/* Referral banner */}
         {referralCode && (
           <div
             className="mb-4 px-3 py-2 rounded-lg text-xs text-center"
@@ -170,7 +167,6 @@ export function ProfileSetupPage() {
         )}
 
         <div className="flex flex-col gap-4">
-          {/* Display Name */}
           <div>
             <Label
               htmlFor="display_name"
@@ -199,7 +195,6 @@ export function ProfileSetupPage() {
             />
           </div>
 
-          {/* Free Fire UID */}
           <div>
             <Label
               htmlFor="ff_uid"
@@ -229,7 +224,6 @@ export function ProfileSetupPage() {
               }}
             />
 
-            {/* UID Status */}
             {uidStatus === "loading" && (
               <div
                 data-ocid="setup.loading_state"
@@ -294,7 +288,6 @@ export function ProfileSetupPage() {
             )}
           </div>
 
-          {/* Confirm checkbox */}
           <div className="flex items-start gap-3 mt-1">
             <Checkbox
               id="confirm"
@@ -315,7 +308,6 @@ export function ProfileSetupPage() {
             </Label>
           </div>
 
-          {/* Submit */}
           <Button
             data-ocid="setup.submit_button"
             className="w-full h-12 font-bold tracking-widest uppercase mt-2"

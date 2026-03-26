@@ -1,33 +1,34 @@
 # KL TOURNAMENTS
 
 ## Current State
-- Login page has both Internet Identity (II) and Google Sign-In buttons
-- EarnPage uses `useOtpAuth` (legacy hook) and dark background (#0A0A0A, #16213E)
-- Home page already has no stats cards; upcoming tournaments show real data or empty state
-- Leaderboard/top earners section in EarnPage already shows empty state
-- UnifiedAuthContext supports both II and Firebase Google auth
-- Some pages still reference dark bg colors
+- Firebase imported in code but `firebase` npm package is NOT in package.json → app crashes (white screen)
+- User profiles stored in localStorage (not Firestore)
+- Login: Google (Firebase) + Internet Identity both present
+- Protected pages redirect to login if not logged in — but session not persisting due to missing firebase package
 
 ## Requested Changes (Diff)
 
 ### Add
-- Nothing new to add
+- `firebase` npm package (firebase/app, firebase/auth, firebase/firestore)
+- Firestore service layer: `src/lib/firestore.ts` — CRUD for users, transactions, referrals collections
+- Firestore profile hook replacing localStorage in useIIProfile
+- Persistent session: Firebase Auth persists automatically; II session via authClient storage
 
 ### Modify
-1. **LoginPage.tsx**: Remove Internet Identity button and OR divider. Keep only "Sign in with Google" button. Update tagline to remove II references.
-2. **EarnPage.tsx**: Fix auth — replace `useOtpAuth` with `useUnifiedAuth`. Change dark background colors to white theme: background #FFFFFF, cards #F5F5F5, text #333333/#666666, keep neon green/purple accents on buttons.
-3. **UnifiedAuthContext.tsx**: Remove Internet Identity dependency entirely. Firebase Google-only. userId = `fb_${firebaseUser.uid}` when logged in. logoutAll = signOut(firebase only). Remove iiPrincipal logic.
-4. **main.tsx**: Remove `InternetIdentityProvider` wrapper (no longer needed).
-5. **LoginPage.tsx**: Update subtitle text from "blockchain login" to reflect Google-only.
+- `package.json` — add firebase dependency
+- `lib/firebase.ts` — also export Firestore db instance
+- `hooks/useIIProfile.ts` — read/write user profiles from Firestore instead of localStorage
+- `App.tsx` `AppContent` — remove PROTECTED_PATHS entirely; after login, all pages accessible; only redirect to /login if no session at all (first open)
+- Remove repeated login guards on individual pages
 
 ### Remove
-- Internet Identity login button from LoginPage
-- II-related auth logic from UnifiedAuthContext
-- InternetIdentityProvider from main.tsx
+- localStorage profile storage (migrate to Firestore)
+- PROTECTED_PATHS array and per-page login requirement after login
 
 ## Implementation Plan
-1. Update `LoginPage.tsx` — remove II button + OR divider, keep only Google Sign-In
-2. Update `UnifiedAuthContext.tsx` — Firebase-only auth, no II
-3. Update `main.tsx` — remove InternetIdentityProvider wrapper
-4. Update `EarnPage.tsx` — use `useUnifiedAuth` instead of `useOtpAuth`, white light theme
-5. Validate build
+1. Add firebase to package.json
+2. Update lib/firebase.ts to export Firestore db
+3. Create lib/firestore.ts — user CRUD, transaction CRUD, referral CRUD
+4. Update hooks/useIIProfile.ts — use Firestore instead of localStorage
+5. Update App.tsx — remove PROTECTED_PATHS; one-time login only
+6. Validate and deploy

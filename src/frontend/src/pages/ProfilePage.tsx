@@ -42,7 +42,7 @@ import { SiFacebook, SiGmail, SiInstagram, SiWhatsapp } from "react-icons/si";
 import { toast } from "sonner";
 
 export function ProfilePage() {
-  const { userId, logoutAll } = useUnifiedAuth();
+  const { logoutAll } = useUnifiedAuth();
   const { profile } = useIIProfile();
   const navigate = useNavigate();
   const { data: stats, isLoading: statsLoading } = useGetCallerStats();
@@ -63,35 +63,6 @@ export function ProfilePage() {
     void navigate({ to: "/login" });
     toast.success("Logged out successfully");
   };
-
-  const isLoggedIn = !!userId;
-
-  // Not logged in
-  if (!isLoggedIn) {
-    return (
-      <div className="container mx-auto py-16 px-4">
-        <Card className="max-w-md mx-auto gaming-card">
-          <CardHeader className="text-center">
-            <User
-              className="h-16 w-16 mx-auto mb-4"
-              style={{ color: "rgba(255,255,255,0.2)" }}
-            />
-            <CardTitle style={{ fontFamily: "'Orbitron', sans-serif" }}>
-              Login Required
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="text-center">
-            <p className="text-muted-foreground mb-6">
-              Please login to view your profile.
-            </p>
-            <Button asChild className="neon-btn w-full">
-              <Link to="/login">Login with Internet Identity</Link>
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
 
   if (!profile) {
     return (

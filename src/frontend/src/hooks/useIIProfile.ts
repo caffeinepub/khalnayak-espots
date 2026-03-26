@@ -1,48 +1,32 @@
 import { useCallback, useEffect, useState } from "react";
 import { useUnifiedAuth } from "../context/UnifiedAuthContext";
+import {
+  type FirestoreUserProfile,
+  addTransaction,
+  findUserByReferralCode,
+  getUserProfile,
+  saveUserProfile,
+  updateWalletBalance,
+} from "../lib/firestore";
 
-export interface IIUserProfile {
-  principal: string;
-  display_name: string;
-  freefire_uid: string;
-  freefire_nickname: string;
-  freefire_level: number;
-  wallet_balance: number;
-  referral_code: string;
-  created_at: number;
-  referred_by?: string;
-  referral_earnings?: number;
-  welcome_bonus?: number;
-}
+export type IIUserProfile = FirestoreUserProfile;
 
 function generateReferralCode(): string {
   return Math.random().toString(36).substring(2, 8).toUpperCase();
 }
 
 const PROFILE_KEY_PREFIX = "kle_ii_profile_";
-const REFERRAL_CODE_INDEX = "kle_referral_code_index";
 
-function getReferralCodeIndex(): Record<string, string> {
+function cacheProfile(principal: string, profile: IIUserProfile) {
   try {
-    const raw = localStorage.getItem(REFERRAL_CODE_INDEX);
-    return raw ? JSON.parse(raw) : {};
-  } catch {
-    return {};
-  }
+    localStorage.setItem(
+      PROFILE_KEY_PREFIX + principal,
+      JSON.stringify(profile),
+    );
+  } catch {}
 }
 
-function setReferralCodeIndex(code: string, principal: string) {
-  const index = getReferralCodeIndex();
-  index[code] = principal;
-  localStorage.setItem(REFERRAL_CODE_INDEX, JSON.stringify(index));
-}
-
-export function findPrincipalByReferralCode(code: string): string | null {
-  const index = getReferralCodeIndex();
-  return index[code.toUpperCase()] ?? null;
-}
-
-export function getProfileByPrincipal(principal: string): IIUserProfile | null {
+function getCachedProfile(principal: string): IIUserProfile | null {
   try {
     const raw = localStorage.getItem(PROFILE_KEY_PREFIX + principal);
     return raw ? JSON.parse(raw) : null;
@@ -51,34 +35,45 @@ export function getProfileByPrincipal(principal: string): IIUserProfile | null {
   }
 }
 
-export function updateProfileBalance(
+export function getProfileByPrincipal(principal: string): IIUserProfile | null {
+  return getCachedProfile(principal);
+}
+
+export async function updateProfileBalance(
   principal: string,
   delta: number,
   description?: string,
 ) {
-  const key = PROFILE_KEY_PREFIX + principal;
-  const raw = localStorage.getItem(key);
-  if (!raw) return;
-  try {
-    const p: IIUserProfile = JSON.parse(raw);
-    p.wallet_balance = (p.wallet_balance ?? 0) + delta;
-    if (description) {
-      const txKey = `kle_tx_${principal}`;
-      const txRaw = localStorage.getItem(txKey);
-      const txList = txRaw ? JSON.parse(txRaw) : [];
-      txList.push({
-        id: Date.now(),
-        type: delta > 0 ? "credit" : "debit",
-        amount: Math.abs(delta),
-        description,
-        date: new Date().toISOString(),
-      });
-      localStorage.setItem(txKey, JSON.stringify(txList));
-    }
-    localStorage.setItem(key, JSON.stringify(p));
-  } catch {
-    // ignore
+  await updateWalletBalance(principal, delta);
+  if (description) {
+    await addTransaction(principal, {
+      type: delta > 0 ? "credit" : "debit",
+      amount: Math.abs(delta),
+      description,
+    });
   }
+  // Update localStorage cache
+  const cached = getCachedProfile(principal);
+  if (cached) {
+    cached.wallet_balance = (cached.wallet_balance ?? 0) + delta;
+    cacheProfile(principal, cached);
+  }
+}
+
+export function getLocalTransactions(principal: string) {
+  try {
+    const raw = localStorage.getItem(`kle_tx_${principal}`);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+export async function findPrincipalByReferralCode(
+  code: string,
+): Promise<string | null> {
+  const user = await findUserByReferralCode(code);
+  return user?.principal ?? null;
 }
 
 export function useIIProfile() {
@@ -86,33 +81,40 @@ export function useIIProfile() {
   const [profile, setProfile] = useState<IIUserProfile | null>(null);
   const [profileLoading, setProfileLoading] = useState(true);
 
-  const loadProfile = useCallback(() => {
+  const loadProfile = useCallback(async () => {
     if (!principal) {
       setProfile(null);
       setProfileLoading(false);
       return;
     }
-    const key = PROFILE_KEY_PREFIX + principal;
-    const raw = localStorage.getItem(key);
-    if (raw) {
-      try {
-        setProfile(JSON.parse(raw));
-      } catch {
+    // Show cached immediately
+    const cached = getCachedProfile(principal);
+    if (cached) {
+      setProfile(cached);
+      setProfileLoading(false);
+    }
+    // Then fetch from Firestore
+    try {
+      const fsProfile = await getUserProfile(principal);
+      if (fsProfile) {
+        setProfile(fsProfile);
+        cacheProfile(principal, fsProfile);
+      } else if (!cached) {
         setProfile(null);
       }
-    } else {
-      setProfile(null);
+    } catch {
+      // Use cached
     }
     setProfileLoading(false);
   }, [principal]);
 
   useEffect(() => {
     if (isInitializing) return;
-    loadProfile();
+    void loadProfile();
   }, [isInitializing, loadProfile]);
 
   const saveProfile = useCallback(
-    (
+    async (
       data: Omit<
         IIUserProfile,
         | "principal"
@@ -122,77 +124,72 @@ export function useIIProfile() {
         | "referral_earnings"
         | "welcome_bonus"
       > & { referred_by?: string },
-    ): { isNewUser: boolean; referralProcessed: boolean } => {
+    ): Promise<{ isNewUser: boolean; referralProcessed: boolean }> => {
       if (!principal) return { isNewUser: false, referralProcessed: false };
 
-      const existingKey = PROFILE_KEY_PREFIX + principal;
-      const existingRaw = localStorage.getItem(existingKey);
-      if (existingRaw) {
+      // Check if already exists in Firestore
+      const existing = await getUserProfile(principal);
+      if (existing) {
+        setProfile(existing);
+        cacheProfile(principal, existing);
         return { isNewUser: false, referralProcessed: false };
       }
 
       const referralCode = generateReferralCode();
       let welcomeBonus = 0;
       let referralProcessed = false;
+      let referredByPrincipal: string | undefined;
+
+      // Handle referral
+      if (data.referred_by) {
+        try {
+          const referrer = await findUserByReferralCode(data.referred_by);
+          if (referrer && referrer.principal !== principal) {
+            referredByPrincipal = referrer.principal;
+            await updateWalletBalance(referrer.principal, 1.5);
+            await addTransaction(referrer.principal, {
+              type: "credit",
+              amount: 1.5,
+              description: `🎉 Referral bonus — invited ${data.display_name}`,
+            });
+            const referrerCached = getCachedProfile(referrer.principal);
+            if (referrerCached) {
+              referrerCached.wallet_balance += 1.5;
+              referrerCached.referral_earnings =
+                (referrerCached.referral_earnings ?? 0) + 1.5;
+              cacheProfile(referrer.principal, referrerCached);
+            }
+            welcomeBonus = 0.5;
+            referralProcessed = true;
+          }
+        } catch {}
+      }
 
       const newProfile: IIUserProfile = {
         principal,
-        ...data,
-        wallet_balance: 0,
+        display_name: data.display_name,
+        freefire_uid: data.freefire_uid,
+        freefire_nickname: data.freefire_nickname,
+        freefire_level: data.freefire_level,
+        wallet_balance: welcomeBonus,
         referral_code: referralCode,
         created_at: Date.now(),
+        ...(referredByPrincipal
+          ? { referred_by: referredByPrincipal, welcome_bonus: welcomeBonus }
+          : {}),
       };
 
-      setReferralCodeIndex(referralCode, principal);
+      await saveUserProfile(principal, newProfile);
 
-      if (data.referred_by && data.referred_by !== principal) {
-        const referrerProfile = getProfileByPrincipal(data.referred_by);
-        if (referrerProfile) {
-          updateProfileBalance(
-            data.referred_by,
-            1.5,
-            `🎉 Referral bonus — invited ${data.display_name}`,
-          );
-          const referrerKey = PROFILE_KEY_PREFIX + data.referred_by;
-          const referrerRaw = localStorage.getItem(referrerKey);
-          if (referrerRaw) {
-            try {
-              const rp: IIUserProfile = JSON.parse(referrerRaw);
-              rp.referral_earnings = (rp.referral_earnings ?? 0) + 1.5;
-              localStorage.setItem(referrerKey, JSON.stringify(rp));
-            } catch {
-              // ignore
-            }
-          }
-          welcomeBonus = 0.5;
-          newProfile.wallet_balance = 0.5;
-          newProfile.referred_by = data.referred_by;
-          newProfile.welcome_bonus = 0.5;
-          referralProcessed = true;
-        }
-      }
-
-      localStorage.setItem(existingKey, JSON.stringify(newProfile));
-
-      if (welcomeBonus > 0) {
-        const txKey = `kle_tx_${principal}`;
-        const txList: Array<{
-          id: number;
-          type: string;
-          amount: number;
-          description: string;
-          date: string;
-        }> = [];
-        txList.push({
-          id: Date.now(),
+      if (referredByPrincipal && welcomeBonus > 0) {
+        await addTransaction(principal, {
           type: "credit",
           amount: welcomeBonus,
           description: "🎁 Welcome bonus — referral reward",
-          date: new Date().toISOString(),
         });
-        localStorage.setItem(txKey, JSON.stringify(txList));
       }
 
+      cacheProfile(principal, newProfile);
       setProfile(newProfile);
       return { isNewUser: true, referralProcessed };
     },
@@ -200,7 +197,7 @@ export function useIIProfile() {
   );
 
   const refreshProfile = useCallback(() => {
-    loadProfile();
+    void loadProfile();
   }, [loadProfile]);
 
   return { profile, profileLoading, saveProfile, principal, refreshProfile };

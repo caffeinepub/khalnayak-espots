@@ -1,10 +1,8 @@
 import { AdModal } from "@/components/AdModal";
 import { Button } from "@/components/ui/button";
-import { useUnifiedAuth } from "@/context/UnifiedAuthContext";
 import { useAdMob } from "@/hooks/useAdMob";
 import { useTokens } from "@/hooks/useTokens";
-import { useNavigate } from "@tanstack/react-router";
-import { Loader2, LogIn, Play } from "lucide-react";
+import { Loader2, Play } from "lucide-react";
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
 
@@ -24,60 +22,7 @@ const rajdhani: React.CSSProperties = {
 };
 
 export function EarnPage() {
-  const { userId, isInitializing } = useUnifiedAuth();
   const tokens = useTokens();
-  const navigate = useNavigate();
-
-  if (!userId && !isInitializing) {
-    return (
-      <div
-        className="min-h-screen flex flex-col items-center justify-center gap-6 text-center px-4"
-        style={{ background: lightBg }}
-        data-ocid="earn.page"
-      >
-        <div
-          className="rounded-full p-6"
-          style={{
-            border: `2px solid ${neonGreen}`,
-            boxShadow: `0 0 24px ${neonGreen}55`,
-          }}
-        >
-          <span className="text-5xl">💰</span>
-        </div>
-        <div>
-          <h2
-            className="text-3xl font-bold mb-2"
-            style={{
-              ...orbitron,
-              color: neonGreen,
-              textShadow: `0 0 16px ${neonGreen}`,
-            }}
-          >
-            EARN REAL MONEY
-          </h2>
-          <p style={{ ...rajdhani, color: "#666666", fontSize: 16 }}>
-            Watch Ads → Tokens → Cashout
-          </p>
-        </div>
-        <Button
-          onClick={() => navigate({ to: "/login" })}
-          size="lg"
-          className="font-bold px-8 text-base"
-          style={{
-            ...orbitron,
-            background: `linear-gradient(90deg, ${neonGreen}, #00cc6a)`,
-            color: "#000",
-            boxShadow: `0 0 20px ${neonGreen}88`,
-            border: "none",
-          }}
-          data-ocid="earn.primary_button"
-        >
-          <LogIn className="mr-2 h-5 w-5" />
-          LOGIN TO EARN
-        </Button>
-      </div>
-    );
-  }
 
   return (
     <div
