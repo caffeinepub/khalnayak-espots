@@ -14,15 +14,17 @@ import {
   useMemo,
   useState,
 } from "react";
+import { useInternetIdentity } from "../hooks/useInternetIdentity";
 import { getFirebaseAuth } from "../lib/firebase";
 
-type AuthMethod = "firebase" | null;
+type AuthMethod = "firebase" | "internet-identity" | null;
 
 interface UnifiedAuthContextType {
   userId: string | null;
   authMethod: AuthMethod;
   isInitializing: boolean;
   loginWithGoogle: () => Promise<void>;
+  loginWithII: () => void;
   logoutAll: () => void;
 }
 
@@ -35,10 +37,21 @@ export function UnifiedAuthProvider({
 }: {
   children: React.ReactNode;
 }) {
-  // undefined = not yet checked, null = no user, User = logged in
   const [firebaseUser, setFirebaseUser] = useState<User | null | undefined>(
     undefined,
   );
+
+  // Internet Identity
+  const {
+    identity,
+    login: iiLogin,
+    clear: iiClear,
+    isInitializing: iiInitializing,
+  } = useInternetIdentity();
+  const iiUserId =
+    identity && !identity.getPrincipal().isAnonymous()
+      ? `ii_${identity.getPrincipal().toText()}`
+      : null;
 
   useEffect(() => {
     const auth = getFirebaseAuth();
@@ -48,9 +61,18 @@ export function UnifiedAuthProvider({
     return unsub;
   }, []);
 
-  const isInitializing = firebaseUser === undefined;
-  const userId = firebaseUser ? `fb_${firebaseUser.uid}` : null;
-  const authMethod: AuthMethod = firebaseUser ? "firebase" : null;
+  const isInitializing = firebaseUser === undefined || iiInitializing;
+
+  // Priority: Firebase > Internet Identity
+  let userId: string | null = null;
+  let authMethod: AuthMethod = null;
+  if (firebaseUser) {
+    userId = `fb_${firebaseUser.uid}`;
+    authMethod = "firebase";
+  } else if (iiUserId) {
+    userId = iiUserId;
+    authMethod = "internet-identity";
+  }
 
   const loginWithGoogle = useCallback(async () => {
     const auth = getFirebaseAuth();
@@ -58,10 +80,15 @@ export function UnifiedAuthProvider({
     await signInWithPopup(auth, provider);
   }, []);
 
+  const loginWithII = useCallback(() => {
+    iiLogin();
+  }, [iiLogin]);
+
   const logoutAll = useCallback(() => {
     const auth = getFirebaseAuth();
     void signOut(auth);
-  }, []);
+    iiClear();
+  }, [iiClear]);
 
   const value = useMemo(
     () => ({
@@ -69,9 +96,17 @@ export function UnifiedAuthProvider({
       authMethod,
       isInitializing,
       loginWithGoogle,
+      loginWithII,
       logoutAll,
     }),
-    [userId, authMethod, isInitializing, loginWithGoogle, logoutAll],
+    [
+      userId,
+      authMethod,
+      isInitializing,
+      loginWithGoogle,
+      loginWithII,
+      logoutAll,
+    ],
   );
 
   return (

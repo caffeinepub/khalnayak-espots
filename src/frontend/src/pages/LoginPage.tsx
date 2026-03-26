@@ -13,7 +13,6 @@ function KLLoginLogo() {
         gap: 6,
       }}
     >
-      {/* Circle emblem */}
       <div
         style={{
           width: 80,
@@ -44,7 +43,6 @@ function KLLoginLogo() {
           KL
         </span>
       </div>
-      {/* Brand name */}
       <div style={{ textAlign: "center" }}>
         <div
           style={{
@@ -127,8 +125,9 @@ function GoogleIcon() {
 }
 
 export function LoginPage() {
-  const { loginWithGoogle } = useUnifiedAuth();
+  const { loginWithGoogle, loginWithII } = useUnifiedAuth();
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [iiLoading, setIiLoading] = useState(false);
   const [googleError, setGoogleError] = useState<string | null>(null);
 
   const handleGoogleLogin = async () => {
@@ -138,7 +137,6 @@ export function LoginPage() {
       await loginWithGoogle();
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Google sign-in failed";
-      // Ignore popup-closed-by-user errors
       if (!msg.includes("popup-closed") && !msg.includes("cancelled")) {
         setGoogleError("Sign-in failed. Please try again.");
       }
@@ -147,12 +145,18 @@ export function LoginPage() {
     }
   };
 
+  const handleIILogin = () => {
+    setIiLoading(true);
+    loginWithII();
+    // II opens a popup/redirect — loading state will reset on auth state change
+    setTimeout(() => setIiLoading(false), 3000);
+  };
+
   return (
     <div
       className="battleground-bg min-h-screen flex items-center justify-center px-4"
       style={{ position: "relative" }}
     >
-      {/* Fire overlay */}
       <div
         aria-hidden="true"
         style={{
@@ -188,11 +192,11 @@ export function LoginPage() {
         />
 
         <div className="flex flex-col items-center gap-4">
-          {/* Google Sign-In Button */}
+          {/* Google Sign-In Button — Primary */}
           <Button
             type="button"
             data-ocid="login.google.primary_button"
-            disabled={googleLoading}
+            disabled={googleLoading || iiLoading}
             onClick={handleGoogleLogin}
             className="w-full"
             style={{
@@ -236,32 +240,99 @@ export function LoginPage() {
                 fontSize: 12,
                 textAlign: "center",
               }}
-              data-ocid="login.google.error_state"
             >
               {googleError}
             </p>
           )}
 
+          {/* Divider */}
+          <div
+            className="flex items-center gap-3 w-full"
+            style={{ color: "rgba(255,255,255,0.2)", fontSize: 11 }}
+          >
+            <div
+              style={{
+                flex: 1,
+                height: 1,
+                background: "rgba(255,255,255,0.1)",
+              }}
+            />
+            <span
+              style={{
+                fontFamily: "'Rajdhani', sans-serif",
+                letterSpacing: "1px",
+              }}
+            >
+              OR
+            </span>
+            <div
+              style={{
+                flex: 1,
+                height: 1,
+                background: "rgba(255,255,255,0.1)",
+              }}
+            />
+          </div>
+
+          {/* Internet Identity Button — Backup */}
+          <Button
+            type="button"
+            data-ocid="login.ii.backup_button"
+            disabled={googleLoading || iiLoading}
+            onClick={handleIILogin}
+            className="w-full"
+            style={{
+              width: "100%",
+              height: 48,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 10,
+              background: iiLoading
+                ? "rgba(157,78,221,0.08)"
+                : "rgba(157,78,221,0.12)",
+              color: iiLoading ? "rgba(157,78,221,0.4)" : "#c77dff",
+              border: "1.5px solid rgba(157,78,221,0.35)",
+              borderRadius: 12,
+              cursor: iiLoading ? "wait" : "pointer",
+              fontFamily: "'Rajdhani', sans-serif",
+              fontSize: "0.9rem",
+              fontWeight: 600,
+              letterSpacing: "0.03em",
+              transition: "all 0.25s ease",
+            }}
+          >
+            {iiLoading ? (
+              <Loader2
+                className="h-4 w-4 animate-spin"
+                style={{ color: "#9d4edd" }}
+              />
+            ) : (
+              <span style={{ fontSize: 16 }}>🔐</span>
+            )}
+            {iiLoading ? "Opening..." : "Login with Internet Identity"}
+          </Button>
+
           <p
             className="text-center text-xs leading-relaxed"
             style={{
-              color: "rgba(255,255,255,0.4)",
+              color: "rgba(255,255,255,0.3)",
               fontFamily: "'Rajdhani', sans-serif",
               maxWidth: 260,
             }}
           >
-            Sign in securely with your Google account
+            Internet Identity uses Face ID / Fingerprint — no password needed
           </p>
 
           <div
-            className="flex items-center gap-3 mt-2"
+            className="flex items-center gap-3 mt-1"
             style={{ color: "rgba(255,255,255,0.25)", fontSize: 11 }}
           >
             <span>🔒 Secure</span>
             <span>•</span>
             <span>⚡ Fast</span>
             <span>•</span>
-            <span>🌐 Google</span>
+            <span>🌐 Blockchain</span>
           </div>
         </div>
       </div>

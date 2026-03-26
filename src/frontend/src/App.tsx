@@ -20,7 +20,10 @@ import { PushNotificationManager } from "./components/PushNotificationManager";
 import { SplashScreen } from "./components/SplashScreen";
 import { VpnBlocker } from "./components/VpnBlocker";
 import { Toaster } from "./components/ui/sonner";
-import { useUnifiedAuth } from "./context/UnifiedAuthContext";
+import {
+  UnifiedAuthProvider,
+  useUnifiedAuth,
+} from "./context/UnifiedAuthContext";
 import { useIIProfile } from "./hooks/useIIProfile";
 
 // ── Lazy-loaded pages ──────────────────────────────────────────────────────────
@@ -101,6 +104,9 @@ function ReferralRedirectPage() {
 }
 
 const AUTH_EXEMPT_PATHS = ["/login", "/setup-profile", "/ref"];
+// Pages that require login — redirect to login and save the original path
+const PROTECTED_PATHS = ["/earn", "/wallet", "/profile", "/my-matches"];
+const REDIRECT_KEY = "kle_login_redirect";
 
 function PageLoadingSpinner() {
   return (
@@ -170,9 +176,16 @@ function AppContent() {
 
   useEffect(() => {
     if (isInitializing || profileLoading) return;
-    if (!userId && path !== "/login") {
-      void navigate({ to: "/login" });
-    } else if (userId && !profile && path !== "/setup-profile") {
+
+    if (!userId) {
+      if (path !== "/login") {
+        // Save the page user was trying to access so we can redirect back after login
+        if (PROTECTED_PATHS.some((p) => path.startsWith(p))) {
+          sessionStorage.setItem(REDIRECT_KEY, path);
+        }
+        void navigate({ to: "/login" });
+      }
+    } else if (!profile && path !== "/setup-profile") {
       void navigate({ to: "/setup-profile" });
     } else if (
       userId &&
@@ -186,7 +199,14 @@ function AppContent() {
           duration: 4000,
         });
       }
-      void navigate({ to: "/" });
+      // Redirect back to where user was trying to go
+      const redirectTo = sessionStorage.getItem(REDIRECT_KEY);
+      if (redirectTo) {
+        sessionStorage.removeItem(REDIRECT_KEY);
+        void navigate({ to: redirectTo as "/" });
+      } else {
+        void navigate({ to: "/" });
+      }
     }
   }, [userId, isInitializing, profile, profileLoading, path, navigate]);
 
@@ -328,16 +348,18 @@ declare module "@tanstack/react-router" {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <SplashScreen />
-      <BanNotification />
-      <VpnBlocker />
-      <NotificationPoller />
-      <Suspense fallback={<PageLoadingSpinner />}>
-        <RouterProvider router={router} />
-      </Suspense>
-      <Toaster position="top-right" richColors />
-      <InstallPrompt />
-      <PushNotificationManager />
+      <UnifiedAuthProvider>
+        <SplashScreen />
+        <BanNotification />
+        <VpnBlocker />
+        <NotificationPoller />
+        <Suspense fallback={<PageLoadingSpinner />}>
+          <RouterProvider router={router} />
+        </Suspense>
+        <Toaster position="top-right" richColors />
+        <InstallPrompt />
+        <PushNotificationManager />
+      </UnifiedAuthProvider>
     </QueryClientProvider>
   );
 }
