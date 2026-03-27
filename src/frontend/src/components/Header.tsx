@@ -58,14 +58,11 @@ export function KLEsportsLogo({ className }: { className?: string }) {
       </span>
       <span
         style={{
-          background: "linear-gradient(90deg, #9d4edd, #c77dff)",
-          WebkitBackgroundClip: "text",
-          WebkitTextFillColor: "transparent",
-          backgroundClip: "text",
-          filter: "drop-shadow(0 0 6px rgba(157,78,221,0.7))",
+          color: "#000000",
+          textShadow: "0 0 1px #000, 1px 0 0 rgba(0,0,0,0.2)",
         }}
       >
-        Esports Life
+        {" TOURNAMENTS"}
       </span>
     </span>
   );

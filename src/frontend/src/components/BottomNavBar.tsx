@@ -1,5 +1,6 @@
 import { Link, useRouter } from "@tanstack/react-router";
 import { Coins, House, Trophy, User } from "lucide-react";
+import { useState } from "react";
 
 const navItems = [
   { to: "/", label: "HOME", icon: House, ocid: "bottom_nav.home.tab" },
@@ -21,6 +22,7 @@ const navItems = [
 export function BottomNavBar() {
   const router = useRouter();
   const currentPath = router.state.location.pathname;
+  const [tapped, setTapped] = useState<string | null>(null);
 
   const isActive = (to: string) => {
     if (to === "/") return currentPath === "/";
@@ -31,11 +33,9 @@ export function BottomNavBar() {
     <nav
       className="fixed bottom-0 left-0 right-0 z-40 md:hidden"
       style={{
-        background: "rgba(10,10,10,0.97)",
-        backdropFilter: "blur(20px)",
-        WebkitBackdropFilter: "blur(20px)",
-        borderTop: "1px solid rgba(0,255,136,0.18)",
-        boxShadow: "0 -4px 24px rgba(0,0,0,0.6)",
+        background: "#ffffff",
+        borderTop: "1px solid #e0e0e0",
+        boxShadow: "0 -2px 12px rgba(0,0,0,0.08)",
       }}
       data-ocid="bottom_nav.panel"
       aria-label="Bottom navigation"
@@ -43,20 +43,32 @@ export function BottomNavBar() {
       <div className="flex items-stretch justify-around" style={{ height: 60 }}>
         {navItems.map(({ to, label, icon: Icon, ocid }) => {
           const active = isActive(to);
+          const isTapped = tapped === to;
           return (
             <Link
               key={to}
               to={to}
-              className="flex flex-col items-center justify-center flex-1 relative transition-all duration-200"
+              className="flex flex-col items-center justify-center flex-1 relative"
               style={{
-                color: active ? "#00FF88" : "#888888",
+                color: active ? "#00FF88" : "#666666",
                 WebkitTapHighlightColor: "transparent",
                 outline: "none",
                 minHeight: 44,
                 minWidth: 44,
+                transform: isTapped ? "scale(0.9)" : "scale(1.0)",
+                transition: "transform 0.1s ease",
+                filter:
+                  isTapped && active
+                    ? "drop-shadow(0 0 12px rgba(0,255,136,1))"
+                    : "none",
               }}
               data-ocid={ocid}
               aria-current={active ? "page" : undefined}
+              onMouseDown={() => setTapped(to)}
+              onMouseUp={() => setTapped(null)}
+              onMouseLeave={() => setTapped(null)}
+              onTouchStart={() => setTapped(to)}
+              onTouchEnd={() => setTapped(null)}
             >
               {/* Active top indicator */}
               {active && (
@@ -72,7 +84,7 @@ export function BottomNavBar() {
                     borderRadius: 2,
                     background: "#00FF88",
                     boxShadow:
-                      "0 0 10px rgba(0,255,136,1), 0 0 20px rgba(0,255,136,0.5)",
+                      "0 0 10px rgba(0,255,136,0.9), 0 0 20px rgba(0,255,136,0.5)",
                   }}
                 />
               )}

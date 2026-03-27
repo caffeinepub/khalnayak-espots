@@ -671,9 +671,7 @@ function FreeTournamentCard({ t }: { t: FreeTournament }) {
           >
             <div className="flex justify-between text-sm">
               <span style={{ color: "rgba(255,255,255,0.5)" }}>Entry Fee</span>
-              <span className="font-bold" style={{ color: "#00FF88" }}>
-                FREE
-              </span>
+              <span className="badge-free">🎁 FREE</span>
             </div>
             <div className="flex justify-between text-sm">
               <span style={{ color: "rgba(255,255,255,0.5)" }}>Prize Pool</span>
@@ -710,8 +708,7 @@ function FreeTournamentCard({ t }: { t: FreeTournament }) {
               </span>
             ) : (
               <span style={{ color: "#FF8C00" }}>
-                {joinCount}/{t.maxPlayers} &nbsp;·&nbsp; Only {spotsLeft} Spots
-                Left
+                👥 {joinCount}/{t.maxPlayers} Only {spotsLeft} Spots Left
               </span>
             )}
           </div>
@@ -1408,9 +1405,9 @@ function TournamentCard({ tournament }: { tournament: Tournament }) {
       <div className="p-4 space-y-3">
         <div className="flex items-center justify-between">
           {isOngoing ? (
-            <span className="fire-badge-live">🔴 LIVE</span>
+            <span className="badge-live">🔴 LIVE</span>
           ) : isCompleted ? (
-            <span className="fire-badge-completed">✅ DONE</span>
+            <span className="badge-completed">✅ DONE</span>
           ) : (
             <span
               className="text-xs font-bold uppercase px-2 py-0.5 rounded-full"

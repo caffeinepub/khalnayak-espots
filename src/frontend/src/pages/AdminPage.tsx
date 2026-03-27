@@ -647,23 +647,248 @@ export function AdminPage() {
         </TabsContent>
 
         <TabsContent value="freeTournaments">
-          <div className="space-y-4">
-            <h2
-              className="text-lg font-bold text-white"
-              style={{ fontFamily: "'Orbitron', sans-serif" }}
+          <FreeTournamentsManagementSection />
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+}
+
+// ── Free Tournaments Management Section ──────────────────────────────────────
+
+const FREE_PRIZE_MAP: Record<string, { label: string; prize: string }[]> = {
+  Solo: [
+    { label: "1st Place", prize: "₹20" },
+    { label: "2nd Place", prize: "₹5" },
+    { label: "3rd Place", prize: "₹0.50" },
+    { label: "Most Kills", prize: "₹1.60" },
+  ],
+  "4v4": [
+    { label: "1st Place", prize: "₹20" },
+    { label: "2nd Place", prize: "₹5" },
+  ],
+  "1v1": [{ label: "Winner", prize: "₹20" }],
+  "2v2": [
+    { label: "1st Place", prize: "₹20" },
+    { label: "2nd Place", prize: "₹5" },
+  ],
+};
+
+function CreateFreeTournamentForm() {
+  const [name, setName] = useState("");
+  const [mode, setMode] = useState("Solo");
+  const [maxPlayers, setMaxPlayers] = useState(500);
+  const [startTime, setStartTime] = useState("");
+
+  const prizes = FREE_PRIZE_MAP[mode] ?? [];
+
+  const handleCreate = () => {
+    if (!name.trim() || !startTime) {
+      toast.error("Please fill in all fields");
+      return;
+    }
+    const key = `customFreeTournament_${Date.now()}`;
+    localStorage.setItem(
+      key,
+      JSON.stringify({ name, mode, maxPlayers, startTime, prizes }),
+    );
+    toast.success(`✅ Free tournament "${name}" created!`);
+    setName("");
+    setStartTime("");
+  };
+
+  return (
+    <div
+      className="rounded-xl p-4 space-y-4"
+      style={{
+        background: "#f5f5f5",
+        border: "1px solid #e0e0e0",
+        boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
+      }}
+    >
+      <h3
+        className="text-base font-bold"
+        style={{ fontFamily: "'Orbitron', sans-serif", color: "#000000" }}
+      >
+        ➕ Create Free Tournament
+      </h3>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <div className="space-y-1">
+          <label
+            htmlFor="ft-name"
+            className="text-xs font-semibold text-gray-600"
+          >
+            Tournament Name *
+          </label>
+          <Input
+            id="ft-name"
+            placeholder="e.g. Saturday Night Solo"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            style={{ background: "#ffffff", border: "1px solid #e0e0e0" }}
+          />
+        </div>
+        <div className="space-y-1">
+          <Label
+            htmlFor="ft-mode"
+            className="text-xs font-semibold text-gray-600"
+          >
+            Mode *
+          </Label>
+          <Select value={mode} onValueChange={setMode}>
+            <SelectTrigger
+              style={{ background: "#ffffff", border: "1px solid #e0e0e0" }}
             >
-              🎁 Free Tournament Management
-            </h2>
-            <p className="text-sm" style={{ color: "rgba(255,255,255,0.4)" }}>
-              Set Room ID &amp; Password for each free tournament. Toggle match
-              started to activate LIVE button for users.
-            </p>
-            <div className="grid gap-4 sm:grid-cols-2">
-              {FREE_TOURNAMENT_LIST.map((t) => (
-                <FreeTournamentAdminCard key={t.id} t={t} />
-              ))}
-            </div>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Solo">Solo (Battle Ground)</SelectItem>
+              <SelectItem value="4v4">4v4 Custom</SelectItem>
+              <SelectItem value="1v1">1v1 Solo Duel</SelectItem>
+              <SelectItem value="2v2">2v2 Duo Battle</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-1">
+          <label
+            htmlFor="ft-max"
+            className="text-xs font-semibold text-gray-600"
+          >
+            Max Players *
+          </label>
+          <Input
+            id="ft-max"
+            type="number"
+            min={1}
+            max={500}
+            value={maxPlayers}
+            onChange={(e) => setMaxPlayers(Number(e.target.value))}
+            style={{ background: "#ffffff", border: "1px solid #e0e0e0" }}
+          />
+        </div>
+        <div className="space-y-1">
+          <label
+            htmlFor="ft-time"
+            className="text-xs font-semibold text-gray-600"
+          >
+            Start Time *
+          </label>
+          <Input
+            id="ft-time"
+            type="datetime-local"
+            value={startTime}
+            onChange={(e) => setStartTime(e.target.value)}
+            style={{ background: "#ffffff", border: "1px solid #e0e0e0" }}
+          />
+        </div>
+      </div>
+
+      {/* Prize auto-display */}
+      <div
+        className="rounded-lg p-3 space-y-1"
+        style={{
+          background: "rgba(0,255,136,0.06)",
+          border: "1px solid rgba(0,255,136,0.25)",
+        }}
+      >
+        <p className="text-xs font-bold text-gray-600">
+          🏆 Prize Distribution (auto)
+        </p>
+        {prizes.map((p) => (
+          <div key={p.label} className="flex justify-between text-sm">
+            <span className="text-gray-600">{p.label}</span>
+            <span className="font-bold" style={{ color: "#00cc66" }}>
+              {p.prize}
+            </span>
           </div>
+        ))}
+      </div>
+
+      <Button
+        className="w-full neon-btn"
+        onClick={handleCreate}
+        data-ocid="admin.free_tournament.submit_button"
+      >
+        ✅ CREATE FREE TOURNAMENT
+      </Button>
+    </div>
+  );
+}
+
+function FreeTournamentsManagementSection() {
+  return (
+    <div className="space-y-4">
+      <Tabs defaultValue="free">
+        <TabsList
+          className="flex gap-2 mb-4"
+          style={{
+            background: "transparent",
+            borderBottom: "1px solid #e0e0e0",
+            borderRadius: 0,
+            padding: "0 0 8px 0",
+            height: "auto",
+          }}
+        >
+          <TabsTrigger
+            value="free"
+            data-ocid="admin.free_subtab.tab"
+            style={{
+              borderRadius: 8,
+              fontFamily: "'Rajdhani', sans-serif",
+              fontWeight: 600,
+            }}
+          >
+            🎁 Free Tournaments
+          </TabsTrigger>
+          <TabsTrigger
+            value="paid"
+            data-ocid="admin.paid_subtab.tab"
+            style={{
+              borderRadius: 8,
+              fontFamily: "'Rajdhani', sans-serif",
+              fontWeight: 600,
+            }}
+          >
+            💰 Paid Tournaments
+          </TabsTrigger>
+          <TabsTrigger
+            value="all"
+            data-ocid="admin.all_subtab.tab"
+            style={{
+              borderRadius: 8,
+              fontFamily: "'Rajdhani', sans-serif",
+              fontWeight: 600,
+            }}
+          >
+            📋 All Tournaments
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="free" className="space-y-4">
+          <CreateFreeTournamentForm />
+          <h3
+            className="text-sm font-bold mt-4"
+            style={{ fontFamily: "'Orbitron', sans-serif", color: "#000000" }}
+          >
+            🎁 Active Free Tournaments
+          </h3>
+          <p className="text-xs text-gray-500">
+            Set Room ID &amp; Password for each free tournament. Toggle match
+            started to activate LIVE button for users.
+          </p>
+          <div className="grid gap-4 sm:grid-cols-2">
+            {FREE_TOURNAMENT_LIST.map((t) => (
+              <FreeTournamentAdminCard key={t.id} t={t} />
+            ))}
+          </div>
+        </TabsContent>
+
+        <TabsContent value="paid">
+          <TournamentsTab />
+        </TabsContent>
+
+        <TabsContent value="all">
+          <TournamentsTab />
         </TabsContent>
       </Tabs>
     </div>
