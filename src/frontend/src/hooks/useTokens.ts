@@ -4,7 +4,7 @@
  * Token rules:
  * - Each ad watched gives 1 token
  * - 25 tokens required to withdraw
- * - Each withdrawal gives ₹1.25 and deducts 25 tokens
+ * - Each withdrawal gives ₹1.25 (admin adjustable) and deducts 25 tokens
  * - No daily limit on ads
  * - Balance never goes negative
  */
@@ -43,7 +43,14 @@ export interface AdDayStats {
 
 const TOKENS_PER_AD = 1;
 const TOKENS_FOR_WITHDRAWAL = 25;
-const RUPEES_PER_WITHDRAWAL = 1.25;
+
+function getRupeesPerWithdrawal(): number {
+  try {
+    const stored = localStorage.getItem("ke_token_reward_amount");
+    if (stored) return Number.parseFloat(stored) || 1.25;
+  } catch {}
+  return 1.25;
+}
 
 function getStorageKey(principalStr: string) {
   return `kl_tokens_${principalStr}`;
@@ -73,7 +80,7 @@ function loadStore(key: string): TokenStore {
           ),
           totalRupeesPaid:
             Math.floor((parsed.totalWithdrawn ?? 0) / TOKENS_FOR_WITHDRAWAL) *
-            RUPEES_PER_WITHDRAWAL,
+            getRupeesPerWithdrawal(),
         };
       }
       return parsed;
@@ -232,21 +239,22 @@ export function useTokens() {
    */
   const withdrawTokens = useCallback((): boolean => {
     if (store.balance < TOKENS_FOR_WITHDRAWAL) return false;
+    const rupeesPerWithdrawal = getRupeesPerWithdrawal();
 
     const tx: TokenTransaction = {
       id: `withdraw_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
       type: "withdrawn",
       amount: TOKENS_FOR_WITHDRAWAL,
-      rupeesAmount: RUPEES_PER_WITHDRAWAL,
+      rupeesAmount: rupeesPerWithdrawal,
       timestamp: Date.now(),
-      description: `Withdrawn ${TOKENS_FOR_WITHDRAWAL} tokens → ₹${RUPEES_PER_WITHDRAWAL}`,
+      description: `Withdrawn ${TOKENS_FOR_WITHDRAWAL} tokens → ₹${rupeesPerWithdrawal}`,
     };
     const newBalance = Math.max(0, store.balance - TOKENS_FOR_WITHDRAWAL);
     const newAllTime = {
       ...store.allTime,
       totalAdsWatched: store.allTime.totalAdsWatched + 1,
       totalWithdrawals: store.allTime.totalWithdrawals + 1,
-      totalRupeesPaid: store.allTime.totalRupeesPaid + RUPEES_PER_WITHDRAWAL,
+      totalRupeesPaid: store.allTime.totalRupeesPaid + rupeesPerWithdrawal,
     };
     persist({
       ...store,
@@ -298,7 +306,7 @@ export function useTokens() {
     tokensForNextWithdrawal,
     tokensNeeded: TOKENS_FOR_WITHDRAWAL - tokensForNextWithdrawal,
     TOKENS_FOR_WITHDRAWAL,
-    RUPEES_PER_WITHDRAWAL,
+    RUPEES_PER_WITHDRAWAL: getRupeesPerWithdrawal(),
     earnToken,
     earnTokenFromTournament,
     withdrawTokens,

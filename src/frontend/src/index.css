@@ -399,12 +399,14 @@
   background: #ffffff;
   border-bottom: 1px solid #e0e0e0;
   padding: 10px 16px;
+  overflow: hidden;
 }
 
 /* Scrollable inner container */
 .admin-nav-scroll {
   overflow-x: auto;
   overflow-y: hidden;
+  width: 100%;
   -ms-overflow-style: none;
   scrollbar-width: none;
 }

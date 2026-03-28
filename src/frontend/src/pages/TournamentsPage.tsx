@@ -1036,7 +1036,33 @@ export function TournamentsPage() {
     };
   }, []);
 
-  const visibleFreeTournaments = adminFreeTournaments;
+  const [freeStatusTab, setFreeStatusTab] = useState<
+    "upcoming" | "live" | "done"
+  >("upcoming");
+
+  function getFreeTournamentStatus(
+    t: FreeTournament,
+  ): "upcoming" | "live" | "done" {
+    const isLive = localStorage.getItem(`freeMatchStarted_${t.id}`) === "true";
+    if (isLive) return "live";
+    const isDone = localStorage.getItem(`freeMatchDone_${t.id}`) === "true";
+    if (isDone) return "done";
+    try {
+      const raw = localStorage.getItem(t.id);
+      if (raw) {
+        const data = JSON.parse(raw);
+        if (data.startTime) {
+          const startMs = new Date(data.startTime).getTime();
+          if (startMs && startMs < Date.now()) return "done";
+        }
+      }
+    } catch {}
+    return "upcoming";
+  }
+
+  const visibleFreeTournaments = adminFreeTournaments.filter(
+    (t) => getFreeTournamentStatus(t) === freeStatusTab,
+  );
 
   const filteredTournaments =
     tournaments?.filter((t) => {
@@ -1152,6 +1178,53 @@ export function TournamentsPage() {
         {/* ── FREE SECTION ── */}
         {section === "free" && (
           <div className="space-y-4">
+            {/* Status tabs — Upcoming / Live / Done */}
+            <div
+              style={{
+                display: "flex",
+                gap: 8,
+                overflowX: "auto",
+                paddingBottom: 4,
+                msOverflowStyle: "none",
+                scrollbarWidth: "none",
+              }}
+            >
+              {(["upcoming", "live", "done"] as const).map((tab) => {
+                const labels = {
+                  upcoming: "⏰ UPCOMING",
+                  live: "🔴 LIVE",
+                  done: "✅ DONE",
+                };
+                const isActive = freeStatusTab === tab;
+                return (
+                  <button
+                    key={tab}
+                    type="button"
+                    onClick={() => setFreeStatusTab(tab)}
+                    style={{
+                      flexShrink: 0,
+                      padding: "8px 20px",
+                      borderRadius: 24,
+                      background: isActive ? "#00FF88" : "#F0F0F0",
+                      color: isActive ? "#000000" : "#666666",
+                      border: isActive ? "none" : "1px solid #E0E0E0",
+                      fontFamily: "'Orbitron', sans-serif",
+                      fontSize: 12,
+                      fontWeight: 700,
+                      cursor: "pointer",
+                      transition: "all 0.15s ease",
+                      boxShadow: isActive
+                        ? "0 0 12px rgba(0,255,136,0.4)"
+                        : "none",
+                      textTransform: "uppercase",
+                      letterSpacing: 1,
+                    }}
+                  >
+                    {labels[tab]}
+                  </button>
+                );
+              })}
+            </div>
             <div
               className="rounded-xl p-4"
               style={{
@@ -1187,7 +1260,11 @@ export function TournamentsPage() {
                   No tournaments available
                 </p>
                 <p className="text-sm mt-1">
-                  Admin hasn't published any free tournaments yet.
+                  {freeStatusTab === "upcoming"
+                    ? "No upcoming tournaments scheduled."
+                    : freeStatusTab === "live"
+                      ? "No tournaments are live right now."
+                      : "No completed tournaments yet."}
                 </p>
               </div>
             ) : (

@@ -155,8 +155,8 @@ export function EarnPage() {
             }}
           >
             {tokens.canWithdraw
-              ? `✅ Ready to withdraw ₹${tokens.RUPEES_PER_WITHDRAWAL}!`
-              : `${tokens.tokensNeeded} more tokens to withdraw ₹${tokens.RUPEES_PER_WITHDRAWAL}`}
+              ? `✅ Ready to withdraw ₹${tokens.RUPEES_PER_WITHDRAWAL.toFixed(2)}!`
+              : `${tokens.tokensNeeded} more tokens to withdraw ₹${tokens.RUPEES_PER_WITHDRAWAL.toFixed(2)}`}
           </p>
         </div>
 
@@ -282,16 +282,17 @@ function WithdrawalSection({
   tokens,
 }: { tokens: ReturnType<typeof useTokens> }) {
   const [adOpen, setAdOpen] = useState(false);
+  const rewardAmount = tokens.RUPEES_PER_WITHDRAWAL;
 
   const handleComplete = useCallback(() => {
     setAdOpen(false);
     const success = tokens.withdrawTokens();
     if (success) {
-      toast.success("✅ ₹1.25 added to your wallet!", {
+      toast.success(`✅ ₹${rewardAmount.toFixed(2)} added to your wallet!`, {
         duration: 5000,
       });
     }
-  }, [tokens]);
+  }, [tokens, rewardAmount]);
 
   const handleCancel = useCallback(() => {
     setAdOpen(false);
@@ -312,8 +313,8 @@ function WithdrawalSection({
         onComplete={handleComplete}
         onCancel={handleCancel}
         duration={WITHDRAWAL_AD_SECONDS}
-        title="Watch Ad to Redeem ₹1.25"
-        rewardLabel={`₹${tokens.RUPEES_PER_WITHDRAWAL}`}
+        title={`Watch Ad to Redeem ₹${rewardAmount.toFixed(2)}`}
+        rewardLabel={`₹${rewardAmount.toFixed(2)}`}
       />
 
       <div
@@ -326,7 +327,7 @@ function WithdrawalSection({
         </p>
         <p style={{ ...rajdhani, color: "#666666", fontSize: 13 }}>
           {tokens.canWithdraw
-            ? "✅ Ready! Watch a short ad to redeem ₹1.25 directly to your wallet."
+            ? `✅ Ready! Watch a short ad to redeem ₹${rewardAmount.toFixed(2)} directly to your wallet.`
             : `Need ${tokens.tokensNeeded} more tokens to unlock redemption.`}
         </p>
         <button
@@ -351,7 +352,7 @@ function WithdrawalSection({
           data-ocid="earn.redeem.primary_button"
         >
           {tokens.canWithdraw
-            ? "🎬 WATCH AD TO REDEEM ₹1.25"
+            ? `🎬 WATCH AD TO REDEEM ₹${rewardAmount.toFixed(2)}`
             : "Collect 25 tokens to redeem"}
         </button>
         {!tokens.canWithdraw && (

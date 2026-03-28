@@ -115,66 +115,97 @@ import {
   XCircle,
   Zap,
 } from "lucide-react";
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 
-const FREE_TOURNAMENT_LIST = [
-  {
-    id: "free-battleground",
-    name: "⚔️ Battle Ground Championship",
-    maxPlayers: 500,
-  },
-  { id: "free-4v4", name: "🎮 4v4 Custom Match", maxPlayers: 40 },
-  { id: "free-1v1", name: "🥇 1v1 Solo Duel", maxPlayers: 10 },
-  { id: "free-2v2", name: "🥈 2v2 Duo Battle", maxPlayers: 20 },
-];
+// ── StoredFreeTournament type ─────────────────────────────────────────────────
 
-function FreeTournamentAdminCard({
-  t,
-}: { t: (typeof FREE_TOURNAMENT_LIST)[0] }) {
+interface StoredFreeTournament {
+  name: string;
+  mode: string;
+  maxPlayers: number;
+  startTime: string;
+  prizes: { label: string; prize: string; condition?: string }[];
+  prizePool: string;
+}
+
+function loadStoredFreeTournaments(): {
+  id: string;
+  data: StoredFreeTournament;
+}[] {
+  const results: { id: string; data: StoredFreeTournament }[] = [];
+  try {
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key?.startsWith("customFreeTournament_")) {
+        const raw = localStorage.getItem(key);
+        if (raw) {
+          const data = JSON.parse(raw) as StoredFreeTournament;
+          results.push({ id: key, data });
+        }
+      }
+    }
+  } catch {}
+  return results;
+}
+
+function DynamicFreeTournamentAdminCard({
+  id,
+  data,
+  onDelete,
+}: {
+  id: string;
+  data: StoredFreeTournament;
+  onDelete: () => void;
+}) {
   const [roomId, setRoomId] = useState(
-    localStorage.getItem(`freeRoomId_${t.id}`) || "",
+    localStorage.getItem(`freeRoomId_${id}`) || "",
   );
   const [roomPassword, setRoomPassword] = useState(
-    localStorage.getItem(`freeRoomPassword_${t.id}`) || "",
+    localStorage.getItem(`freeRoomPassword_${id}`) || "",
   );
   const [matchStarted, setMatchStarted] = useState(
-    localStorage.getItem(`freeMatchStarted_${t.id}`) === "true",
+    localStorage.getItem(`freeMatchStarted_${id}`) === "true",
   );
   const [saved, setSaved] = useState(false);
   const [newMatchTime, setNewMatchTime] = useState(
-    localStorage.getItem(`freeMatchTime_${t.id}`) || "",
+    localStorage.getItem(`freeMatchTime_${id}`) || data.startTime || "",
   );
   const [timeSaved, setTimeSaved] = useState(false);
   const [isPublished, setIsPublished] = useState(
-    localStorage.getItem(`ke_free_published_${t.id}`) === "true",
+    localStorage.getItem(`ke_free_published_${id}`) === "true",
   );
+
+  const joinCount = Number.parseInt(
+    localStorage.getItem(`freeJoinCount_${id}`) || "0",
+    10,
+  );
+
+  const handleSave = () => {
+    localStorage.setItem(`freeRoomId_${id}`, roomId);
+    localStorage.setItem(`freeRoomPassword_${id}`, roomPassword);
+    window.dispatchEvent(new Event("freeTournamentUpdated"));
+    setSaved(true);
+    toast.success(`Room details saved for ${data.name}`);
+    setTimeout(() => setSaved(false), 2000);
+  };
 
   const handleUpdateTime = () => {
     if (!newMatchTime) {
       toast.error("Please select a date and time.");
       return;
     }
-    localStorage.setItem(`freeMatchTime_${t.id}`, newMatchTime);
+    localStorage.setItem(`freeMatchTime_${id}`, newMatchTime);
     window.dispatchEvent(new Event("freeTournamentUpdated"));
     setTimeSaved(true);
-    toast.success(`Match time updated for ${t.name}`);
+    toast.success(`Match time updated for ${data.name}`);
     setTimeout(() => setTimeSaved(false), 2000);
-  };
-
-  const handleSave = () => {
-    localStorage.setItem(`freeRoomId_${t.id}`, roomId);
-    localStorage.setItem(`freeRoomPassword_${t.id}`, roomPassword);
-    window.dispatchEvent(new Event("freeTournamentUpdated"));
-    setSaved(true);
-    toast.success(`Room details saved for ${t.name}`);
-    setTimeout(() => setSaved(false), 2000);
   };
 
   const toggleMatchStarted = () => {
     const newVal = !matchStarted;
     setMatchStarted(newVal);
-    localStorage.setItem(`freeMatchStarted_${t.id}`, String(newVal));
+    localStorage.setItem(`freeMatchStarted_${id}`, String(newVal));
     window.dispatchEvent(new Event("freeTournamentUpdated"));
     toast.success(
       newVal
@@ -186,7 +217,7 @@ function FreeTournamentAdminCard({
   const togglePublish = () => {
     const newVal = !isPublished;
     setIsPublished(newVal);
-    localStorage.setItem(`ke_free_published_${t.id}`, String(newVal));
+    localStorage.setItem(`ke_free_published_${id}`, String(newVal));
     window.dispatchEvent(new Event("freeTournamentUpdated"));
     toast.success(
       newVal
@@ -195,124 +226,119 @@ function FreeTournamentAdminCard({
     );
   };
 
-  const joinCount = Number.parseInt(
-    localStorage.getItem(`freeJoinCount_${t.id}`) || "0",
-    10,
-  );
+  const handleDelete = () => {
+    if (!window.confirm(`Delete "${data.name}"?`)) return;
+    localStorage.removeItem(id);
+    localStorage.removeItem(`freeRoomId_${id}`);
+    localStorage.removeItem(`freeRoomPassword_${id}`);
+    localStorage.removeItem(`freeMatchStarted_${id}`);
+    localStorage.removeItem(`ke_free_published_${id}`);
+    localStorage.removeItem(`freeMatchTime_${id}`);
+    localStorage.removeItem(`freeJoinCount_${id}`);
+    window.dispatchEvent(new Event("freeTournamentUpdated"));
+    onDelete();
+  };
 
   return (
     <div
       className="rounded-xl p-4 space-y-3"
-      style={{
-        background: "rgba(22,33,62,0.7)",
-        border: "1px solid rgba(0,255,136,0.15)",
-      }}
+      style={{ background: "#f5f5f5", border: "1px solid #e0e0e0" }}
     >
-      <div className="flex items-center justify-between">
-        <div>
+      <div className="flex items-start justify-between">
+        <div className="flex-1 min-w-0">
           <h3
-            className="font-bold text-white text-sm"
-            style={{ fontFamily: "'Orbitron', sans-serif" }}
+            className="font-bold text-sm truncate"
+            style={{ fontFamily: "'Orbitron', sans-serif", color: "#000" }}
           >
-            {t.name}
+            {data.name}
           </h3>
-          <p
-            className="text-xs mt-0.5"
-            style={{ color: "rgba(255,255,255,0.4)" }}
-          >
-            👥 {joinCount}/{t.maxPlayers} joined
+          <p className="text-xs text-gray-500 mt-0.5">
+            {data.mode} · {data.maxPlayers} players · Prize: {data.prizePool}
+          </p>
+          <p className="text-xs text-gray-400">
+            👥 {joinCount}/{data.maxPlayers} joined
           </p>
         </div>
-        <div className="flex gap-2 text-xs">
+        <div className="flex gap-1 ml-2 flex-shrink-0 flex-wrap justify-end">
           {matchStarted && (
             <span
-              className="px-2 py-0.5 rounded-full font-bold"
+              className="px-2 py-0.5 rounded-full text-xs font-bold"
               style={{
-                background: "rgba(255,215,0,0.15)",
-                color: "#ffd700",
-                border: "1px solid rgba(255,215,0,0.3)",
+                background: "rgba(255,215,0,0.2)",
+                color: "#d97706",
+                border: "1px solid rgba(255,215,0,0.4)",
               }}
             >
               🟡 LIVE
             </span>
           )}
-          {roomId && (
+          {isPublished && (
             <span
-              className="px-2 py-0.5 rounded-full font-bold"
+              className="px-2 py-0.5 rounded-full text-xs font-bold"
               style={{
-                background: "rgba(157,78,221,0.15)",
-                color: "#c084fc",
-                border: "1px solid rgba(157,78,221,0.3)",
+                background: "rgba(0,255,136,0.1)",
+                color: "#00AA55",
+                border: "1px solid rgba(0,255,136,0.3)",
               }}
             >
-              🔑 Room Set
+              ✅ Published
             </span>
           )}
         </div>
       </div>
 
-      <div className="space-y-2">
-        <div className="flex gap-2">
-          <div className="flex-1 space-y-1">
-            <label
-              htmlFor={`room-id-${t.id}`}
-              className="text-xs font-medium"
-              style={{ color: "rgba(255,255,255,0.5)" }}
-            >
-              Room ID
-            </label>
-            <input
-              id={`room-id-${t.id}`}
-              type="text"
-              value={roomId}
-              onChange={(e) => setRoomId(e.target.value)}
-              placeholder="e.g., 213579050"
-              className="w-full rounded-lg px-3 py-2 text-sm font-mono text-white outline-none"
-              style={{
-                background: "rgba(255,255,255,0.06)",
-                border: "1px solid rgba(255,255,255,0.12)",
-              }}
-              data-ocid="admin.free_tournament.room_id.input"
-            />
-          </div>
-          <div className="flex-1 space-y-1">
-            <label
-              htmlFor={`room-pw-${t.id}`}
-              className="text-xs font-medium"
-              style={{ color: "rgba(255,255,255,0.5)" }}
-            >
-              Password
-            </label>
-            <input
-              id={`room-pw-${t.id}`}
-              type="text"
-              value={roomPassword}
-              onChange={(e) => setRoomPassword(e.target.value)}
-              placeholder="e.g., 00"
-              className="w-full rounded-lg px-3 py-2 text-sm font-mono text-white outline-none"
-              style={{
-                background: "rgba(255,255,255,0.06)",
-                border: "1px solid rgba(255,255,255,0.12)",
-              }}
-              data-ocid="admin.free_tournament.password.input"
-            />
-          </div>
+      <div className="flex gap-2">
+        <div className="flex-1 space-y-1">
+          <label
+            htmlFor={`dyn-room-id-${id}`}
+            className="text-xs font-semibold text-gray-600"
+          >
+            Room ID
+          </label>
+          <input
+            id={`dyn-room-id-${id}`}
+            type="text"
+            value={roomId}
+            onChange={(e) => setRoomId(e.target.value)}
+            placeholder="e.g., 213579050"
+            className="w-full rounded-lg px-3 py-2 text-sm font-mono outline-none"
+            style={{ background: "#fff", border: "1px solid #e0e0e0" }}
+            data-ocid="admin.free_tournament.room_id.input"
+          />
         </div>
-        <button
-          type="button"
-          onClick={handleSave}
-          className="w-full py-2 rounded-lg text-xs font-bold uppercase tracking-wide"
-          style={{
-            background: saved ? "rgba(0,255,136,0.15)" : "rgba(157,78,221,0.2)",
-            color: saved ? "#00FF88" : "#c084fc",
-            border: `1px solid ${saved ? "rgba(0,255,136,0.4)" : "rgba(157,78,221,0.4)"}`,
-            fontFamily: "'Orbitron', sans-serif",
-          }}
-          data-ocid="admin.free_tournament.save_room.button"
-        >
-          {saved ? "✅ Saved!" : "🔑 Set Room ID & Password"}
-        </button>
+        <div className="flex-1 space-y-1">
+          <label
+            htmlFor={`dyn-room-pw-${id}`}
+            className="text-xs font-semibold text-gray-600"
+          >
+            Password
+          </label>
+          <input
+            id={`dyn-room-pw-${id}`}
+            type="text"
+            value={roomPassword}
+            onChange={(e) => setRoomPassword(e.target.value)}
+            placeholder="e.g., 00"
+            className="w-full rounded-lg px-3 py-2 text-sm font-mono outline-none"
+            style={{ background: "#fff", border: "1px solid #e0e0e0" }}
+            data-ocid="admin.free_tournament.password.input"
+          />
+        </div>
       </div>
+      <button
+        type="button"
+        onClick={handleSave}
+        className="w-full py-2 rounded-lg text-xs font-bold uppercase tracking-wide"
+        style={{
+          background: saved ? "rgba(0,255,136,0.1)" : "rgba(157,78,221,0.1)",
+          color: saved ? "#00AA55" : "#9d4edd",
+          border: `1px solid ${saved ? "rgba(0,255,136,0.4)" : "rgba(157,78,221,0.4)"}`,
+          fontFamily: "'Orbitron', sans-serif",
+        }}
+        data-ocid="admin.free_tournament.save_room.button"
+      >
+        {saved ? "✅ Saved!" : "🔑 Set Room ID & Password"}
+      </button>
 
       <button
         type="button"
@@ -320,106 +346,161 @@ function FreeTournamentAdminCard({
         className="w-full py-2 rounded-lg text-xs font-bold uppercase tracking-wide"
         style={{
           background: matchStarted
-            ? "rgba(255,50,50,0.15)"
-            : "rgba(255,215,0,0.12)",
-          color: matchStarted ? "#ff6b6b" : "#ffd700",
+            ? "rgba(255,50,50,0.1)"
+            : "rgba(255,215,0,0.1)",
+          color: matchStarted ? "#ef4444" : "#d97706",
           border: `1px solid ${matchStarted ? "rgba(255,50,50,0.4)" : "rgba(255,215,0,0.4)"}`,
           fontFamily: "'Orbitron', sans-serif",
         }}
         data-ocid="admin.free_tournament.match_started.toggle"
       >
-        {matchStarted
-          ? "⏹️ STOP MATCH (Deactivate LIVE)"
-          : "▶️ START MATCH (Activate LIVE Button)"}
+        {matchStarted ? "⏹️ STOP MATCH" : "▶️ START MATCH (Activate LIVE)"}
       </button>
 
-      {/* Edit Match Time */}
-      <div
-        className="border-t pt-3 mt-1"
-        style={{ borderColor: "rgba(0,255,136,0.1)" }}
-      >
-        <p
-          className="text-xs font-bold uppercase tracking-wide mb-2"
-          style={{
-            color: "rgba(255,255,255,0.5)",
-            fontFamily: "'Orbitron', sans-serif",
-          }}
+      <div className="space-y-2">
+        <label
+          htmlFor={`dyn-match-time-${id}`}
+          className="text-xs font-semibold text-gray-600"
         >
           ⏰ Edit Match Time
-        </p>
-        {newMatchTime && (
-          <p
-            className="text-xs mb-2"
-            style={{ color: "rgba(255,255,255,0.4)" }}
-          >
-            Current:{" "}
-            {new Date(newMatchTime).toLocaleString("en-IN", {
-              day: "2-digit",
-              month: "short",
-              year: "numeric",
-              hour: "2-digit",
-              minute: "2-digit",
-            })}
-          </p>
-        )}
+        </label>
         <input
+          id={`dyn-match-time-${id}`}
           type="datetime-local"
           value={newMatchTime}
           onChange={(e) => setNewMatchTime(e.target.value)}
+          className="w-full rounded-lg px-3 py-2 text-sm outline-none"
+          style={{ background: "#fff", border: "1px solid #e0e0e0" }}
           data-ocid="admin.free_tournament.match_time.input"
-          style={{
-            width: "100%",
-            padding: "8px 10px",
-            borderRadius: "8px",
-            background: "rgba(0,0,0,0.4)",
-            border: "1px solid rgba(0,255,136,0.2)",
-            color: "white",
-            fontSize: "13px",
-            marginBottom: "8px",
-          }}
         />
         <button
           type="button"
           onClick={handleUpdateTime}
-          data-ocid="admin.free_tournament.update_time.button"
+          className="w-full py-2 rounded-lg text-xs font-bold uppercase tracking-wide"
           style={{
-            width: "100%",
-            padding: "8px",
-            borderRadius: "8px",
-            background: timeSaved
-              ? "rgba(0,255,136,0.2)"
-              : "rgba(0,255,136,0.1)",
-            border: "1px solid rgba(0,255,136,0.4)",
-            color: "#00FF88",
+            background: timeSaved ? "rgba(0,255,136,0.1)" : "rgba(0,0,0,0.05)",
+            color: timeSaved ? "#00AA55" : "#666",
+            border: "1px solid #e0e0e0",
             fontFamily: "'Orbitron', sans-serif",
-            fontSize: "11px",
-            fontWeight: "bold",
-            cursor: "pointer",
-            letterSpacing: "0.05em",
           }}
+          data-ocid="admin.free_tournament.update_time.button"
         >
-          {timeSaved ? "✅ TIME UPDATED!" : "✅ UPDATE MATCH TIME"}
+          {timeSaved ? "✅ Time Updated!" : "✅ Update Match Time"}
         </button>
-        {/* Publish/Unpublish toggle */}
+      </div>
+
+      <div className="flex gap-2">
         <button
           type="button"
           onClick={togglePublish}
-          className="w-full py-2 rounded-lg text-xs font-bold uppercase tracking-wide mt-1"
+          className="flex-1 py-2 rounded-lg text-xs font-bold uppercase tracking-wide"
           style={{
             background: isPublished
-              ? "rgba(255,50,50,0.15)"
-              : "rgba(0,255,136,0.12)",
-            color: isPublished ? "#ff6b6b" : "#00FF88",
+              ? "rgba(255,50,50,0.1)"
+              : "rgba(0,255,136,0.1)",
+            color: isPublished ? "#ef4444" : "#00AA55",
             border: `1px solid ${isPublished ? "rgba(255,50,50,0.4)" : "rgba(0,255,136,0.4)"}`,
             fontFamily: "'Orbitron', sans-serif",
           }}
           data-ocid="admin.free_tournament.publish.toggle"
         >
-          {isPublished
-            ? "✅ Published (Click to Hide)"
-            : "🚀 Publish Tournament"}
+          {isPublished ? "⛔ Unpublish" : "🚀 Publish"}
+        </button>
+        <button
+          type="button"
+          onClick={handleDelete}
+          className="px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wide"
+          style={{
+            background: "rgba(255,50,50,0.1)",
+            color: "#ef4444",
+            border: "1px solid rgba(255,50,50,0.4)",
+            fontFamily: "'Orbitron', sans-serif",
+          }}
+          data-ocid="admin.free_tournament.delete_button"
+        >
+          🗑️ Delete
         </button>
       </div>
+    </div>
+  );
+}
+
+function TokenRewardSettings() {
+  const [amount, setAmount] = useState(
+    localStorage.getItem("ke_token_reward_amount") || "1.25",
+  );
+  const [saved, setSaved] = useState(false);
+
+  const handleSave = () => {
+    const val = Number.parseFloat(amount);
+    if (Number.isNaN(val) || val <= 0) {
+      toast.error("Invalid amount");
+      return;
+    }
+    localStorage.setItem("ke_token_reward_amount", val.toFixed(2));
+    setSaved(true);
+    toast.success(`✅ Token reward set to ₹${val.toFixed(2)}`);
+    setTimeout(() => setSaved(false), 2000);
+  };
+
+  return (
+    <div
+      className="rounded-xl p-4 space-y-3"
+      style={{ background: "#f5f5f5", border: "1px solid #e0e0e0" }}
+    >
+      <h3
+        style={{
+          fontFamily: "'Orbitron',sans-serif",
+          color: "#000",
+          fontSize: 14,
+          fontWeight: 700,
+        }}
+      >
+        🪙 Token Reward Settings
+      </h3>
+      <p className="text-xs text-gray-500">
+        25 tokens redeem karne par user ko kitna ₹ milega? (Default: ₹1.25)
+      </p>
+      <div className="flex gap-3 items-end">
+        <div className="space-y-1 flex-1">
+          <Label
+            htmlFor="token-reward-input"
+            className="text-xs font-semibold text-gray-600"
+          >
+            Token Redeem Reward Amount (₹)
+          </Label>
+          <Input
+            id="token-reward-input"
+            type="number"
+            step="0.25"
+            min="0.25"
+            max="10"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            style={{ background: "#fff", border: "1px solid #e0e0e0" }}
+          />
+        </div>
+        <Button
+          onClick={handleSave}
+          style={{
+            background: saved
+              ? "#00FF88"
+              : "linear-gradient(135deg,#00FF88,#9d4edd)",
+            color: "#000",
+            fontWeight: 700,
+          }}
+          data-ocid="admin.token_reward.save_button"
+        >
+          {saved ? "✅ Saved" : "Save"}
+        </Button>
+      </div>
+      <p className="text-xs" style={{ color: "#00AA55" }}>
+        ℹ️ Current: ₹
+        {Number.parseFloat(
+          localStorage.getItem("ke_token_reward_amount") || "1.25",
+        ).toFixed(2)}{" "}
+        per 25 tokens
+      </p>
     </div>
   );
 }
@@ -864,9 +945,97 @@ function CreateFreeTournamentForm() {
   );
 }
 
+function DynamicFreeTournamentList() {
+  const [tournaments, setTournaments] = useState<
+    { id: string; data: StoredFreeTournament }[]
+  >([]);
+
+  const refresh = useCallback(
+    () => setTournaments(loadStoredFreeTournaments()),
+    [],
+  );
+
+  useEffect(() => {
+    refresh();
+    window.addEventListener("freeTournamentUpdated", refresh);
+    window.addEventListener("storage", refresh);
+    return () => {
+      window.removeEventListener("freeTournamentUpdated", refresh);
+      window.removeEventListener("storage", refresh);
+    };
+  }, [refresh]);
+
+  if (tournaments.length === 0) {
+    return (
+      <div
+        className="py-8 text-center text-gray-400 text-sm"
+        data-ocid="admin.free_tournaments.empty_state"
+      >
+        <p className="text-2xl mb-2">🎮</p>
+        <p>
+          No free tournaments created yet. Use the form above to create one.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid gap-4 sm:grid-cols-2">
+      {tournaments.map((t) => (
+        <DynamicFreeTournamentAdminCard
+          key={t.id}
+          id={t.id}
+          data={t.data}
+          onDelete={refresh}
+        />
+      ))}
+    </div>
+  );
+}
+
+function FreeTournamentsInMatchesSection() {
+  const [tournaments, setTournaments] = useState<
+    { id: string; data: StoredFreeTournament }[]
+  >([]);
+
+  const refresh = useCallback(
+    () => setTournaments(loadStoredFreeTournaments()),
+    [],
+  );
+
+  useEffect(() => {
+    refresh();
+    window.addEventListener("freeTournamentUpdated", refresh);
+    return () => window.removeEventListener("freeTournamentUpdated", refresh);
+  }, [refresh]);
+
+  if (tournaments.length === 0) return null;
+
+  return (
+    <div className="space-y-4 mt-6">
+      <div className="flex items-center gap-2">
+        <span className="text-xl">🎁</span>
+        <h3 className="font-bold text-lg font-display">Free Tournaments</h3>
+      </div>
+      <div className="grid gap-4 sm:grid-cols-2">
+        {tournaments.map((t) => (
+          <DynamicFreeTournamentAdminCard
+            key={t.id}
+            id={t.id}
+            data={t.data}
+            onDelete={refresh}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function FreeTournamentsManagementSection() {
   return (
     <div className="space-y-4">
+      <TokenRewardSettings />
+
       <Tabs defaultValue="free">
         <TabsList
           className="flex gap-2 mb-4"
@@ -922,14 +1091,10 @@ function FreeTournamentsManagementSection() {
             🎁 Active Free Tournaments
           </h3>
           <p className="text-xs text-gray-500">
-            Set Room ID &amp; Password for each free tournament. Toggle match
+            Set Room ID & Password for each free tournament. Toggle match
             started to activate LIVE button for users.
           </p>
-          <div className="grid gap-4 sm:grid-cols-2">
-            {FREE_TOURNAMENT_LIST.map((t) => (
-              <FreeTournamentAdminCard key={t.id} t={t} />
-            ))}
-          </div>
+          <DynamicFreeTournamentList />
         </TabsContent>
 
         <TabsContent value="paid">
@@ -1448,6 +1613,9 @@ function ManageMatchesTab() {
           </p>
         </div>
       )}
+
+      {/* Free Tournaments in Manage Matches */}
+      <FreeTournamentsInMatchesSection />
     </div>
   );
 }
