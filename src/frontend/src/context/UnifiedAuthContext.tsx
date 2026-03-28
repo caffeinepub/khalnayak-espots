@@ -23,6 +23,7 @@ interface UnifiedAuthContextType {
   userId: string | null;
   authMethod: AuthMethod;
   isInitializing: boolean;
+  firebaseEmail: string | null;
   loginWithGoogle: () => Promise<void>;
   loginWithII: () => void;
   logoutAll: () => void;
@@ -95,6 +96,7 @@ export function UnifiedAuthProvider({
       userId,
       authMethod,
       isInitializing,
+      firebaseEmail: firebaseUser?.email ?? null,
       loginWithGoogle,
       loginWithII,
       logoutAll,
@@ -103,6 +105,7 @@ export function UnifiedAuthProvider({
       userId,
       authMethod,
       isInitializing,
+      firebaseUser,
       loginWithGoogle,
       loginWithII,
       logoutAll,

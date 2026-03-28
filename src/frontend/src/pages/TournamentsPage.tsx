@@ -86,117 +86,6 @@ export function saveFreeMyMatch(
     }
   } catch {}
 }
-
-// ─────────────────────────────────────────────
-// Static Free Tournaments (frontend-only)
-// ─────────────────────────────────────────────
-const FREE_TOURNAMENTS: FreeTournament[] = [
-  {
-    id: "free-battleground",
-    name: "Battle Ground Championship",
-    tournamentType: "battleground",
-    gameMode: "SOLO",
-    modeDetail: "Solo (har player apne liye)",
-    mode: "⚔️",
-    description: "500 Players • Solo Mode",
-    maxPlayers: 500,
-    slots: 500,
-    status: "upcoming" as const,
-    prizePool: "₹20",
-    prizeDistribution: [
-      {
-        label: "🏆 Booyah Prize",
-        amount: "₹10",
-        condition: "1st Place Winner",
-        icon: "🥇",
-      },
-      {
-        label: "🔫 Most Kills Prize",
-        amount: "₹10",
-        condition: "Most kills (min 6 kills required)",
-        icon: "💀",
-      },
-    ],
-    rules: [
-      "Ek player dono prizes le sakta hai (total ₹20)",
-      "Most Kills prize ke liye minimum 6 kills zaroori hai",
-      "Same kills hone par pehle kill wale ko priority milegi",
-    ],
-  },
-  {
-    id: "free-4v4",
-    name: "4v4 Custom Match",
-    tournamentType: "custom4v4",
-    gameMode: "TEAM",
-    modeDetail: "Team (2 teams × 4 players)",
-    mode: "🎮",
-    description: "40 Players • 2 Teams × 4",
-    maxPlayers: 40,
-    slots: 40,
-    status: "upcoming" as const,
-    prizePool: "₹5",
-    prizeDistribution: [
-      {
-        label: "🏆 Winning Team",
-        amount: "₹1.25 each",
-        condition: "4 players × ₹1.25 = ₹5 total",
-        icon: "🥇",
-      },
-    ],
-    rules: [
-      "Sirf winning team ke 4 players ko prize milega",
-      "Losing team ko kuch nahi milega",
-    ],
-  },
-  {
-    id: "free-1v1",
-    name: "1v1 Solo Duel",
-    tournamentType: "custom1v1",
-    gameMode: "SOLO",
-    modeDetail: "Solo (2 players)",
-    mode: "🥇",
-    description: "10 Players • Solo Duel",
-    maxPlayers: 10,
-    slots: 10,
-    status: "upcoming" as const,
-    prizePool: "₹0.50",
-    prizeDistribution: [
-      {
-        label: "🏆 Winner",
-        amount: "₹0.50",
-        condition: "Match winner",
-        icon: "🥇",
-      },
-    ],
-    rules: ["Sirf winner ko ₹0.50 milega", "Losing player ko kuch nahi milega"],
-  },
-  {
-    id: "free-2v2",
-    name: "2v2 Duo Battle",
-    tournamentType: "custom2v2",
-    gameMode: "TEAM",
-    modeDetail: "Team (2 teams × 2 players)",
-    mode: "🥈",
-    description: "20 Players • 2 Teams × 2",
-    maxPlayers: 20,
-    slots: 20,
-    status: "upcoming" as const,
-    prizePool: "₹1.60",
-    prizeDistribution: [
-      {
-        label: "🏆 Winning Team",
-        amount: "₹0.80 each",
-        condition: "2 players × ₹0.80 = ₹1.60 total",
-        icon: "🥇",
-      },
-    ],
-    rules: [
-      "Sirf winning team ke 2 players ko prize milega",
-      "Losing team ko kuch nahi milega",
-    ],
-  },
-];
-
 // ── Free Tournament State (localStorage) ──────────────────────────────────
 function getFreeJoinCount(id: string): number {
   return Number.parseInt(
@@ -606,41 +495,46 @@ function FreeTournamentCard({ t }: { t: FreeTournament }) {
   const spotsLeft = Math.max(0, t.maxPlayers - joinCount);
   const isFull = spotsLeft === 0;
 
-  const typeColors: Record<string, string> = {
-    battleground: "#ff6b35",
-    custom4v4: "#00FF88",
-    custom1v1: "#ffd700",
-    custom2v2: "#c084fc",
-  };
-  const accent = typeColors[t.tournamentType] || "#00FF88";
-  const isSolo = t.gameMode === "SOLO";
+  const [hovered, setHovered] = useState(false);
 
   return (
     <>
-      <div className="fire-card">
-        {/* Top gradient bar */}
-        <div className="fire-card-topbar" />
-
+      <div
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+        style={{
+          background: "#FFFFFF",
+          border: "1px solid #E0E0E0",
+          borderRadius: 16,
+          boxShadow: hovered
+            ? "0 8px 24px rgba(0,0,0,0.12)"
+            : "0 4px 12px rgba(0,0,0,0.05)",
+          transform: hovered ? "scale(1.01)" : "scale(1)",
+          transition: "all 0.2s ease",
+          overflow: "hidden",
+          cursor: "pointer",
+        }}
+      >
         <div className="p-4 space-y-3">
           {/* Badges row */}
           <div className="flex items-center justify-between gap-2">
-            {/* Mode badge: SOLO / TEAM */}
+            {/* FREE badge */}
             <span
               className="text-xs font-bold uppercase px-2 py-0.5 rounded-full"
               style={{
-                background: "rgba(255,140,0,0.12)",
-                color: "#FF8C00",
-                border: "1px solid rgba(255,140,0,0.35)",
+                background: "#28a745",
+                color: "#FFFFFF",
+                borderRadius: 20,
               }}
             >
-              {isSolo ? "👤 SOLO" : "👥 TEAM"}
+              🎁 FREE
             </span>
             <span
               className="text-xs font-medium px-2 py-0.5 rounded-full"
               style={{
-                background: "rgba(255,140,0,0.15)",
-                color: "#FF8C00",
-                border: "1px solid rgba(255,140,0,0.3)",
+                background: "#6f42c1",
+                color: "#FFFFFF",
+                borderRadius: 20,
               }}
             >
               {t.mode} {getTournamentTypeLabel(t.tournamentType)}
@@ -649,15 +543,16 @@ function FreeTournamentCard({ t }: { t: FreeTournament }) {
 
           {/* Name */}
           <h3
-            className="font-display font-bold text-white leading-tight"
+            className="font-display font-bold leading-tight"
             style={{
-              fontSize: "clamp(1rem,4vw,1.15rem)",
-              textShadow: "0 0 12px rgba(255,140,0,0.4)",
+              fontSize: "clamp(1rem,4vw,1.125rem)",
+              color: "#000000",
+              fontWeight: 700,
             }}
           >
             {t.name}
           </h3>
-          <p className="text-xs" style={{ color: "rgba(255,255,255,0.45)" }}>
+          <p className="text-xs" style={{ color: "#666666" }}>
             {t.description} • {t.modeDetail}
           </p>
 
@@ -665,28 +560,35 @@ function FreeTournamentCard({ t }: { t: FreeTournament }) {
           <div
             className="rounded-lg p-3 space-y-2"
             style={{
-              background: "rgba(80,20,0,0.30)",
-              border: "1px solid rgba(255,100,0,0.15)",
+              background: "#F8F8F8",
+              border: "1px solid #E0E0E0",
             }}
           >
             <div className="flex justify-between text-sm">
-              <span style={{ color: "rgba(255,255,255,0.5)" }}>Entry Fee</span>
-              <span className="badge-free">🎁 FREE</span>
+              <span style={{ color: "#666666" }}>Entry Fee</span>
+              <span
+                className="font-bold text-xs px-2 py-0.5 rounded-full"
+                style={{ background: "#28a745", color: "#FFFFFF" }}
+              >
+                🎁 FREE
+              </span>
             </div>
             <div className="flex justify-between text-sm">
-              <span style={{ color: "rgba(255,255,255,0.5)" }}>Prize Pool</span>
-              <span className="font-bold" style={{ color: "#ffd700" }}>
+              <span style={{ color: "#666666" }}>Prize Pool</span>
+              <span className="font-bold" style={{ color: "#00FF88" }}>
                 {t.prizePool}
               </span>
             </div>
             <div className="flex justify-between text-sm">
               <span
                 className="flex items-center gap-1"
-                style={{ color: "rgba(255,255,255,0.5)" }}
+                style={{ color: "#666666" }}
               >
                 <Users className="h-3 w-3" /> Max Players
               </span>
-              <span className="font-bold text-white">{t.maxPlayers}</span>
+              <span className="font-bold" style={{ color: "#333333" }}>
+                {t.maxPlayers}
+              </span>
             </div>
           </div>
 
@@ -695,19 +597,19 @@ function FreeTournamentCard({ t }: { t: FreeTournament }) {
             className="rounded-lg px-3 py-2 flex items-center justify-between text-sm font-bold"
             style={{
               background: isFull
-                ? "rgba(255,50,50,0.1)"
-                : "rgba(255,100,0,0.08)",
-              border: `1px solid ${isFull ? "rgba(255,50,50,0.3)" : "rgba(255,100,0,0.25)"}`,
+                ? "rgba(220,53,69,0.08)"
+                : "rgba(40,167,69,0.05)",
+              border: `1px solid ${isFull ? "rgba(220,53,69,0.3)" : "rgba(40,167,69,0.2)"}`,
               fontFamily: "'Rajdhani', sans-serif",
             }}
           >
-            <span style={{ color: "rgba(255,255,255,0.7)" }}>👥 Joined</span>
+            <span style={{ color: "#333333" }}>👥 Joined</span>
             {isFull ? (
-              <span style={{ color: "#ff4444", fontWeight: 700 }}>
+              <span style={{ color: "#dc3545", fontWeight: 700 }}>
                 {joinCount}/{t.maxPlayers} FULL
               </span>
             ) : (
-              <span style={{ color: "#FF8C00" }}>
+              <span style={{ color: "#333333" }}>
                 👥 {joinCount}/{t.maxPlayers} Only {spotsLeft} Spots Left
               </span>
             )}
@@ -721,7 +623,7 @@ function FreeTournamentCard({ t }: { t: FreeTournament }) {
                 <div
                   style={{
                     height: 4,
-                    background: "#1a1a2e",
+                    background: "#E0E0E0",
                     borderRadius: 2,
                     marginTop: 4,
                   }}
@@ -757,13 +659,13 @@ function FreeTournamentCard({ t }: { t: FreeTournament }) {
           <div
             className="rounded-lg p-3 space-y-1.5"
             style={{
-              background: "rgba(60,15,0,0.35)",
-              border: "1px solid rgba(255,100,0,0.20)",
+              background: "#F5F5F5",
+              border: "1px solid #E0E0E0",
             }}
           >
             <p
               className="text-xs font-bold uppercase tracking-wide mb-2"
-              style={{ color: "#FF8C00" }}
+              style={{ color: "#333333" }}
             >
               🏆 Prize Distribution
             </p>
@@ -773,13 +675,16 @@ function FreeTournamentCard({ t }: { t: FreeTournament }) {
                 className="flex items-start justify-between gap-2"
               >
                 <div className="min-w-0">
-                  <span className="text-xs font-semibold text-white">
+                  <span
+                    className="text-xs font-semibold"
+                    style={{ color: "#333333" }}
+                  >
                     {prize.label}
                   </span>
                   {prize.condition && (
                     <p
                       className="text-xs leading-tight mt-0.5"
-                      style={{ color: "rgba(255,255,255,0.45)" }}
+                      style={{ color: "#888888" }}
                     >
                       {prize.condition}
                     </p>
@@ -787,7 +692,7 @@ function FreeTournamentCard({ t }: { t: FreeTournament }) {
                 </div>
                 <span
                   className="font-bold text-xs shrink-0"
-                  style={{ color: "#FFD700" }}
+                  style={{ color: "#00FF88" }}
                 >
                   {prize.amount}
                 </span>
@@ -799,13 +704,10 @@ function FreeTournamentCard({ t }: { t: FreeTournament }) {
           <div className="space-y-1">
             {t.rules.map((rule) => (
               <div key={rule} className="flex items-start gap-1.5">
-                <span className="text-xs mt-0.5" style={{ color: accent }}>
+                <span className="text-xs mt-0.5" style={{ color: "#28a745" }}>
                   ✓
                 </span>
-                <p
-                  className="text-xs"
-                  style={{ color: "rgba(255,255,255,0.5)" }}
-                >
+                <p className="text-xs" style={{ color: "#666666" }}>
                   {rule}
                 </p>
               </div>
@@ -820,15 +722,11 @@ function FreeTournamentCard({ t }: { t: FreeTournament }) {
               className="flex-1 py-2 rounded-lg font-bold text-xs uppercase tracking-wide transition-all"
               style={{
                 background: matchStarted
-                  ? "linear-gradient(135deg, #FF8C00, #8B0000)"
-                  : "rgba(255,255,255,0.06)",
-                color: matchStarted ? "#ffffff" : "rgba(255,255,255,0.25)",
-                border: matchStarted
-                  ? "1px solid #FF8C00"
-                  : "1px solid rgba(255,255,255,0.1)",
-                boxShadow: matchStarted
-                  ? "0 0 12px rgba(255,68,0,0.5)"
-                  : "none",
+                  ? "linear-gradient(135deg, #dc3545, #a71d2a)"
+                  : "#F0F0F0",
+                color: matchStarted ? "#FFFFFF" : "#CCCCCC",
+                border: matchStarted ? "none" : "1px solid #E0E0E0",
+                boxShadow: "none",
                 cursor: matchStarted ? "pointer" : "not-allowed",
                 fontFamily: "'Orbitron', sans-serif",
               }}
@@ -845,12 +743,10 @@ function FreeTournamentCard({ t }: { t: FreeTournament }) {
               style={{
                 background: roomId
                   ? "linear-gradient(135deg, #9d4edd, #6a0dad)"
-                  : "rgba(255,255,255,0.06)",
-                color: roomId ? "#ffffff" : "rgba(255,255,255,0.25)",
-                border: roomId
-                  ? "1px solid #9d4edd"
-                  : "1px solid rgba(255,255,255,0.1)",
-                boxShadow: roomId ? "0 0 12px rgba(157,78,221,0.5)" : "none",
+                  : "#F0F0F0",
+                color: roomId ? "#FFFFFF" : "#CCCCCC",
+                border: roomId ? "none" : "1px solid #E0E0E0",
+                boxShadow: roomId ? "0 0 10px rgba(157,78,221,0.3)" : "none",
                 cursor: roomId ? "pointer" : "not-allowed",
                 fontFamily: "'Orbitron', sans-serif",
               }}
@@ -867,9 +763,9 @@ function FreeTournamentCard({ t }: { t: FreeTournament }) {
               disabled
               className="block w-full text-center py-2.5 rounded-lg font-bold text-sm uppercase tracking-wide"
               style={{
-                background: "rgba(0,255,136,0.1)",
+                background: "transparent",
                 color: "#00FF88",
-                border: "1px solid rgba(0,255,136,0.4)",
+                border: "2px solid #00FF88",
                 fontFamily: "'Orbitron', sans-serif",
                 cursor: "not-allowed",
               }}
@@ -885,12 +781,13 @@ function FreeTournamentCard({ t }: { t: FreeTournament }) {
               className="block w-full text-center py-2.5 rounded-lg font-bold text-sm uppercase tracking-wide transition-all active:scale-95 flex items-center justify-center gap-2"
               style={{
                 background: isFull
-                  ? "rgba(255,255,255,0.08)"
-                  : "linear-gradient(135deg, #FF8C00, #8B0000)",
-                color: isFull ? "rgba(255,255,255,0.3)" : "#ffffff",
-                boxShadow: isFull ? "none" : "0 0 16px rgba(255,140,0,0.5)",
+                  ? "#F0F0F0"
+                  : "linear-gradient(135deg, #28a745, #1a6b2a)",
+                color: isFull ? "#CCCCCC" : "#FFFFFF",
+                boxShadow: isFull ? "none" : "0 0 12px rgba(40,167,69,0.3)",
                 fontFamily: "'Orbitron', sans-serif",
                 cursor: isFull ? "not-allowed" : "pointer",
+                transition: "transform 0.15s ease, box-shadow 0.15s ease",
               }}
               data-ocid="free_tournament.primary_button"
             >
@@ -1038,6 +935,84 @@ function FreeTournamentCard({ t }: { t: FreeTournament }) {
 }
 
 // ─────────────────────────────────────────────
+// Load admin-created free tournaments from localStorage
+// ─────────────────────────────────────────────
+function getAdminCreatedFreeTournaments(): FreeTournament[] {
+  const result: FreeTournament[] = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (!key?.startsWith("customFreeTournament_")) continue;
+    try {
+      const data = JSON.parse(localStorage.getItem(key) || "");
+      const modeMap: Record<
+        string,
+        {
+          tournamentType: string;
+          gameMode: "SOLO" | "TEAM";
+          modeDetail: string;
+          mode: string;
+          maxPlayers: number;
+        }
+      > = {
+        Solo: {
+          tournamentType: "battleground",
+          gameMode: "SOLO",
+          modeDetail: "Solo (har player apne liye)",
+          mode: "⚔️",
+          maxPlayers: 500,
+        },
+        "4v4": {
+          tournamentType: "custom4v4",
+          gameMode: "TEAM",
+          modeDetail: "Team (2 teams × 4 players)",
+          mode: "🎮",
+          maxPlayers: 40,
+        },
+        "1v1": {
+          tournamentType: "custom1v1",
+          gameMode: "SOLO",
+          modeDetail: "Solo (2 players)",
+          mode: "🥇",
+          maxPlayers: 10,
+        },
+        "2v2": {
+          tournamentType: "custom2v2",
+          gameMode: "TEAM",
+          modeDetail: "Team (2 teams × 2 players)",
+          mode: "🥈",
+          maxPlayers: 20,
+        },
+      };
+      const modeInfo = modeMap[data.mode] ?? modeMap.Solo;
+      const prizeDistribution: PrizeDistribution[] = (data.prizes || []).map(
+        (p: { label: string; prize: string; condition?: string }) => ({
+          label: p.label,
+          amount: p.prize,
+          condition: p.condition || "",
+          icon: "🏆",
+        }),
+      );
+      result.push({
+        id: key,
+        name: data.name,
+        tournamentType: modeInfo.tournamentType,
+        gameMode: modeInfo.gameMode,
+        modeDetail: modeInfo.modeDetail,
+        mode: modeInfo.mode,
+        description: `${data.maxPlayers || modeInfo.maxPlayers} Players • ${data.mode} Mode`,
+        maxPlayers: data.maxPlayers || modeInfo.maxPlayers,
+        slots: data.maxPlayers || modeInfo.maxPlayers,
+        status: "upcoming" as const,
+        prizePool: data.prizePool || "₹0",
+        prizeDistribution,
+        rules: [],
+      });
+    } catch {}
+  }
+  return result;
+}
+
+// ─────────────────────────────────────────────
 // Main TournamentsPage
 // ─────────────────────────────────────────────
 export function TournamentsPage() {
@@ -1046,23 +1021,12 @@ export function TournamentsPage() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [section, setSection] = useState<"free" | "paid">("free");
   const [filterChip, setFilterChip] = useState("ALL");
-  const [publishedIds, setPublishedIds] = useState<Set<string>>(() => {
-    const ids = new Set<string>();
-    for (const t of FREE_TOURNAMENTS) {
-      if (localStorage.getItem(`ke_free_published_${t.id}`) === "true")
-        ids.add(t.id);
-    }
-    return ids;
-  });
-
+  const [adminFreeTournaments, setAdminFreeTournaments] = useState<
+    FreeTournament[]
+  >(() => getAdminCreatedFreeTournaments());
   useEffect(() => {
     const handler = () => {
-      const ids = new Set<string>();
-      for (const t of FREE_TOURNAMENTS) {
-        if (localStorage.getItem(`ke_free_published_${t.id}`) === "true")
-          ids.add(t.id);
-      }
-      setPublishedIds(ids);
+      setAdminFreeTournaments(getAdminCreatedFreeTournaments());
     };
     window.addEventListener("freeTournamentUpdated", handler);
     window.addEventListener("storage", handler);
@@ -1072,9 +1036,7 @@ export function TournamentsPage() {
     };
   }, []);
 
-  const visibleFreeTournaments = FREE_TOURNAMENTS.filter((t) =>
-    publishedIds.has(t.id),
-  );
+  const visibleFreeTournaments = adminFreeTournaments;
 
   const filteredTournaments =
     tournaments?.filter((t) => {
@@ -1085,7 +1047,7 @@ export function TournamentsPage() {
     }) || [];
 
   return (
-    <div className="min-h-screen pb-24" style={{ background: "#0A0A0A" }}>
+    <div className="min-h-screen pb-24" style={{ background: "#FFFFFF" }}>
       <div className="container py-8 space-y-6 px-4 md:px-6">
         {/* Header */}
         <div className="space-y-1">
@@ -1126,18 +1088,12 @@ export function TournamentsPage() {
                 background:
                   section === tab
                     ? tab === "free"
-                      ? "#00FF88"
-                      : "#9d4edd"
-                    : "rgba(22,33,62,0.6)",
-                color: section === tab ? "#0A0A0A" : "rgba(255,255,255,0.6)",
-                border:
-                  section === tab
-                    ? `1px solid ${tab === "free" ? "#00FF88" : "#9d4edd"}`
-                    : "1px solid rgba(255,255,255,0.12)",
-                boxShadow:
-                  section === tab
-                    ? `0 0 14px ${tab === "free" ? "rgba(0,255,136,0.4)" : "rgba(157,78,221,0.4)"}`
-                    : "none",
+                      ? "#28a745"
+                      : "#6f42c1"
+                    : "#F0F0F0",
+                color: section === tab ? "#FFFFFF" : "#666666",
+                border: section === tab ? "none" : "1px solid #E0E0E0",
+                boxShadow: "none",
                 fontFamily: "'Orbitron', sans-serif",
               }}
               data-ocid="tournaments.section.tab"
@@ -1200,8 +1156,8 @@ export function TournamentsPage() {
               className="rounded-xl p-4"
               style={{
                 background:
-                  "linear-gradient(135deg, rgba(0,255,136,0.06), rgba(157,78,221,0.06))",
-                border: "1px solid rgba(0,255,136,0.2)",
+                  "linear-gradient(135deg, rgba(40,167,69,0.05), rgba(111,66,193,0.05))",
+                border: "1px solid rgba(40,167,69,0.2)",
               }}
             >
               <p
@@ -1267,20 +1223,15 @@ export function TournamentsPage() {
                     className="flex-shrink-0 px-4 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wide transition-all"
                     style={{
                       background:
-                        typeFilter === chip.value
-                          ? "#00FF88"
-                          : "rgba(22,33,62,0.6)",
-                      color:
-                        typeFilter === chip.value
-                          ? "#0A0A0A"
-                          : "rgba(255,255,255,0.6)",
+                        typeFilter === chip.value ? "#00FF88" : "#F0F0F0",
+                      color: typeFilter === chip.value ? "#0A0A0A" : "#555555",
                       border:
                         typeFilter === chip.value
-                          ? "1px solid #00FF88"
-                          : "1px solid rgba(0,255,136,0.2)",
+                          ? "none"
+                          : "1px solid #E0E0E0",
                       boxShadow:
                         typeFilter === chip.value
-                          ? "0 0 12px rgba(0,255,136,0.5)"
+                          ? "0 0 8px rgba(0,255,136,0.3)"
                           : "none",
                     }}
                     data-ocid="tournaments.type_filter.tab"
@@ -1308,20 +1259,16 @@ export function TournamentsPage() {
                     className="flex-shrink-0 px-4 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wide transition-all"
                     style={{
                       background:
-                        statusFilter === chip.value
-                          ? "#9d4edd"
-                          : "rgba(22,33,62,0.6)",
+                        statusFilter === chip.value ? "#6f42c1" : "#F0F0F0",
                       color:
-                        statusFilter === chip.value
-                          ? "#fff"
-                          : "rgba(255,255,255,0.6)",
+                        statusFilter === chip.value ? "#FFFFFF" : "#555555",
                       border:
                         statusFilter === chip.value
-                          ? "1px solid rgba(157,78,221,0.8)"
-                          : "1px solid rgba(157,78,221,0.2)",
+                          ? "none"
+                          : "1px solid #E0E0E0",
                       boxShadow:
                         statusFilter === chip.value
-                          ? "0 0 12px rgba(157,78,221,0.5)"
+                          ? "0 0 8px rgba(111,66,193,0.3)"
                           : "none",
                     }}
                     data-ocid="tournaments.status_filter.tab"
@@ -1347,7 +1294,7 @@ export function TournamentsPage() {
                   <Skeleton
                     key={i}
                     className="h-96 rounded-[12px]"
-                    style={{ background: "rgba(22,33,62,0.4)" }}
+                    style={{ background: "#F0F0F0" }}
                   />
                 ))}
               </div>
@@ -1364,12 +1311,12 @@ export function TournamentsPage() {
               <div
                 className="p-12 rounded-[12px] text-center"
                 style={{
-                  background: "rgba(22,33,62,0.4)",
-                  border: "1px solid rgba(0,255,136,0.12)",
+                  background: "#F8F8F8",
+                  border: "1px solid #E0E0E0",
                 }}
                 data-ocid="tournaments.empty_state"
               >
-                <p style={{ color: "rgba(255,255,255,0.5)" }}>
+                <p style={{ color: "#666666" }}>
                   No tournaments found matching your filters.
                 </p>
               </div>
@@ -1399,56 +1346,67 @@ function TournamentCard({ tournament }: { tournament: Tournament }) {
           : "🥈";
 
   return (
-    <div className="fire-card">
-      <div className="fire-card-topbar" />
-
+    <div
+      style={{
+        background: "#FFFFFF",
+        border: "1px solid #E0E0E0",
+        borderRadius: 16,
+        boxShadow: "0 4px 12px rgba(0,0,0,0.05)",
+        overflow: "hidden",
+        transition: "all 0.2s ease",
+      }}
+    >
       <div className="p-4 space-y-3">
         <div className="flex items-center justify-between">
           {isOngoing ? (
-            <span className="badge-live">🔴 LIVE</span>
+            <span
+              className="text-xs font-bold uppercase px-2 py-0.5 rounded-full flex items-center gap-1"
+              style={{ background: "#dc3545", color: "#FFFFFF" }}
+            >
+              <span className="inline-block w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+              LIVE
+            </span>
           ) : isCompleted ? (
-            <span className="badge-completed">✅ DONE</span>
+            <span
+              className="text-xs font-bold uppercase px-2 py-0.5 rounded-full"
+              style={{ background: "#6c757d", color: "#FFFFFF" }}
+            >
+              ✅ DONE
+            </span>
           ) : (
             <span
               className="text-xs font-bold uppercase px-2 py-0.5 rounded-full"
-              style={{
-                background: "rgba(255,140,0,0.12)",
-                color: "#FF8C00",
-                border: "1px solid rgba(255,140,0,0.35)",
-              }}
+              style={{ background: "#0d6efd", color: "#FFFFFF" }}
             >
               ⏰ UPCOMING
             </span>
           )}
           <span
             className="text-xs font-medium px-2 py-0.5 rounded-full"
-            style={{
-              background: "rgba(255,140,0,0.15)",
-              color: "#FF8C00",
-              border: "1px solid rgba(255,140,0,0.3)",
-            }}
+            style={{ background: "#6f42c1", color: "#FFFFFF" }}
           >
             {modeIcon} {getTournamentTypeLabel(tournament.tournamentType)}
           </span>
         </div>
 
         <h3
-          className="font-display font-bold text-white leading-tight"
+          className="font-display font-bold leading-tight"
           style={{
-            fontSize: "clamp(1rem, 4vw, 1.15rem)",
-            textShadow: "0 0 12px rgba(255,140,0,0.35)",
+            fontSize: "clamp(1rem, 4vw, 1.125rem)",
+            color: "#000000",
+            fontWeight: 700,
           }}
         >
           {tournament.name}
         </h3>
-        <p className="text-xs" style={{ color: "rgba(255,255,255,0.45)" }}>
+        <p className="text-xs" style={{ color: "#666666" }}>
           {getTournamentPlayerInfo(tournament.tournamentType).description}
         </p>
 
         {isUpcoming && (
           <div
             className="flex items-center gap-1.5 text-xs"
-            style={{ color: "#FFD700" }}
+            style={{ color: "#666666" }}
           >
             <Calendar className="h-3 w-3" />
             <span>Starts in: </span>
@@ -1458,7 +1416,7 @@ function TournamentCard({ tournament }: { tournament: Tournament }) {
         {isOngoing && (
           <div
             className="flex items-center gap-2 text-sm font-semibold"
-            style={{ color: "#ef4444" }}
+            style={{ color: "#dc3545" }}
           >
             <div className="h-2 w-2 rounded-full bg-red-500 animate-pulse" />
             Tournament is Live!
@@ -1468,30 +1426,30 @@ function TournamentCard({ tournament }: { tournament: Tournament }) {
         <div
           className="rounded-lg p-3 space-y-2"
           style={{
-            background: "rgba(80,20,0,0.30)",
-            border: "1px solid rgba(255,100,0,0.15)",
+            background: "#F8F8F8",
+            border: "1px solid #E0E0E0",
           }}
         >
           <div className="flex justify-between text-sm">
-            <span style={{ color: "rgba(255,255,255,0.5)" }}>Entry Fee</span>
-            <span className="font-bold text-white">
+            <span style={{ color: "#666666" }}>Entry Fee</span>
+            <span className="font-bold" style={{ color: "#333333" }}>
               {formatCurrency(tournament.entryFee)}
             </span>
           </div>
           <div className="flex justify-between text-sm">
-            <span style={{ color: "rgba(255,255,255,0.5)" }}>Prize Pool</span>
-            <span className="font-bold" style={{ color: "#FFD700" }}>
+            <span style={{ color: "#666666" }}>Prize Pool</span>
+            <span className="font-bold" style={{ color: "#00FF88" }}>
               {formatCurrency(tournament.prizePool)}
             </span>
           </div>
           <div className="flex justify-between text-sm">
             <span
               className="flex items-center gap-1"
-              style={{ color: "rgba(255,255,255,0.5)" }}
+              style={{ color: "#666666" }}
             >
               <Users className="h-3 w-3" /> Slots
             </span>
-            <span className="font-bold text-white">
+            <span className="font-bold" style={{ color: "#333333" }}>
               {tournament.maxTeams.toString()} teams
             </span>
           </div>
@@ -1505,13 +1463,13 @@ function TournamentCard({ tournament }: { tournament: Tournament }) {
           return (
             <div style={{ marginBottom: 12 }}>
               <div
-                style={{ height: 4, background: "#1a1a2e", borderRadius: 2 }}
+                style={{ height: 4, background: "#E0E0E0", borderRadius: 2 }}
               >
                 <div
                   style={{
                     height: 4,
                     width: `${pct}%`,
-                    background: "linear-gradient(90deg, #9d4edd, #00FF88)",
+                    background: "#00FF88",
                     borderRadius: 2,
                     transition: "width 0.4s ease",
                   }}
@@ -1522,7 +1480,7 @@ function TournamentCard({ tournament }: { tournament: Tournament }) {
                   display: "flex",
                   justifyContent: "space-between",
                   fontSize: 11,
-                  color: "rgba(255,255,255,0.45)",
+                  color: "#888888",
                   marginTop: 4,
                   fontFamily: "'Rajdhani', sans-serif",
                 }}
@@ -1541,20 +1499,20 @@ function TournamentCard({ tournament }: { tournament: Tournament }) {
           style={
             isOngoing
               ? {
-                  background: "linear-gradient(135deg, #ef4444, #dc2626)",
-                  color: "#fff",
-                  boxShadow: "0 0 16px rgba(239,68,68,0.4)",
+                  background: "linear-gradient(135deg, #dc3545, #a71d2a)",
+                  color: "#FFFFFF",
+                  boxShadow: "0 0 12px rgba(220,53,69,0.3)",
                 }
               : isUpcoming
                 ? {
-                    background: "linear-gradient(135deg, #00FF88, #00cc6a)",
-                    color: "#0A0A0A",
-                    boxShadow: "0 0 16px rgba(0,255,136,0.4)",
+                    background: "linear-gradient(135deg, #00FF88, #9d4edd)",
+                    color: "#FFFFFF",
+                    boxShadow: "0 0 12px rgba(0,255,136,0.3)",
                   }
                 : {
-                    background: "rgba(255,255,255,0.07)",
-                    color: "rgba(255,255,255,0.6)",
-                    border: "1px solid rgba(255,255,255,0.15)",
+                    background: "#F0F0F0",
+                    color: "#999999",
+                    border: "1px solid #E0E0E0",
                   }
           }
           data-ocid="tournaments.register.button"

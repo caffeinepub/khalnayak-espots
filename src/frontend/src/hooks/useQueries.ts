@@ -20,6 +20,7 @@ import type {
   Wallet,
   WithdrawalRequest,
 } from "../backend";
+import { useUnifiedAuth } from "../context/UnifiedAuthContext";
 import { decodeTournament, encodeTournamentName } from "../utils/format";
 import { useActor } from "./useActor";
 import { useOtpAuth } from "./useOtpAuth";
@@ -165,15 +166,24 @@ export function useGetCallerUserRole() {
   });
 }
 
+const ADMIN_EMAILS = ["bindishwam512@gmail.com"];
+
 export function useIsCallerAdmin() {
   const { actor, isFetching } = useActor();
+  const { firebaseEmail } = useUnifiedAuth();
+  const isGoogleAdmin = firebaseEmail
+    ? ADMIN_EMAILS.includes(firebaseEmail)
+    : false;
+
   return useQuery<boolean>({
-    queryKey: ["isCallerAdmin"],
+    queryKey: ["isCallerAdmin", firebaseEmail],
     queryFn: async () => {
+      if (isGoogleAdmin) return true;
       if (!actor) return false;
       return actor.isCallerAdmin();
     },
-    enabled: !!actor && !isFetching,
+    enabled: !isFetching,
+    ...(isGoogleAdmin ? { initialData: true } : {}),
   });
 }
 

@@ -605,7 +605,7 @@ export function ProfilePage() {
                     {
                       step: "4",
                       icon: "💰",
-                      text: "You get ₹2 in wallet instantly!",
+                      text: "You get ₹1.50 in wallet instantly!",
                     },
                   ].map(({ step, icon, text }) => (
                     <div key={step} className="flex items-center gap-3">

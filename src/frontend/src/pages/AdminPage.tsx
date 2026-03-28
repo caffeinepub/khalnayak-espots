@@ -656,21 +656,39 @@ export function AdminPage() {
 
 // ── Free Tournaments Management Section ──────────────────────────────────────
 
-const FREE_PRIZE_MAP: Record<string, { label: string; prize: string }[]> = {
+const FREE_POOL_MAP: Record<string, string> = {
+  Solo: "₹20",
+  "4v4": "₹5",
+  "1v1": "₹0.50",
+  "2v2": "₹1.60",
+};
+
+const FREE_PRIZE_MAP: Record<
+  string,
+  { label: string; prize: string; condition?: string }[]
+> = {
   Solo: [
-    { label: "1st Place", prize: "₹20" },
-    { label: "2nd Place", prize: "₹5" },
-    { label: "3rd Place", prize: "₹0.50" },
-    { label: "Most Kills", prize: "₹1.60" },
+    {
+      label: "🏆 Booyah (1st Place)",
+      prize: "₹10",
+      condition: "1st place winner",
+    },
+    { label: "🔫 Most Kills", prize: "₹10", condition: "6+ kills required" },
   ],
   "4v4": [
-    { label: "1st Place", prize: "₹20" },
-    { label: "2nd Place", prize: "₹5" },
+    {
+      label: "🏆 Winning Team (4 players)",
+      prize: "₹1.25 each",
+      condition: "4 × ₹1.25 = ₹5 total",
+    },
   ],
-  "1v1": [{ label: "Winner", prize: "₹20" }],
+  "1v1": [{ label: "🏆 Winner", prize: "₹0.50", condition: "Match winner" }],
   "2v2": [
-    { label: "1st Place", prize: "₹20" },
-    { label: "2nd Place", prize: "₹5" },
+    {
+      label: "🏆 Winning Team (2 players)",
+      prize: "₹0.80 each",
+      condition: "2 × ₹0.80 = ₹1.60 total",
+    },
   ],
 };
 
@@ -690,7 +708,14 @@ function CreateFreeTournamentForm() {
     const key = `customFreeTournament_${Date.now()}`;
     localStorage.setItem(
       key,
-      JSON.stringify({ name, mode, maxPlayers, startTime, prizes }),
+      JSON.stringify({
+        name,
+        mode,
+        maxPlayers,
+        startTime,
+        prizes,
+        prizePool: FREE_POOL_MAP[mode] ?? "₹0",
+      }),
     );
     toast.success(`✅ Free tournament "${name}" created!`);
     setName("");
@@ -795,13 +820,37 @@ function CreateFreeTournamentForm() {
           🏆 Prize Distribution (auto)
         </p>
         {prizes.map((p) => (
-          <div key={p.label} className="flex justify-between text-sm">
-            <span className="text-gray-600">{p.label}</span>
-            <span className="font-bold" style={{ color: "#00cc66" }}>
-              {p.prize}
+          <div
+            key={p.label}
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              fontSize: 13,
+              padding: "4px 0",
+            }}
+          >
+            <span style={{ color: "#333" }}>
+              {p.label}
+              {p.condition ? ` (${p.condition})` : ""}
             </span>
+            <span style={{ color: "#00FF88", fontWeight: 700 }}>{p.prize}</span>
           </div>
         ))}
+        <div
+          style={{
+            marginTop: 8,
+            paddingTop: 8,
+            borderTop: "1px solid #e0e0e0",
+            display: "flex",
+            justifyContent: "space-between",
+            fontWeight: 700,
+          }}
+        >
+          <span>Total Prize Pool:</span>
+          <span style={{ color: "#00FF88" }}>
+            {FREE_POOL_MAP[mode] ?? "₹0"}
+          </span>
+        </div>
       </div>
 
       <Button

@@ -9,7 +9,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useOtpAuth } from "@/hooks/useOtpAuth";
 import {
   useGetCallerTeamRegistrations,
   useGetTeamRegistrations,
@@ -699,7 +698,6 @@ function MatchCard({ tournament, registeredCount, index }: MatchCardProps) {
 // ── MyMatchesPage ─────────────────────────────────────────────────────────────
 
 export function MyMatchesPage() {
-  const { identity, login } = useOtpAuth();
   const [freeMatches] = useState<FreeMyMatch[]>(() => loadFreeMyMatches());
   const { data: myRegistrations, isLoading: regLoading } =
     useGetCallerTeamRegistrations();
@@ -731,39 +729,6 @@ export function MyMatchesPage() {
         myTournaments.push({ tournament, index: idx++ });
       }
     }
-  }
-
-  if (!identity) {
-    return (
-      <div
-        className="container py-16 text-center space-y-6"
-        data-ocid="my_matches.page"
-      >
-        <div
-          className="mx-auto w-20 h-20 rounded-full flex items-center justify-center"
-          style={{
-            background: "oklch(0.12 0.05 195 / 0.3)",
-            border: "1px solid oklch(0.75 0.18 195 / 0.3)",
-          }}
-        >
-          <Swords className="h-9 w-9 text-primary" />
-        </div>
-        <div className="space-y-2">
-          <h1 className="text-3xl font-bold font-display">My Matches</h1>
-          <p className="text-muted-foreground max-w-sm mx-auto">
-            Login to view your registered tournaments and access room
-            credentials.
-          </p>
-        </div>
-        <Button
-          onClick={login}
-          size="lg"
-          className="bg-primary text-primary-foreground hover:bg-primary/90 px-8"
-        >
-          Login to View Matches
-        </Button>
-      </div>
-    );
   }
 
   return (
