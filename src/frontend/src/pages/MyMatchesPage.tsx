@@ -97,7 +97,7 @@ function FreeMatchCard({
     <Card
       data-ocid={`free_match.card.${index}`}
       style={{
-        background: "#16213E",
+        background: "#F5F5F5",
         borderRadius: 12,
         border: "1px solid rgba(0,255,136,0.2)",
         marginBottom: 12,
@@ -319,7 +319,7 @@ function RoomDetailsDialog({
             "linear-gradient(135deg, oklch(0.10 0.03 285), oklch(0.08 0.025 285))",
           border: "1px solid oklch(0.70 0.20 160 / 0.35)",
           boxShadow:
-            "0 0 40px oklch(0.70 0.20 160 / 0.12), 0 8px 32px rgba(0,0,0,0.5)",
+            "0 0 40px oklch(0.70 0.20 160 / 0.12), 0 8px 32px rgba(0,0,0,0.08)",
         }}
       >
         <DialogHeader>
@@ -481,7 +481,7 @@ function MatchCard({ tournament, registeredCount, index }: MatchCardProps) {
         data-ocid={`my_matches.card.${index}`}
         className="p-0 overflow-hidden transition-all duration-300"
         style={{
-          background: "#16213E",
+          background: "#F5F5F5",
           borderRadius: 12,
           marginBottom: 12,
           border: isLive
@@ -764,7 +764,7 @@ export function MyMatchesPage() {
             className="text-sm mt-0.5"
             style={{
               fontFamily: "'Rajdhani', sans-serif",
-              color: "rgba(255,255,255,0.5)",
+              color: "#666666",
             }}
           >
             Your registered tournaments — access room details and results here

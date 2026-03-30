@@ -71,6 +71,7 @@ import {
   saveReferralSettings,
 } from "@/hooks/useReferralSettings";
 import { useTokens } from "@/hooks/useTokens";
+import { type FreeRegistration, getFreeRegistrations } from "@/lib/firestore";
 import type {
   PlayVoucher,
   RedeemRequest,
@@ -673,6 +674,14 @@ export function AdminPage() {
                 <span className="admin-nav-icon">🎁</span>
                 <span>Free Tournaments</span>
               </TabsTrigger>
+              <TabsTrigger
+                value="freeRegistrations"
+                data-ocid="admin.free_registrations.tab"
+                className="admin-nav-trigger"
+              >
+                <span className="admin-nav-icon">📋</span>
+                <span>Free Registrations</span>
+              </TabsTrigger>
             </TabsList>
           </div>
           {/* Scroll fade indicator on the right */}
@@ -729,6 +738,9 @@ export function AdminPage() {
 
         <TabsContent value="freeTournaments">
           <FreeTournamentsManagementSection />
+        </TabsContent>
+        <TabsContent value="freeRegistrations">
+          <FreeRegistrationsTab />
         </TabsContent>
       </Tabs>
     </div>
@@ -4255,6 +4267,248 @@ function ReferralsTab() {
                 ))}
               </TableBody>
             </Table>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+// ── Free Registrations Tab ────────────────────────────────────────────────────
+
+function FreeRegistrationsTab() {
+  const [registrations, setRegistrations] = useState<FreeRegistration[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [filterTournament, setFilterTournament] = useState("all");
+
+  useEffect(() => {
+    getFreeRegistrations()
+      .then((data) => setRegistrations(data))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const tournamentNames = Array.from(
+    new Set(registrations.map((r) => r.tournamentName).filter(Boolean)),
+  );
+
+  const filtered =
+    filterTournament === "all"
+      ? registrations
+      : registrations.filter((r) => r.tournamentName === filterTournament);
+
+  return (
+    <div className="space-y-4">
+      <Card
+        style={{
+          background: "#ffffff",
+          border: "1px solid #e5e7eb",
+          borderRadius: 12,
+        }}
+      >
+        <CardHeader>
+          <CardTitle
+            style={{ color: "#000000", fontWeight: "bold", fontSize: 18 }}
+            className="flex items-center gap-2"
+          >
+            📋 Free Registrations
+          </CardTitle>
+          <CardDescription style={{ color: "#666666" }}>
+            Free tournament ke saare registrations yahan dikhenge
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="mb-4 flex items-center gap-3 flex-wrap">
+            <label
+              htmlFor="free-reg-filter"
+              style={{ color: "#333333", fontWeight: 600, fontSize: 14 }}
+            >
+              Filter by Tournament:
+            </label>
+            <select
+              id="free-reg-filter"
+              value={filterTournament}
+              onChange={(e) => setFilterTournament(e.target.value)}
+              data-ocid="admin.free_registrations.select"
+              style={{
+                background: "#F5F5F5",
+                border: "1px solid #333333",
+                color: "#000000",
+                borderRadius: 8,
+                padding: "6px 12px",
+                fontSize: 14,
+                outline: "none",
+              }}
+            >
+              <option value="all">All Tournaments</option>
+              {tournamentNames.map((name) => (
+                <option key={name} value={name}>
+                  {name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {loading ? (
+            <p
+              style={{
+                color: "#666666",
+                textAlign: "center",
+                padding: "24px 0",
+              }}
+              data-ocid="admin.free_registrations.loading_state"
+            >
+              Loading...
+            </p>
+          ) : filtered.length === 0 ? (
+            <div
+              className="text-center py-12"
+              data-ocid="admin.free_registrations.empty_state"
+              style={{ color: "#666666" }}
+            >
+              <p style={{ fontSize: 32 }}>📋</p>
+              <p style={{ marginTop: 8, fontWeight: 600 }}>
+                No free registrations yet
+              </p>
+              <p style={{ fontSize: 13, marginTop: 4 }}>
+                Free tournament registrations yahan dikhenge
+              </p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table
+                style={{ width: "100%", borderCollapse: "collapse" }}
+                data-ocid="admin.free_registrations.table"
+              >
+                <thead>
+                  <tr style={{ background: "#EEEEEE" }}>
+                    <th
+                      style={{
+                        padding: "10px 12px",
+                        textAlign: "left",
+                        color: "#000000",
+                        fontWeight: "bold",
+                        fontSize: 13,
+                        borderBottom: "1px solid #DDDDDD",
+                      }}
+                    >
+                      Nickname
+                    </th>
+                    <th
+                      style={{
+                        padding: "10px 12px",
+                        textAlign: "left",
+                        color: "#000000",
+                        fontWeight: "bold",
+                        fontSize: 13,
+                        borderBottom: "1px solid #DDDDDD",
+                      }}
+                    >
+                      UID
+                    </th>
+                    <th
+                      style={{
+                        padding: "10px 12px",
+                        textAlign: "left",
+                        color: "#000000",
+                        fontWeight: "bold",
+                        fontSize: 13,
+                        borderBottom: "1px solid #DDDDDD",
+                      }}
+                    >
+                      Tournament Name
+                    </th>
+                    <th
+                      style={{
+                        padding: "10px 12px",
+                        textAlign: "left",
+                        color: "#000000",
+                        fontWeight: "bold",
+                        fontSize: 13,
+                        borderBottom: "1px solid #DDDDDD",
+                      }}
+                    >
+                      Registration Time
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filtered.map((reg, idx) => (
+                    <tr
+                      key={reg.id ?? idx}
+                      data-ocid={`admin.free_registrations.row.${idx + 1}`}
+                      style={{
+                        background: idx % 2 === 0 ? "#ffffff" : "#fafafa",
+                      }}
+                      onMouseEnter={(e) => {
+                        (
+                          e.currentTarget as HTMLTableRowElement
+                        ).style.background = "#F5F5F5";
+                      }}
+                      onMouseLeave={(e) => {
+                        (
+                          e.currentTarget as HTMLTableRowElement
+                        ).style.background =
+                          idx % 2 === 0 ? "#ffffff" : "#fafafa";
+                      }}
+                    >
+                      <td
+                        style={{
+                          padding: "10px 12px",
+                          color: "#111111",
+                          fontSize: 14,
+                          borderBottom: "1px solid #DDDDDD",
+                          fontWeight: 500,
+                        }}
+                      >
+                        {reg.nickname}
+                      </td>
+                      <td
+                        style={{
+                          padding: "10px 12px",
+                          color: "#333333",
+                          fontSize: 13,
+                          borderBottom: "1px solid #DDDDDD",
+                          fontFamily: "monospace",
+                        }}
+                      >
+                        {reg.uid}
+                      </td>
+                      <td
+                        style={{
+                          padding: "10px 12px",
+                          color: "#333333",
+                          fontSize: 14,
+                          borderBottom: "1px solid #DDDDDD",
+                        }}
+                      >
+                        {reg.tournamentName}
+                      </td>
+                      <td
+                        style={{
+                          padding: "10px 12px",
+                          color: "#666666",
+                          fontSize: 13,
+                          borderBottom: "1px solid #DDDDDD",
+                        }}
+                      >
+                        {new Date(reg.registeredAt).toLocaleString("en-IN")}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              <p
+                style={{
+                  color: "#666666",
+                  fontSize: 12,
+                  marginTop: 8,
+                  textAlign: "right",
+                }}
+              >
+                Total: {filtered.length} registration
+                {filtered.length !== 1 ? "s" : ""}
+              </p>
+            </div>
           )}
         </CardContent>
       </Card>

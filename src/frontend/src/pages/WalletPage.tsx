@@ -240,7 +240,7 @@ export function WalletPage() {
         </h1>
         <p
           style={{
-            color: "rgba(255,255,255,0.5)",
+            color: "#666666",
             fontFamily: "'Rajdhani', sans-serif",
           }}
         >
@@ -251,7 +251,7 @@ export function WalletPage() {
       {/* Balance Card */}
       <Card
         style={{
-          background: "linear-gradient(135deg, #16213E, #0A1628)",
+          background: "#F5F5F5",
           border: "2px solid #00FF88",
           boxShadow: "0 0 32px rgba(0,255,136,0.3)",
           borderRadius: 16,
@@ -365,7 +365,7 @@ export function WalletPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center gap-3">
-              <code className="flex-1 bg-[#16213E] border border-[#00FF88]/30 px-4 py-3 rounded-xl font-mono text-lg font-bold text-[#00FF88]">
+              <code className="flex-1 bg-[#F5F5F5] border border-[#00FF88]/30 px-4 py-3 rounded-xl font-mono text-lg font-bold text-[#00FF88]">
                 {profile.referralCode}
               </code>
               <Button
@@ -403,7 +403,7 @@ export function WalletPage() {
       {/* Transaction History */}
       <Card
         style={{
-          background: "#16213E",
+          background: "#F5F5F5",
           border: "1px solid rgba(0,255,136,0.15)",
           borderRadius: 12,
         }}
@@ -423,7 +423,7 @@ export function WalletPage() {
           <CardDescription
             style={{
               fontFamily: "'Rajdhani', sans-serif",
-              color: "rgba(255,255,255,0.5)",
+              color: "#666666",
             }}
           >
             View all your wallet transactions
@@ -434,7 +434,7 @@ export function WalletPage() {
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
-                  <TableRow className="bg-[#16213E]">
+                  <TableRow className="bg-[#F5F5F5]">
                     <TableHead>Type</TableHead>
                     <TableHead>Description</TableHead>
                     <TableHead>Date</TableHead>
@@ -508,8 +508,8 @@ function PendingWithdrawalsCard({ userId }: { userId: string }) {
   };
 
   const methodColor: Record<WithdrawMethod, string> = {
-    upi: "bg-blue-500/20 text-blue-300 border-blue-500/30",
-    voucher: "bg-green-500/20 text-green-300 border-green-500/30",
+    upi: "bg-blue-500/20 text-blue-700 border-blue-500/30",
+    voucher: "bg-green-500/20 text-green-700 border-green-500/30",
   };
 
   if (userDetails.length === 0) return null;
@@ -532,7 +532,7 @@ function PendingWithdrawalsCard({ userId }: { userId: string }) {
           {userDetails.map((d, idx) => (
             <div
               key={d.requestId}
-              className="flex items-center gap-3 bg-[#16213E] border border-[#00FF88]/20 rounded-xl p-4"
+              className="flex items-center gap-3 bg-[#F5F5F5] border border-[#00FF88]/20 rounded-xl p-4"
               data-ocid={`wallet.pending_withdrawals.item.${idx + 1}`}
             >
               <div className="flex-1 min-w-0">
@@ -545,7 +545,7 @@ function PendingWithdrawalsCard({ userId }: { userId: string }) {
                   >
                     {methodLabel[d.method]}
                   </span>
-                  <span className="font-bold text-sm text-white">
+                  <span className="font-bold text-sm text-gray-900">
                     ₹{d.amount.toFixed(2)}
                   </span>
                   {d.method === "upi" && d.upiId && (
@@ -646,7 +646,7 @@ function DepositDialog({ onClose }: { onClose: () => void }) {
             value={upiId}
             onChange={(e) => setUpiId(e.target.value)}
             placeholder="yourname@oksbi"
-            className="font-mono border-[#00FF88]/30 bg-[#16213E] focus:border-[#00FF88]"
+            className="font-mono border-[#00FF88]/30 bg-[#F5F5F5] focus:border-[#00FF88]"
             data-ocid="wallet.deposit.upi_id.input"
             required
           />
@@ -670,7 +670,7 @@ function DepositDialog({ onClose }: { onClose: () => void }) {
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
             placeholder="Enter amount (min ₹10)"
-            className="border-[#00FF88]/30 bg-[#16213E] focus:border-[#00FF88]"
+            className="border-[#00FF88]/30 bg-[#F5F5F5] focus:border-[#00FF88]"
             data-ocid="wallet.deposit.amount.input"
             required
           />
@@ -689,7 +689,7 @@ function DepositDialog({ onClose }: { onClose: () => void }) {
           ))}
         </div>
 
-        <div className="p-3 rounded-lg bg-blue-950/30 border border-blue-500/20 text-xs text-blue-300 space-y-1">
+        <div className="p-3 rounded-lg bg-blue-50 border border-blue-200 text-xs text-blue-700 space-y-1">
           <p className="font-semibold">📌 How it works:</p>
           <p>1. Enter UPI ID &amp; amount → Submit request</p>
           <p>
@@ -901,7 +901,7 @@ function WithdrawDialog({
               <Ticket className="h-8 w-8 text-green-400" />
             </div>
             <div className="text-center">
-              <p className="text-3xl font-bold font-display text-green-300">
+              <p className="text-3xl font-bold font-display text-green-700">
                 ₹{generatedVoucher.amount}
               </p>
               <p className="text-xs text-muted-foreground">
@@ -1163,7 +1163,7 @@ function WithdrawDialog({
                   <p className="text-sm font-medium">
                     Google Play Store Voucher
                   </p>
-                  <span className="text-[10px] bg-green-500/20 text-green-300 border border-green-500/30 px-1.5 py-0.5 rounded-full font-medium">
+                  <span className="text-[10px] bg-green-500/20 text-green-700 border border-green-500/30 px-1.5 py-0.5 rounded-full font-medium">
                     INSTANT ⚡
                   </span>
                 </div>
@@ -1236,7 +1236,7 @@ function WithdrawDialog({
         {/* Voucher preview info */}
         {method === "voucher" && (
           <div className="p-3 rounded-lg bg-green-950/30 border border-green-500/20 text-sm space-y-2">
-            <p className="text-green-300 font-medium flex items-center gap-2">
+            <p className="text-green-700 font-medium flex items-center gap-2">
               <Ticket className="h-4 w-4" />
               Play Store Voucher — Instant Delivery
             </p>

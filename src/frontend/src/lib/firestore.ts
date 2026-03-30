@@ -4,6 +4,7 @@ import {
   doc,
   getDoc,
   getDocs,
+  orderBy,
   query,
   serverTimestamp,
   setDoc,
@@ -108,5 +109,45 @@ export async function findUserByReferralCode(
     return null;
   } catch {
     return null;
+  }
+}
+
+export interface FreeRegistration {
+  id?: string;
+  nickname: string;
+  uid: string;
+  tournamentId: string;
+  tournamentName: string;
+  registeredAt: number;
+}
+
+export async function saveFreeRegistration(data: {
+  nickname: string;
+  uid: string;
+  tournamentId: string;
+  tournamentName: string;
+  registeredAt: number;
+}): Promise<void> {
+  try {
+    const db = getFirebaseDb();
+    await addDoc(collection(db, "freeRegistrations"), data);
+  } catch {
+    /* ignore */
+  }
+}
+
+export async function getFreeRegistrations(): Promise<FreeRegistration[]> {
+  try {
+    const db = getFirebaseDb();
+    const q = query(
+      collection(db, "freeRegistrations"),
+      orderBy("registeredAt", "desc"),
+    );
+    const snap = await getDocs(q);
+    return snap.docs.map(
+      (d) => ({ id: d.id, ...d.data() }) as FreeRegistration,
+    );
+  } catch {
+    return [];
   }
 }

@@ -15,6 +15,7 @@ import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useGetTournaments } from "@/hooks/useQueries";
 import { useTokens } from "@/hooks/useTokens";
+import { saveFreeRegistration } from "@/lib/firestore";
 import {
   formatCurrency,
   getTournamentPlayerInfo,
@@ -213,6 +214,13 @@ function FreeRegistrationModal({
       saveUid(uid);
       localStorage.setItem(`ke_free_joined_${tournament.id}`, "true");
       saveFreeMyMatch(tournament, nickname, uid);
+      saveFreeRegistration({
+        nickname,
+        uid,
+        tournamentId: tournament.id.toString(),
+        tournamentName: tournament.name,
+        registeredAt: Date.now(),
+      }).catch(() => {});
       setState("done");
       setShowInterstitial(true);
       toast.success("✅ Registration successful!", {

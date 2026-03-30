@@ -186,7 +186,7 @@ export function ProfilePage() {
               <p
                 className="text-xs mt-0.5"
                 style={{
-                  color: "rgba(255,255,255,0.35)",
+                  color: "#999999",
                   fontFamily: "monospace",
                 }}
               >
@@ -232,7 +232,7 @@ export function ProfilePage() {
           <div
             className="mt-4 p-3 rounded-xl"
             style={{
-              background: "rgba(0,0,0,0.4)",
+              background: "#F5F5F5",
               border: "1px solid rgba(255,140,0,0.2)",
             }}
           >
@@ -247,10 +247,7 @@ export function ProfilePage() {
             </p>
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <p
-                  className="text-xs"
-                  style={{ color: "rgba(255,255,255,0.4)" }}
-                >
+                <p className="text-xs" style={{ color: "#888888" }}>
                   Nickname
                 </p>
                 <p className="text-sm font-bold" style={{ color: "#FFD700" }}>
@@ -258,10 +255,7 @@ export function ProfilePage() {
                 </p>
               </div>
               <div>
-                <p
-                  className="text-xs"
-                  style={{ color: "rgba(255,255,255,0.4)" }}
-                >
+                <p className="text-xs" style={{ color: "#888888" }}>
                   Level
                 </p>
                 <p className="text-sm font-bold" style={{ color: "#FFD700" }}>
@@ -269,24 +263,15 @@ export function ProfilePage() {
                 </p>
               </div>
               <div>
-                <p
-                  className="text-xs"
-                  style={{ color: "rgba(255,255,255,0.4)" }}
-                >
+                <p className="text-xs" style={{ color: "#888888" }}>
                   UID
                 </p>
-                <p
-                  className="text-sm font-mono"
-                  style={{ color: "rgba(255,255,255,0.8)" }}
-                >
+                <p className="text-sm font-mono" style={{ color: "#222222" }}>
                   {profile.freefire_uid}
                 </p>
               </div>
               <div>
-                <p
-                  className="text-xs"
-                  style={{ color: "rgba(255,255,255,0.4)" }}
-                >
+                <p className="text-xs" style={{ color: "#888888" }}>
                   Wallet
                 </p>
                 <p className="text-sm font-bold" style={{ color: "#00FF88" }}>
@@ -334,10 +319,7 @@ export function ProfilePage() {
                   <p className="text-sm font-bold" style={{ color: "white" }}>
                     {value}
                   </p>
-                  <p
-                    className="text-xs"
-                    style={{ color: "rgba(255,255,255,0.4)" }}
-                  >
+                  <p className="text-xs" style={{ color: "#888888" }}>
                     {label}
                   </p>
                 </div>
@@ -412,9 +394,7 @@ export function ProfilePage() {
                   border: "1px solid rgba(157,78,221,0.15)",
                 }}
               >
-                <span style={{ color: "rgba(255,255,255,0.35)", fontSize: 11 }}>
-                  🔗
-                </span>
+                <span style={{ color: "#999999", fontSize: 11 }}>🔗</span>
                 <code
                   className="text-xs flex-1 truncate"
                   style={{
@@ -430,7 +410,7 @@ export function ProfilePage() {
               <p
                 className="text-xs font-bold uppercase tracking-widest mb-3"
                 style={{
-                  color: "rgba(255,255,255,0.5)",
+                  color: "#666666",
                   fontFamily: "'Orbitron', sans-serif",
                 }}
               >
@@ -620,10 +600,7 @@ export function ProfilePage() {
                       >
                         {step}
                       </div>
-                      <p
-                        className="text-xs"
-                        style={{ color: "rgba(255,255,255,0.75)" }}
-                      >
+                      <p className="text-xs" style={{ color: "#333333" }}>
                         <span className="mr-1">{icon}</span>
                         {text}
                       </p>
@@ -635,7 +612,7 @@ export function ProfilePage() {
               {referralStats.totalReferrals > 0 && (
                 <p
                   className="text-xs mt-3 text-center"
-                  style={{ color: "rgba(255,255,255,0.4)" }}
+                  style={{ color: "#888888" }}
                 >
                   Total referrals: {referralStats.totalReferrals} • Earned:{" "}
                   {formatCurrency(
@@ -678,10 +655,7 @@ export function ProfilePage() {
             </span>
           </div>
           <Progress value={(tokens.balance % 25) * 4} className="mt-2 h-1.5" />
-          <p
-            className="text-xs mt-1"
-            style={{ color: "rgba(255,255,255,0.35)" }}
-          >
+          <p className="text-xs mt-1" style={{ color: "#999999" }}>
             {tokens.balance % 25}/{25} to next ₹1.25 redeem
           </p>
         </CardContent>
@@ -723,10 +697,7 @@ export function ProfilePage() {
                     >
                       {v.code}
                     </code>
-                    <p
-                      className="text-xs"
-                      style={{ color: "rgba(255,255,255,0.4)" }}
-                    >
+                    <p className="text-xs" style={{ color: "#888888" }}>
                       {formatCurrency(BigInt(Math.floor(v.amount)))} •{" "}
                       {new Date(v.createdAt).toLocaleDateString()}
                     </p>
@@ -766,10 +737,7 @@ export function ProfilePage() {
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="upcoming">
-            <TabsList
-              className="w-full mb-4"
-              style={{ background: "rgba(255,255,255,0.05)" }}
-            >
+            <TabsList className="w-full mb-4" style={{ background: "#F9F9F9" }}>
               <TabsTrigger value="upcoming" data-ocid="profile.tab">
                 Upcoming
               </TabsTrigger>
@@ -793,7 +761,7 @@ export function ProfilePage() {
                     <div
                       data-ocid="profile.empty_state"
                       className="text-center py-8"
-                      style={{ color: "rgba(255,255,255,0.35)" }}
+                      style={{ color: "#999999" }}
                     >
                       No {status} tournaments
                     </div>
@@ -825,7 +793,7 @@ export function ProfilePage() {
                                 {team && (
                                   <p
                                     className="text-xs mt-0.5"
-                                    style={{ color: "rgba(255,255,255,0.5)" }}
+                                    style={{ color: "#666666" }}
                                   >
                                     Team: {team.name}
                                   </p>
