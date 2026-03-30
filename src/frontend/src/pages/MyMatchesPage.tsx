@@ -112,7 +112,7 @@ function FreeMatchCard({
                 className="font-bold text-base leading-snug truncate"
                 style={{
                   fontFamily: "'Orbitron', sans-serif",
-                  color: "#FFFFFF",
+                  color: "#111111",
                   textTransform: "uppercase",
                 }}
               >
@@ -574,7 +574,7 @@ function MatchCard({ tournament, registeredCount, index }: MatchCardProps) {
                 className="font-bold text-base md:text-lg leading-tight truncate"
                 style={{
                   fontFamily: "'Orbitron', sans-serif",
-                  color: "#FFFFFF",
+                  color: "#111111",
                   textTransform: "uppercase",
                 }}
               >
@@ -595,7 +595,7 @@ function MatchCard({ tournament, registeredCount, index }: MatchCardProps) {
           {/* Stats row */}
           <div
             className="grid grid-cols-3 gap-2 my-3 py-3 rounded-lg"
-            style={{ background: "oklch(0.10 0.02 285 / 0.7)" }}
+            style={{ background: "#F0F0F0" }}
           >
             <div className="text-center px-1">
               <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-0.5">
@@ -735,7 +735,7 @@ export function MyMatchesPage() {
     <div
       className="container py-8 md:py-12 space-y-8"
       data-ocid="my_matches.page"
-      style={{ minHeight: "100vh", background: "#0A0A0A" }}
+      style={{ minHeight: "100vh", background: "#FFFFFF" }}
     >
       {/* Header */}
       <div className="flex items-center gap-3">

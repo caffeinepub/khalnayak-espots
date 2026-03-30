@@ -151,3 +151,44 @@ export async function getFreeRegistrations(): Promise<FreeRegistration[]> {
     return [];
   }
 }
+
+export interface PaidRegistration {
+  id?: string;
+  nickname: string;
+  uid: string;
+  tournamentId: string;
+  tournamentName: string;
+  paymentStatus: "Success" | "Failed" | "Pending";
+  registeredAt: number;
+  transactionId: string;
+}
+
+export async function savePaidRegistration(
+  data: Omit<PaidRegistration, "id">,
+): Promise<void> {
+  try {
+    const db = getFirebaseDb();
+    await addDoc(collection(db, "paid_registrations"), {
+      ...data,
+      registeredAt: data.registeredAt || Date.now(),
+    });
+  } catch {
+    /* ignore */
+  }
+}
+
+export async function getPaidRegistrations(): Promise<PaidRegistration[]> {
+  try {
+    const db = getFirebaseDb();
+    const q = query(
+      collection(db, "paid_registrations"),
+      orderBy("registeredAt", "desc"),
+    );
+    const snap = await getDocs(q);
+    return snap.docs.map(
+      (d) => ({ id: d.id, ...d.data() }) as PaidRegistration,
+    );
+  } catch {
+    return [];
+  }
+}

@@ -1,44 +1,43 @@
-# KL TOURNAMENTS
+# Khalnayak Esports
 
 ## Current State
-- App is a mobile-first Free Fire tournament PWA with Firebase Google Sign-In + Internet Identity.
-- White background (#FFFFFF) light mode already in place.
-- BottomNavBar uses Lucide icons with neon green active color.
-- Tournaments page has FREE/PAID tab separation, free tournaments with 🎬 WATCH AD & JOIN FREE button.
-- AdminPage has FreeTournamentAdminCard managing existing FREE_TOURNAMENT_LIST (fixed 4 modes).
-- Status badges use CSS classes `fire-badge-live`, `fire-badge-completed`.
-- Logo in Header is "KL Esports Life" (Orbitron, neon green).
-- Admin panel tabs: matches, overview, registrations, tournaments, scores, deposits, withdrawals, users, security, referrals.
+- AdminPage.tsx has WithdrawalsTab with correct columns (User, Method, Details, Amount, Date, Status, Actions)
+- VoucherTransactionsLog has columns: User, Amount, Voucher Code, Created, Expires, Status (needs reordering to: Voucher Code, Amount, Created Date, Expiry Date, Status)
+- AdStatsTab shows all stats but uses dark neon colors — needs light mode readable colors
+- ReferralsTab has tab named "Referrals" already, but referral logs table shows: Referrer Code, Friend, Date, Amount, Status — needs to show: User, Referred User, Reward, Date
+- Token earning: TournamentDetailPage.tsx line 816 calls `tokens.earnToken()` when ad is watched during tournament registration — should NOT earn tokens here
+- No PaidRegistrationsTab exists in AdminPage
+- firestore.ts has FreeRegistration interface and functions — needs PaidRegistration interface and functions added
 
 ## Requested Changes (Diff)
 
 ### Add
-- Tap animation on BottomNavBar icons: scale(0.9) → scale(1.0) with 0.1s transition on press
-- Glow effect on active nav icon tap
-- Status badge CSS classes: .badge-free (green bg #22c55e, white text), .badge-paid (purple bg #9d4edd, white text), .badge-live (red bg #ef4444, white text), .badge-completed (gray bg #9ca3af, white text)
-- Admin panel "Free Tournaments" tab, "Paid Tournaments" tab, "All Tournaments" tab inside the existing Tournaments management area
-- "Create Free Tournament" admin section with fields: Tournament Name, Mode, Max Players, Start Time, and auto-calculated prize display
-- Free tournament cards: "🎁 FREE" badge prominently displayed
-- Join count display: "👥 X/500 Only Y Spots Left" format
+- PaidRegistration interface + savePaidRegistration + getPaidRegistrations functions in firestore.ts
+- PaidRegistrationsTab component in AdminPage.tsx with columns: Nickname, UID, Tournament Name, Payment Status, Registration Time, Actions
+- Tab trigger "Paid Registrations" in admin nav (value="paidRegistrations")
+- TabsContent for paidRegistrations
+- Tournament-wise and status-wise filter in PaidRegistrationsTab
+- savePaidRegistration call in TournamentDetailPage when paid tournament registration succeeds
+- "Watch ads to earn tokens!" message on Earn page
 
 ### Modify
-- Logo text: change from "KL Esports Life" to "KL TOURNAMENTS" — Neon Green (#00FF88) with black text-shadow outline, visible on white background
-- BottomNavBar: active color #00FF88, inactive color #666666, add tap animation
-- White background enforced globally: background #FFFFFF, headings #000000 bold, body text #333333, secondary text #666666
-- Cards: #F5F5F5 background, #E0E0E0 border, subtle shadow
-- Buttons: gradient neon green (#00FF88) to neon purple (#9d4edd), white text
-- Progress bars: #00FF88 color
-- Status badges updated to solid-color style: FREE=green, PAID=purple, LIVE=red, COMPLETED=gray, all with white text
-- Free tournament card join button: "🎬 WATCH AD & JOIN FREE" (already present, keep visible)
-- Free tournament card badge: "🎁 FREE" (already has FREE text, make it more prominent)
-- Admin panel add Free/Paid/All tabs within tournaments management section
+- VoucherTransactionsLog: reorder columns to Voucher Code, Amount, Created Date, Expiry Date, Status (remove User column)
+- AdStatsTab: switch all dark neon colors to light-mode readable dark text on light gray card backgrounds (match white bg theme)
+- ReferralsTab: Referral Logs table columns → User, Referred User, Reward, Date (rename from Referrer Code/Friend/Amount/Status)
+- ReferralsTab: ensure currency symbol is ₹ everywhere (already is, just verify)
+- TournamentDetailPage.tsx line 816: REMOVE `tokens.earnToken()` call — tournament registration ad should NOT earn tokens
+- WithdrawalsTab: ensure overflow-x-auto is present for mobile scroll (already there, verify)
+- AdStatsTab cards: use white bg (#ffffff), light gray (#F5F5F5), black/dark gray text instead of dark neon backgrounds
 
 ### Remove
-- Nothing to remove; only UI/color changes
+- `tokens.earnToken()` call in TournamentDetailPage.tsx handleAdComplete function
 
 ## Implementation Plan
-1. Update Header.tsx: change KLEsportsLogo to display "KL TOURNAMENTS" with neon green color + black outline
-2. Update BottomNavBar.tsx: add tap animation (active scale transition 0.9→1.0), ensure active=#00FF88, inactive=#666666
-3. Update index.css: add .badge-free/.badge-paid/.badge-live/.badge-completed utility classes; ensure white bg globals
-4. Update TournamentsPage.tsx: make FREE badge style use new .badge-free class, update status badges (LIVE, COMPLETED) to use solid-color classes with white text
-5. Update AdminPage.tsx: add Free/Paid/All sub-tabs within the tournaments tab area, and add a "Create Free Tournament" form section with Name, Mode, Max Players, Start Time fields, and prize auto-display
+1. firestore.ts: Add PaidRegistration interface and save/get functions
+2. AdminPage.tsx: Add PaidRegistrationsTab, add tab trigger, add TabsContent
+3. AdminPage.tsx: Fix VoucherTransactionsLog column order (Voucher Code, Amount, Created Date, Expiry Date, Status)
+4. AdminPage.tsx: Fix AdStatsTab to use light mode colors
+5. AdminPage.tsx: Fix ReferralsTab Referral Logs columns (User, Referred User, Reward, Date)
+6. TournamentDetailPage.tsx: Remove earnToken() from handleAdComplete
+7. EarnPage.tsx: Add "Watch ads to earn tokens!" message
+8. TournamentDetailPage.tsx: Call savePaidRegistration when paid registration succeeds

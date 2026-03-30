@@ -161,6 +161,26 @@ export function EarnPage() {
         </div>
 
         {/* ── WATCH AD BUTTON ── */}
+        <div
+          style={{
+            background: "#F5F5F5",
+            border: "1px solid #00FF88",
+            borderRadius: 12,
+            padding: "12px 16px",
+            marginBottom: 16,
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+          }}
+        >
+          <span style={{ fontSize: 20 }}>🪙</span>
+          <span style={{ color: "#333333", fontWeight: 600, fontSize: 15 }}>
+            Watch ads to earn tokens!
+          </span>
+          <span style={{ color: "#666666", fontSize: 13, marginLeft: 4 }}>
+            Only ads watched here give tokens.
+          </span>
+        </div>
         <WatchAdSection onAdComplete={tokens.earnToken} />
 
         {/* ── WITHDRAWAL METHODS ── */}

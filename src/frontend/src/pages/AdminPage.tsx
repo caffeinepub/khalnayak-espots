@@ -71,7 +71,12 @@ import {
   saveReferralSettings,
 } from "@/hooks/useReferralSettings";
 import { useTokens } from "@/hooks/useTokens";
-import { type FreeRegistration, getFreeRegistrations } from "@/lib/firestore";
+import {
+  type FreeRegistration,
+  type PaidRegistration,
+  getFreeRegistrations,
+  getPaidRegistrations,
+} from "@/lib/firestore";
 import type {
   PlayVoucher,
   RedeemRequest,
@@ -524,7 +529,7 @@ export function AdminPage() {
   return (
     <div
       className="container py-8 space-y-8"
-      style={{ background: "#0A0A0A", minHeight: "100vh" }}
+      style={{ background: "#FFFFFF", minHeight: "100vh" }}
     >
       <div className="flex items-center gap-3">
         <div
@@ -556,7 +561,7 @@ export function AdminPage() {
           <p
             style={{
               fontFamily: "'Rajdhani', sans-serif",
-              color: "rgba(255,255,255,0.5)",
+              color: "#666666",
               fontSize: 14,
             }}
           >
@@ -682,6 +687,14 @@ export function AdminPage() {
                 <span className="admin-nav-icon">📋</span>
                 <span>Free Registrations</span>
               </TabsTrigger>
+              <TabsTrigger
+                value="paidRegistrations"
+                data-ocid="admin.paid_registrations.tab"
+                className="admin-nav-trigger"
+              >
+                <span className="admin-nav-icon">💳</span>
+                <span>Paid Registrations</span>
+              </TabsTrigger>
             </TabsList>
           </div>
           {/* Scroll fade indicator on the right */}
@@ -742,7 +755,273 @@ export function AdminPage() {
         <TabsContent value="freeRegistrations">
           <FreeRegistrationsTab />
         </TabsContent>
+        <TabsContent value="paidRegistrations">
+          <PaidRegistrationsTab />
+        </TabsContent>
       </Tabs>
+    </div>
+  );
+}
+
+// ── Paid Registrations Tab ────────────────────────────────────────────────────
+
+function PaidRegistrationsTab() {
+  const [registrations, setRegistrations] = useState<PaidRegistration[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [filterTournament, setFilterTournament] = useState("all");
+  const [filterStatus, setFilterStatus] = useState("all");
+
+  useEffect(() => {
+    getPaidRegistrations()
+      .then((data) => setRegistrations(data))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const tournamentNames = Array.from(
+    new Set(registrations.map((r) => r.tournamentName).filter(Boolean)),
+  );
+  const filtered = registrations
+    .filter(
+      (r) =>
+        filterTournament === "all" || r.tournamentName === filterTournament,
+    )
+    .filter((r) => filterStatus === "all" || r.paymentStatus === filterStatus);
+
+  const statusColor = (status: string) => {
+    if (status === "Success") return { bg: "#d1fae5", color: "#065f46" };
+    if (status === "Failed") return { bg: "#fee2e2", color: "#991b1b" };
+    return { bg: "#fef9c3", color: "#92400e" };
+  };
+
+  return (
+    <div className="space-y-4">
+      <div
+        style={{
+          background: "#ffffff",
+          border: "1px solid #e5e7eb",
+          borderRadius: 12,
+          padding: 20,
+        }}
+      >
+        <h2
+          style={{
+            color: "#000000",
+            fontWeight: "bold",
+            fontSize: 18,
+            marginBottom: 4,
+          }}
+        >
+          💳 Paid Registrations
+        </h2>
+        <p style={{ color: "#666666", fontSize: 13, marginBottom: 16 }}>
+          Paid tournament ke saare registrations
+        </p>
+
+        <div className="flex gap-4 flex-wrap mb-4">
+          <div>
+            <label
+              htmlFor="paid-filter-tournament"
+              style={{
+                color: "#333333",
+                fontWeight: 600,
+                fontSize: 13,
+                display: "block",
+                marginBottom: 4,
+              }}
+            >
+              Filter by Tournament:
+            </label>
+            <select
+              id="paid-filter-tournament"
+              value={filterTournament}
+              onChange={(e) => setFilterTournament(e.target.value)}
+              style={{
+                background: "#F5F5F5",
+                border: "1px solid #333333",
+                color: "#000000",
+                borderRadius: 8,
+                padding: "6px 12px",
+                fontSize: 14,
+              }}
+            >
+              <option value="all">All Tournaments</option>
+              {tournamentNames.map((name) => (
+                <option key={name} value={name}>
+                  {name}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label
+              htmlFor="paid-filter-status"
+              style={{
+                color: "#333333",
+                fontWeight: 600,
+                fontSize: 13,
+                display: "block",
+                marginBottom: 4,
+              }}
+            >
+              Filter by Status:
+            </label>
+            <select
+              id="paid-filter-status"
+              value={filterStatus}
+              onChange={(e) => setFilterStatus(e.target.value)}
+              style={{
+                background: "#F5F5F5",
+                border: "1px solid #333333",
+                color: "#000000",
+                borderRadius: 8,
+                padding: "6px 12px",
+                fontSize: 14,
+              }}
+            >
+              <option value="all">All Status</option>
+              <option value="Success">Success</option>
+              <option value="Pending">Pending</option>
+              <option value="Failed">Failed</option>
+            </select>
+          </div>
+        </div>
+
+        {loading ? (
+          <p
+            style={{ color: "#666666", textAlign: "center", padding: "24px 0" }}
+          >
+            Loading...
+          </p>
+        ) : filtered.length === 0 ? (
+          <div
+            style={{ textAlign: "center", padding: "48px 0", color: "#666666" }}
+            data-ocid="admin.paid_registrations.empty_state"
+          >
+            <p style={{ fontSize: 32 }}>💳</p>
+            <p style={{ marginTop: 8, fontWeight: 600 }}>
+              No paid registrations yet
+            </p>
+            <p style={{ fontSize: 13, marginTop: 4 }}>
+              Paid tournament registrations yahan dikhenge
+            </p>
+          </div>
+        ) : (
+          <div
+            style={{ overflowX: "auto" }}
+            data-ocid="admin.paid_registrations.table"
+          >
+            <table
+              style={{
+                width: "100%",
+                borderCollapse: "collapse",
+                minWidth: 700,
+              }}
+            >
+              <thead>
+                <tr style={{ background: "#EEEEEE" }}>
+                  {[
+                    "Nickname",
+                    "UID",
+                    "Tournament Name",
+                    "Payment Status",
+                    "Registration Time",
+                    "Actions",
+                  ].map((h) => (
+                    <th
+                      key={h}
+                      style={{
+                        padding: "10px 12px",
+                        textAlign: "left",
+                        color: "#000000",
+                        fontWeight: "bold",
+                        fontSize: 13,
+                        borderBottom: "1px solid #DDDDDD",
+                      }}
+                    >
+                      {h}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map((reg, idx) => {
+                  const sc = statusColor(reg.paymentStatus);
+                  return (
+                    <tr
+                      key={reg.id || idx}
+                      style={{ borderBottom: "1px solid #F0F0F0" }}
+                      data-ocid={`admin.paid_registrations.row.${idx + 1}`}
+                    >
+                      <td
+                        style={{
+                          padding: "10px 12px",
+                          color: "#111111",
+                          fontWeight: 600,
+                        }}
+                      >
+                        {reg.nickname}
+                      </td>
+                      <td
+                        style={{
+                          padding: "10px 12px",
+                          color: "#444444",
+                          fontFamily: "monospace",
+                          fontSize: 13,
+                        }}
+                      >
+                        {reg.uid}
+                      </td>
+                      <td style={{ padding: "10px 12px", color: "#444444" }}>
+                        {reg.tournamentName}
+                      </td>
+                      <td style={{ padding: "10px 12px" }}>
+                        <span
+                          style={{
+                            background: sc.bg,
+                            color: sc.color,
+                            borderRadius: 6,
+                            padding: "3px 10px",
+                            fontSize: 12,
+                            fontWeight: 700,
+                          }}
+                        >
+                          {reg.paymentStatus}
+                        </span>
+                      </td>
+                      <td
+                        style={{
+                          padding: "10px 12px",
+                          color: "#666666",
+                          fontSize: 13,
+                        }}
+                      >
+                        {new Date(reg.registeredAt).toLocaleString("en-IN", {
+                          day: "2-digit",
+                          month: "short",
+                          year: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </td>
+                      <td style={{ padding: "10px 12px" }}>
+                        <span
+                          style={{
+                            fontSize: 12,
+                            color: "#666666",
+                            fontFamily: "monospace",
+                          }}
+                        >
+                          txn: {reg.transactionId?.slice(0, 10) || "—"}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -1645,28 +1924,32 @@ function OverviewTab() {
   const pendingWithdrawals =
     withdrawals?.filter((w) => w.status === "pending").length || 0;
 
+  const { data: tournaments } = useGetTournaments();
+  const unplayedMatches =
+    tournaments?.filter((t) => t.status !== "completed").length || 0;
+
   const statCards = [
     {
-      icon: "👥",
-      label: "TOTAL PLAYERS",
-      value: stats?.totalPlayers.toString() || "0",
-      color: "#00FF88",
-    },
-    {
-      icon: "🏆",
-      label: "TOURNAMENTS",
+      icon: "🎮",
+      label: "Total Tournaments",
       value: stats?.totalTournaments.toString() || "0",
       color: "#9d4edd",
     },
     {
+      icon: "👥",
+      label: "Active Users",
+      value: stats?.totalPlayers.toString() || "0",
+      color: "#00AA55",
+    },
+    {
       icon: "💰",
-      label: "PRIZE DISTRIBUTED",
+      label: "Total Prize Pool",
       value: stats ? formatCurrency(stats.totalPrizeDistributed) : "₹0",
       color: "#FFD700",
     },
     {
-      icon: "⚡",
-      label: "PENDING ACTIONS",
+      icon: "🔴",
+      label: "Live Matches",
       value: (
         pendingRegistrations +
         pendingDeposits +
@@ -1703,7 +1986,7 @@ function OverviewTab() {
               style={{
                 fontFamily: "'Rajdhani', sans-serif",
                 fontSize: 11,
-                color: "rgba(255,255,255,0.5)",
+                color: "#666666",
                 textTransform: "uppercase",
                 letterSpacing: "0.08em",
                 marginTop: 4,
@@ -1731,9 +2014,10 @@ function OverviewTab() {
         </h3>
         <div className="space-y-2">
           {[
-            { label: "Registrations", count: pendingRegistrations },
-            { label: "Deposits", count: pendingDeposits },
-            { label: "Withdrawals", count: pendingWithdrawals },
+            { label: "Pending Registrations", count: pendingRegistrations },
+            { label: "Pending Deposits", count: pendingDeposits },
+            { label: "Pending Withdrawals", count: pendingWithdrawals },
+            { label: "Unplayed Matches", count: unplayedMatches },
           ].map((item) => (
             <div
               key={item.label}
@@ -1746,7 +2030,7 @@ function OverviewTab() {
               <span
                 style={{
                   fontFamily: "'Rajdhani', sans-serif",
-                  color: "rgba(255,255,255,0.7)",
+                  color: "#444444",
                 }}
               >
                 {item.label}
@@ -2829,11 +3113,10 @@ function VoucherTransactionsLog() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>User</TableHead>
-                <TableHead>Amount</TableHead>
                 <TableHead>Voucher Code</TableHead>
-                <TableHead>Created</TableHead>
-                <TableHead>Expires</TableHead>
+                <TableHead>Amount</TableHead>
+                <TableHead>Created Date</TableHead>
+                <TableHead>Expiry Date</TableHead>
                 <TableHead>Status</TableHead>
               </TableRow>
             </TableHeader>
@@ -2844,19 +3127,18 @@ function VoucherTransactionsLog() {
                     key={v.id}
                     data-ocid={`admin.voucher_log.row.${idx + 1}`}
                   >
-                    <TableCell className="font-mono text-xs">
-                      {v.userId.slice(0, 12)}...
-                    </TableCell>
-                    <TableCell className="font-semibold">₹{v.amount}</TableCell>
                     <TableCell>
-                      <span className="font-mono text-xs bg-green-950/30 border border-green-500/20 px-2 py-1 rounded tracking-widest text-green-300">
+                      <span className="font-mono text-xs bg-gray-100 border border-gray-300 px-2 py-1 rounded tracking-widest text-gray-800">
                         {v.code}
                       </span>
                     </TableCell>
-                    <TableCell className="text-xs text-muted-foreground">
+                    <TableCell className="font-semibold text-gray-900">
+                      ₹{v.amount}
+                    </TableCell>
+                    <TableCell className="text-xs text-gray-600">
                       {new Date(v.createdAt).toLocaleDateString("en-IN")}
                     </TableCell>
-                    <TableCell className="text-xs text-muted-foreground">
+                    <TableCell className="text-xs text-gray-600">
                       {new Date(v.expiresAt).toLocaleDateString("en-IN")}
                     </TableCell>
                     <TableCell>
@@ -2886,7 +3168,7 @@ function VoucherTransactionsLog() {
               ) : (
                 <TableRow>
                   <TableCell
-                    colSpan={6}
+                    colSpan={5}
                     className="text-center text-muted-foreground py-8"
                     data-ocid="admin.voucher_log.empty_state"
                   >
@@ -3182,37 +3464,37 @@ function AdStatsTab() {
       label: "Manual Ads Today",
       value: stats.manualAdsToday,
       icon: Play,
-      color: "border-cyan-500/30 bg-cyan-950/20",
-      textColor: "text-cyan-400",
+      color: "border-gray-200 bg-white",
+      textColor: "text-gray-700",
     },
     {
       label: "Tournament Ads Today",
       value: stats.tournamentAdsToday,
       icon: Trophy,
-      color: "border-yellow-500/30 bg-yellow-950/20",
-      textColor: "text-yellow-400",
+      color: "border-gray-200 bg-white",
+      textColor: "text-gray-700",
     },
     {
       label: "Withdrawal Ads Today",
       value: stats.withdrawalAdsToday,
       icon: IndianRupee,
-      color: "border-green-500/30 bg-green-950/20",
-      textColor: "text-green-400",
+      color: "border-gray-200 bg-white",
+      textColor: "text-gray-700",
     },
     {
       label: "Total Ads Today",
       value: stats.totalAdsToday,
       icon: Coins,
-      color: "border-primary/30 bg-primary/5",
-      textColor: "text-primary",
+      color: "border-[#00FF88]/50 bg-white",
+      textColor: "text-gray-900",
     },
   ];
 
   return (
     <div className="space-y-6" data-ocid="admin.adstats.panel">
-      <Card className="border-yellow-500/30 bg-yellow-950/10">
+      <Card className="border-gray-200 bg-gray-50">
         <CardContent className="pt-4 pb-4">
-          <p className="text-sm text-yellow-400 flex items-center gap-2">
+          <p className="text-sm text-gray-600 flex items-center gap-2">
             <Coins className="h-4 w-4 flex-shrink-0" />
             Stats shown for current admin's account (localStorage-based).
             Platform-wide stats require backend integration.
@@ -3222,7 +3504,7 @@ function AdStatsTab() {
 
       <div>
         <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
-          <Play className="h-5 w-5 text-cyan-400" />
+          <Play className="h-5 w-5 text-gray-600" />
           Today's Ad Activity
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -3237,9 +3519,7 @@ function AdStatsTab() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p
-                  className={`text-4xl font-bold font-display ${card.textColor}`}
-                >
+                <p className="text-4xl font-bold font-display text-gray-900">
                   {card.value}
                 </p>
               </CardContent>
@@ -3249,15 +3529,15 @@ function AdStatsTab() {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <Card className="border-yellow-500/30 bg-yellow-950/20">
+        <Card className="border-gray-200 bg-white">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-yellow-400 flex items-center gap-2">
+            <CardTitle className="text-sm text-gray-700 flex items-center gap-2">
               <Coins className="h-4 w-4" />
               Tokens Distributed Today
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-4xl font-bold font-display text-yellow-300">
+            <p className="text-4xl font-bold font-display text-gray-900">
               {stats.totalTokensEarnedToday}
             </p>
             <p className="text-xs text-muted-foreground mt-1">
@@ -3266,15 +3546,15 @@ function AdStatsTab() {
           </CardContent>
         </Card>
 
-        <Card className="border-green-500/30 bg-green-950/20">
+        <Card className="border-gray-200 bg-white">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-green-400 flex items-center gap-2">
+            <CardTitle className="text-sm text-gray-700 flex items-center gap-2">
               <IndianRupee className="h-4 w-4" />
               Rewards Paid Today
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-4xl font-bold font-display text-green-300">
+            <p className="text-4xl font-bold font-display text-green-600">
               ₹{(stats.withdrawalAdsToday * 1.25).toFixed(2)}
             </p>
             <p className="text-xs text-muted-foreground mt-1">
@@ -3286,61 +3566,61 @@ function AdStatsTab() {
 
       <div>
         <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
-          <Trophy className="h-5 w-5 text-primary" />
+          <Trophy className="h-5 w-5 text-gray-600" />
           All-Time Statistics
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card className="border-cyan-500/30 bg-cyan-950/20">
+          <Card className="border-gray-200 bg-white">
             <CardHeader className="pb-2">
-              <CardTitle className="text-xs text-cyan-400 flex items-center gap-2">
+              <CardTitle className="text-xs text-gray-700 flex items-center gap-2">
                 <Play className="h-3.5 w-3.5" />
                 Total Ads Watched
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-3xl font-bold text-cyan-300">
+              <p className="text-3xl font-bold text-gray-900">
                 {allTime.totalAdsWatched}
               </p>
             </CardContent>
           </Card>
 
-          <Card className="border-yellow-500/30 bg-yellow-950/20">
+          <Card className="border-gray-200 bg-white">
             <CardHeader className="pb-2">
-              <CardTitle className="text-xs text-yellow-400 flex items-center gap-2">
+              <CardTitle className="text-xs text-gray-700 flex items-center gap-2">
                 <Coins className="h-3.5 w-3.5" />
                 Total Tokens Distributed
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-3xl font-bold text-yellow-300">
+              <p className="text-3xl font-bold text-gray-900">
                 {allTime.totalTokensDistributed}
               </p>
             </CardContent>
           </Card>
 
-          <Card className="border-green-500/30 bg-green-950/20">
+          <Card className="border-gray-200 bg-white">
             <CardHeader className="pb-2">
-              <CardTitle className="text-xs text-green-400 flex items-center gap-2">
+              <CardTitle className="text-xs text-gray-700 flex items-center gap-2">
                 <IndianRupee className="h-3.5 w-3.5" />
                 Total Withdrawals
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-3xl font-bold text-green-300">
+              <p className="text-3xl font-bold text-gray-900">
                 {allTime.totalWithdrawals}
               </p>
             </CardContent>
           </Card>
 
-          <Card className="border-primary/30 bg-primary/5">
+          <Card className="border-gray-200 bg-white">
             <CardHeader className="pb-2">
-              <CardTitle className="text-xs text-primary flex items-center gap-2">
+              <CardTitle className="text-xs text-gray-700 flex items-center gap-2">
                 <DollarSign className="h-3.5 w-3.5" />
                 Total Rewards Paid
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-3xl font-bold text-primary">
+              <p className="text-3xl font-bold text-gray-900">
                 ₹{allTime.totalRupeesPaid.toFixed(2)}
               </p>
             </CardContent>
@@ -3362,13 +3642,13 @@ function AdStatsTab() {
           <div className="flex items-center gap-6 flex-wrap">
             <div className="text-center">
               <p className="text-xs text-muted-foreground mb-1">Balance</p>
-              <p className="text-3xl font-bold text-yellow-400">
+              <p className="text-3xl font-bold text-gray-900">
                 {tokens.balance} 🪙
               </p>
             </div>
             <div className="text-center">
               <p className="text-xs text-muted-foreground mb-1">Total Earned</p>
-              <p className="text-3xl font-bold text-yellow-300">
+              <p className="text-3xl font-bold text-gray-900">
                 {tokens.totalEarned}
               </p>
             </div>
@@ -3376,7 +3656,7 @@ function AdStatsTab() {
               <p className="text-xs text-muted-foreground mb-1">
                 Total Withdrawn
               </p>
-              <p className="text-3xl font-bold text-green-400">
+              <p className="text-3xl font-bold text-gray-900">
                 {tokens.totalWithdrawn}
               </p>
             </div>
@@ -3732,10 +4012,21 @@ function SecurityTab() {
                     className="text-center py-12 text-muted-foreground"
                     data-ocid="admin.security.empty_state"
                   >
-                    <div className="flex flex-col items-center gap-2">
+                    <div
+                      className="flex flex-col items-center gap-2"
+                      style={{ maxWidth: 320, margin: "0 auto" }}
+                    >
                       <Shield className="h-8 w-8 opacity-30" />
                       <p>No suspicious activity detected</p>
-                      <p className="text-xs">
+                      <p
+                        className="text-xs"
+                        style={{
+                          whiteSpace: "normal",
+                          wordBreak: "break-word",
+                          textAlign: "center",
+                          width: "100%",
+                        }}
+                      >
                         Players with 15+ kills will be auto-flagged here
                       </p>
                     </div>
@@ -3913,7 +4204,7 @@ function ReferralsTab() {
             <p
               style={{
                 fontFamily: "'Rajdhani', sans-serif",
-                color: "#fff",
+                color: "#111111",
                 fontSize: 15,
                 fontWeight: 700,
               }}
@@ -3923,7 +4214,7 @@ function ReferralsTab() {
             <p
               style={{
                 fontFamily: "'Rajdhani', sans-serif",
-                color: "rgba(255,255,255,0.45)",
+                color: "#777777",
                 fontSize: 12,
               }}
             >
@@ -3946,7 +4237,7 @@ function ReferralsTab() {
               className="text-xs mb-1 block"
               style={{
                 fontFamily: "'Rajdhani', sans-serif",
-                color: "rgba(255,255,255,0.6)",
+                color: "#555555",
                 letterSpacing: "0.05em",
               }}
             >
@@ -3962,7 +4253,7 @@ function ReferralsTab() {
                 min="0"
                 value={referrerReward}
                 onChange={(e) => setReferrerReward(e.target.value)}
-                className="bg-black/40 border-green-500/30 text-white"
+                className="bg-[#F5F5F5] border-green-500/30 text-gray-900"
                 style={{ fontFamily: "'Orbitron', sans-serif" }}
                 data-ocid="admin.referral.input"
               />
@@ -3973,7 +4264,7 @@ function ReferralsTab() {
               className="text-xs mb-1 block"
               style={{
                 fontFamily: "'Rajdhani', sans-serif",
-                color: "rgba(255,255,255,0.6)",
+                color: "#555555",
                 letterSpacing: "0.05em",
               }}
             >
@@ -3989,7 +4280,7 @@ function ReferralsTab() {
                 min="0"
                 value={newUserBonus}
                 onChange={(e) => setNewUserBonus(e.target.value)}
-                className="bg-black/40 border-purple-500/30 text-white"
+                className="bg-[#F5F5F5] border-purple-500/30 text-gray-900"
                 style={{ fontFamily: "'Orbitron', sans-serif" }}
                 data-ocid="admin.referral.input"
               />
@@ -4000,7 +4291,7 @@ function ReferralsTab() {
               className="text-xs mb-1 block"
               style={{
                 fontFamily: "'Rajdhani', sans-serif",
-                color: "rgba(255,255,255,0.6)",
+                color: "#555555",
                 letterSpacing: "0.05em",
               }}
             >
@@ -4011,7 +4302,7 @@ function ReferralsTab() {
               min="0"
               value={minUsers}
               onChange={(e) => setMinUsers(e.target.value)}
-              className="bg-black/40 border-slate-500/30 text-white"
+              className="bg-[#F5F5F5] border-slate-500/30 text-gray-900"
               style={{ fontFamily: "'Orbitron', sans-serif" }}
               data-ocid="admin.referral.input"
             />
@@ -4040,7 +4331,7 @@ function ReferralsTab() {
             <p
               style={{
                 fontFamily: "'Rajdhani', sans-serif",
-                color: "rgba(255,255,255,0.5)",
+                color: "#666666",
                 fontSize: 11,
                 textTransform: "uppercase",
                 letterSpacing: "0.05em",
@@ -4069,7 +4360,7 @@ function ReferralsTab() {
             <p
               style={{
                 fontFamily: "'Rajdhani', sans-serif",
-                color: "rgba(255,255,255,0.5)",
+                color: "#666666",
                 fontSize: 11,
                 textTransform: "uppercase",
                 letterSpacing: "0.05em",
@@ -4216,11 +4507,10 @@ function ReferralsTab() {
             <Table data-ocid="admin.referrals.table">
               <TableHeader>
                 <TableRow>
-                  <TableHead>Referrer Code</TableHead>
-                  <TableHead>Friend</TableHead>
+                  <TableHead>User</TableHead>
+                  <TableHead>Referred User</TableHead>
+                  <TableHead>Reward</TableHead>
                   <TableHead>Date</TableHead>
-                  <TableHead>Amount</TableHead>
-                  <TableHead>Status</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -4229,39 +4519,23 @@ function ReferralsTab() {
                     key={r.id}
                     data-ocid={`admin.referrals.row.${idx + 1}`}
                   >
-                    <TableCell className="font-mono font-semibold text-primary">
+                    <TableCell className="font-mono font-semibold text-gray-800">
                       {r.referrerCode}
                     </TableCell>
-                    <TableCell className="font-medium">
+                    <TableCell className="font-medium text-gray-700">
                       {maskName(r.newUserName)}
-                    </TableCell>
-                    <TableCell className="text-xs text-muted-foreground">
-                      {formatDate(r.timestamp)}
                     </TableCell>
                     <TableCell>
                       {r.status === "success" ? (
-                        <span className="text-yellow-400 font-semibold">
+                        <span className="text-green-600 font-semibold">
                           ₹{r.rewardAmount.toFixed(2)}
                         </span>
                       ) : (
-                        <span className="text-muted-foreground">₹0</span>
+                        <span className="text-gray-400">₹0</span>
                       )}
                     </TableCell>
-                    <TableCell>
-                      {r.status === "success" ? (
-                        <Badge className="bg-green-700/30 text-green-300 border-green-500/30 flex items-center gap-1 w-fit">
-                          <CheckCircle2 className="h-3 w-3" />
-                          Success
-                        </Badge>
-                      ) : (
-                        <Badge
-                          variant="destructive"
-                          className="flex items-center gap-1 w-fit opacity-80"
-                        >
-                          <XCircle className="h-3 w-3" />
-                          Fraud
-                        </Badge>
-                      )}
+                    <TableCell className="text-xs text-gray-500">
+                      {formatDate(r.timestamp)}
                     </TableCell>
                   </TableRow>
                 ))}

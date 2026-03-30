@@ -34,7 +34,7 @@ import {
   useGetTournamentById,
   useRegisterTeam,
 } from "@/hooks/useQueries";
-import { useTokens } from "@/hooks/useTokens";
+import { savePaidRegistration } from "@/lib/firestore";
 import {
   formatCurrency,
   getTournamentPlayerInfo,
@@ -709,7 +709,6 @@ function RegistrationDialog({
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const navigate = useNavigate();
-  const tokens = useTokens();
   const registerMutation = useRegisterTeam();
 
   // UID validation
@@ -813,10 +812,6 @@ function RegistrationDialog({
 
   // Step 2: Ad completed → show form
   const handleAdComplete = () => {
-    tokens.earnToken();
-    toast.success("🪙 +1 Token earned!", {
-      description: "Token credited! Ab registration complete karo.",
-    });
     setFlowState("formOpen");
   };
 
@@ -872,6 +867,18 @@ function RegistrationDialog({
       });
 
       saveRegisteredUid(uid);
+      // Save paid registration to Firestore
+      if (!isFree) {
+        savePaidRegistration({
+          nickname,
+          uid,
+          tournamentId: tournament.id.toString(),
+          tournamentName: tournament.name || "Unknown Tournament",
+          paymentStatus: "Success",
+          registeredAt: Date.now(),
+          transactionId: `txn_${Date.now()}_${uid}`,
+        });
+      }
       setFlowState("done");
 
       toast.success("✅ Registration successful!", {

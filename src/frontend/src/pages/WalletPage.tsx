@@ -33,6 +33,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { useIIProfile } from "@/hooks/useIIProfile";
 import {
   useApproveDeposit,
   useDeposit,
@@ -208,6 +209,7 @@ function getUpiUsageCount(userId: string, upiId: string): number {
 export function WalletPage() {
   const { data: wallet } = useGetCallerWallet();
   const { data: profile } = useGetCallerUserProfile();
+  const { profile: iiProfile } = useIIProfile();
   const [depositDialogOpen, setDepositDialogOpen] = useState(false);
   const [withdrawDialogOpen, setWithdrawDialogOpen] = useState(false);
 
@@ -217,8 +219,8 @@ export function WalletPage() {
   );
 
   const copyReferralCode = () => {
-    if (profile?.referralCode) {
-      navigator.clipboard.writeText(profile.referralCode);
+    if (iiProfile?.referral_code) {
+      navigator.clipboard.writeText(iiProfile?.referral_code || "");
       toast.success("Referral code copied to clipboard!");
     }
   };
@@ -350,7 +352,7 @@ export function WalletPage() {
       {/* Google Play Redeem Code */}
 
       {/* Referral Card */}
-      {profile?.referralCode && (
+      {iiProfile?.referral_code && (
         <Card
           className="border-[#00FF88]/40"
           style={{ boxShadow: "0 0 16px rgba(0,255,136,0.08)" }}
@@ -366,7 +368,7 @@ export function WalletPage() {
           <CardContent className="space-y-4">
             <div className="flex items-center gap-3">
               <code className="flex-1 bg-[#F5F5F5] border border-[#00FF88]/30 px-4 py-3 rounded-xl font-mono text-lg font-bold text-[#00FF88]">
-                {profile.referralCode}
+                {iiProfile.referral_code}
               </code>
               <Button
                 onClick={copyReferralCode}
@@ -380,7 +382,7 @@ export function WalletPage() {
             </div>
             <div className="flex gap-2">
               <a
-                href={`https://wa.me/?text=${encodeURIComponent(`Join Khalnayak Espots using my referral code: ${profile.referralCode}`)}`}
+                href={`https://wa.me/?text=${encodeURIComponent(`Join Khalnayak Espots using my referral code: ${iiProfile.referral_code}`)}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex-1 py-2 text-center text-sm font-semibold rounded-xl border border-green-500/40 text-green-400 bg-green-500/10 hover:bg-green-500/20 transition-all"
@@ -388,7 +390,7 @@ export function WalletPage() {
                 📱 WhatsApp
               </a>
               <a
-                href={`https://t.me/share/url?url=${encodeURIComponent("https://khalnayak.app")}&text=${encodeURIComponent(`Join with my code: ${profile.referralCode}`)}`}
+                href={`https://t.me/share/url?url=${encodeURIComponent("https://khalnayak.app")}&text=${encodeURIComponent(`Join with my code: ${iiProfile.referral_code}`)}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex-1 py-2 text-center text-sm font-semibold rounded-xl border border-blue-500/40 text-blue-400 bg-blue-500/10 hover:bg-blue-500/20 transition-all"
