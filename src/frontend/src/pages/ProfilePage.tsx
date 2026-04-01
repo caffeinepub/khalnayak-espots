@@ -551,16 +551,16 @@ export function ProfilePage() {
               <div
                 className="rounded-xl p-4"
                 style={{
-                  background:
-                    "linear-gradient(135deg, rgba(0,255,136,0.05), rgba(157,78,221,0.05))",
-                  border: "1px solid rgba(0,255,136,0.15)",
+                  background: "#F9FAFB",
+                  border: "1px solid #E0E0E0",
+                  borderRadius: 12,
                 }}
               >
                 <p
                   className="text-xs font-bold uppercase tracking-widest mb-3"
                   style={{
                     fontFamily: "'Orbitron', sans-serif",
-                    color: "#00FF88",
+                    color: "#111111",
                   }}
                 >
                   📢 How to Refer &amp; Earn
@@ -588,7 +588,16 @@ export function ProfilePage() {
                       text: "You get ₹1.50 in wallet instantly!",
                     },
                   ].map(({ step, icon, text }) => (
-                    <div key={step} className="flex items-center gap-3">
+                    <div
+                      key={step}
+                      className="flex items-center gap-3"
+                      style={{
+                        background: "#FFFFFF",
+                        border: "1px solid #EEEEEE",
+                        borderRadius: 10,
+                        padding: "10px 12px",
+                      }}
+                    >
                       <div
                         className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
                         style={{

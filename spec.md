@@ -1,43 +1,40 @@
 # Khalnayak Esports
 
 ## Current State
-- AdminPage.tsx has WithdrawalsTab with correct columns (User, Method, Details, Amount, Date, Status, Actions)
-- VoucherTransactionsLog has columns: User, Amount, Voucher Code, Created, Expires, Status (needs reordering to: Voucher Code, Amount, Created Date, Expiry Date, Status)
-- AdStatsTab shows all stats but uses dark neon colors — needs light mode readable colors
-- ReferralsTab has tab named "Referrals" already, but referral logs table shows: Referrer Code, Friend, Date, Amount, Status — needs to show: User, Referred User, Reward, Date
-- Token earning: TournamentDetailPage.tsx line 816 calls `tokens.earnToken()` when ad is watched during tournament registration — should NOT earn tokens here
-- No PaidRegistrationsTab exists in AdminPage
-- firestore.ts has FreeRegistration interface and functions — needs PaidRegistration interface and functions added
+- Tournament cards exist for free and paid tournaments
+- Admin panel has tabs: Overview, Manage Matches, Registrations, Tournaments, Scores, Deposits, Withdrawals, Users, Ad Stats, Referrals, Security, Free Registrations, Paid Registrations
+- My Matches page shows joined tournaments
+- Earn page has token earning via ads
+- Token earning currently may fire from multiple places
+- Admin free tournament detail page exists but looks basic
+- Paid tournaments may lack same controls as free tournaments
 
 ## Requested Changes (Diff)
 
 ### Add
-- PaidRegistration interface + savePaidRegistration + getPaidRegistrations functions in firestore.ts
-- PaidRegistrationsTab component in AdminPage.tsx with columns: Nickname, UID, Tournament Name, Payment Status, Registration Time, Actions
-- Tab trigger "Paid Registrations" in admin nav (value="paidRegistrations")
-- TabsContent for paidRegistrations
-- Tournament-wise and status-wise filter in PaidRegistrationsTab
-- savePaidRegistration call in TournamentDetailPage when paid tournament registration succeeds
-- "Watch ads to earn tokens!" message on Earn page
+- LIVE tab click → open YouTube channel (https://www.youtube.com/@KL_Tournaments) in new tab for both free & paid
+- Score entry for both free AND paid tournaments in admin Scores section (dropdown showing both types)
+- My Matches page: detailed card with tournament name, date, format, prize, type, UID, player name, status, room ID, password, LIVE button, RESULTS button
+- Admin free tournament detail page: premium redesign with sections (Stats, Match Details, Admin Controls, Match Timing, Tournament Status), colored buttons, copy buttons with toast, pulsing LIVE badge
+- Paid tournament detail page: same premium style, purple accents
+- Paid tournament full controls: Room ID/Password set, match start/stop, scores update, results publish, unpublish/delete
+- Earn page message: "Watch ads to earn tokens! Only ads watched here give tokens."
 
 ### Modify
-- VoucherTransactionsLog: reorder columns to Voucher Code, Amount, Created Date, Expiry Date, Status (remove User column)
-- AdStatsTab: switch all dark neon colors to light-mode readable dark text on light gray card backgrounds (match white bg theme)
-- ReferralsTab: Referral Logs table columns → User, Referred User, Reward, Date (rename from Referrer Code/Friend/Amount/Status)
-- ReferralsTab: ensure currency symbol is ₹ everywhere (already is, just verify)
-- TournamentDetailPage.tsx line 816: REMOVE `tokens.earnToken()` call — tournament registration ad should NOT earn tokens
-- WithdrawalsTab: ensure overflow-x-auto is present for mobile scroll (already there, verify)
-- AdStatsTab cards: use white bg (#ffffff), light gray (#F5F5F5), black/dark gray text instead of dark neon backgrounds
+- Free tournament cards: branded design — white+gradient bg, 16-20px radius, shadow, hover scale, FREE badge neon green glow, prize neon green, join button gradient pill, status badges (UPCOMING blue, LIVE red pulsing, DONE gray)
+- Paid tournament cards: same premium design, PAID badge neon purple glow, join button "PAY & REGISTER" purple gradient
+- Token earning: ONLY fire from Earn page Watch Ad button — remove token award from tournament registration ads, deposit ads, withdrawal ads
+- Admin panel tabs: full names visible, no cut-off, horizontally scrollable
+- Tournaments page tabs (ALL, BG, 4V4, 1V1, 2V2): properly aligned
+- Free & Paid sections properly spaced
+- Overall layout: mobile responsive, no overlapping
 
 ### Remove
-- `tokens.earnToken()` call in TournamentDetailPage.tsx handleAdComplete function
+- Token award from non-Earn-page ad interactions
 
 ## Implementation Plan
-1. firestore.ts: Add PaidRegistration interface and save/get functions
-2. AdminPage.tsx: Add PaidRegistrationsTab, add tab trigger, add TabsContent
-3. AdminPage.tsx: Fix VoucherTransactionsLog column order (Voucher Code, Amount, Created Date, Expiry Date, Status)
-4. AdminPage.tsx: Fix AdStatsTab to use light mode colors
-5. AdminPage.tsx: Fix ReferralsTab Referral Logs columns (User, Referred User, Reward, Date)
-6. TournamentDetailPage.tsx: Remove earnToken() from handleAdComplete
-7. EarnPage.tsx: Add "Watch ads to earn tokens!" message
-8. TournamentDetailPage.tsx: Call savePaidRegistration when paid registration succeeds
+1. TournamentsPage.tsx: LIVE tab → window.open YouTube URL; redesign free/paid tournament cards with branded styles
+2. AdminPage.tsx: Scores section — dropdown includes both free & paid tournaments; free tournament detail view premium redesign; paid tournament detail view with full controls (Room ID/Password, start/stop, results, unpublish/delete); fix tab names cut-off
+3. MyMatchesPage.tsx: redesign match cards with all details (name, date, format, prize, type, UID, player, status, roomID, password, LIVE/RESULTS buttons)
+4. EarnPage.tsx: add message, ensure token only from here
+5. Any other files where token is awarded outside Earn page: remove token award logic

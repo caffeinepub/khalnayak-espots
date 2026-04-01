@@ -128,8 +128,6 @@ function FreeRegistrationModal({
   const [confirmed, setConfirmed] = useState(false);
   const [uidError, setUidError] = useState("");
   const [touched, setTouched] = useState(false);
-  const tokens = useTokens();
-
   const validateUid = (v: string) => {
     if (!v) return "Free Fire UID required hai.";
     if (!/^\d+$/.test(v)) return "⚠️ UID sirf numbers mein hona chahiye.";
@@ -170,8 +168,6 @@ function FreeRegistrationModal({
   };
 
   const handleAdComplete = () => {
-    tokens.earnToken();
-    toast.success("🪙 +1 Token earned!");
     setState("formOpen");
   };
 
@@ -274,7 +270,7 @@ function FreeRegistrationModal({
             >
               {tournament.mode} {tournament.name}
             </DialogTitle>
-            <DialogDescription style={{ color: "rgba(255,255,255,0.55)" }}>
+            <DialogDescription style={{ color: "#666666" }}>
               {tournament.modeDetail} • Prize Pool: {tournament.prizePool}
             </DialogDescription>
           </DialogHeader>
@@ -303,10 +299,7 @@ function FreeRegistrationModal({
                     {prize.label}
                   </span>
                   {prize.condition && (
-                    <p
-                      className="text-xs"
-                      style={{ color: "rgba(255,255,255,0.5)" }}
-                    >
+                    <p className="text-xs" style={{ color: "#666666" }}>
                       {prize.condition}
                     </p>
                   )}
@@ -339,7 +332,7 @@ function FreeRegistrationModal({
                 <span className="text-xl">🎬</span>
                 WATCH AD &amp; JOIN FREE
               </button>
-              <p className="text-xs" style={{ color: "rgba(255,255,255,0.4)" }}>
+              <p className="text-xs" style={{ color: "#666666" }}>
                 30-sec ad dekhne ke baad registration form khulega
               </p>
             </div>
@@ -361,7 +354,7 @@ function FreeRegistrationModal({
                     touched && !nickname.trim() ? "border-red-500" : ""
                   }
                   style={{
-                    background: "rgba(255,255,255,0.06)",
+                    background: "#F5F5F5",
                     color: "#fff",
                   }}
                   data-ocid="free_tournament.input"
@@ -379,7 +372,7 @@ function FreeRegistrationModal({
                   Free Fire UID *{" "}
                   <span
                     className="text-xs font-normal"
-                    style={{ color: "rgba(255,255,255,0.4)" }}
+                    style={{ color: "#666666" }}
                   >
                     (min 8 digits, numeric)
                   </span>
@@ -402,7 +395,7 @@ function FreeRegistrationModal({
                         : ""
                   }
                   style={{
-                    background: "rgba(255,255,255,0.06)",
+                    background: "#F5F5F5",
                     color: "#fff",
                   }}
                   data-ocid="free_tournament.input"
@@ -424,7 +417,7 @@ function FreeRegistrationModal({
                 <Label
                   htmlFor="fn-confirm"
                   className="text-sm cursor-pointer leading-relaxed"
-                  style={{ color: "rgba(255,255,255,0.75)" }}
+                  style={{ color: "#666666" }}
                 >
                   Main confirm karta/karti hoon ki ye details sahi hain aur main
                   tournament rules se agree karta/karti hoon.
@@ -469,7 +462,10 @@ function FreeRegistrationModal({
 // ─────────────────────────────────────────────
 // Free Tournament Card
 // ─────────────────────────────────────────────
-function FreeTournamentCard({ t }: { t: FreeTournament }) {
+function FreeTournamentCard({
+  t,
+  index = 0,
+}: { t: FreeTournament; index?: number }) {
   const [modalOpen, setModalOpen] = useState(false);
   const [joinCount, setJoinCount] = useState(() => getFreeJoinCount(t.id));
   const [roomId, setRoomId] = useState(() => getFreeRoomId(t.id));
@@ -512,12 +508,13 @@ function FreeTournamentCard({ t }: { t: FreeTournament }) {
         onMouseLeave={() => setHovered(false)}
         style={{
           background: "#FFFFFF",
-          border: "1px solid #E0E0E0",
-          borderRadius: 16,
+          border: "1px solid #E8E8E8",
+          borderRadius: 18,
+          borderLeft: `4px solid ${["#00FF88", "#9d4edd", "#FF6B35", "#00BFFF"][index % 4]}`,
           boxShadow: hovered
-            ? "0 8px 24px rgba(0,0,0,0.12)"
-            : "0 4px 12px rgba(0,0,0,0.05)",
-          transform: hovered ? "scale(1.01)" : "scale(1)",
+            ? "0 8px 24px rgba(0,0,0,0.15)"
+            : "0 4px 12px rgba(0,0,0,0.08)",
+          transform: hovered ? "scale(1.02)" : "scale(1)",
           transition: "all 0.2s ease",
           overflow: "hidden",
           cursor: "pointer",
@@ -530,9 +527,11 @@ function FreeTournamentCard({ t }: { t: FreeTournament }) {
             <span
               className="text-xs font-bold uppercase px-2 py-0.5 rounded-full"
               style={{
-                background: "#28a745",
-                color: "#FFFFFF",
+                background: "#00FF88",
+                color: "#000000",
                 borderRadius: 20,
+                boxShadow: "0 0 10px rgba(0,255,136,0.5)",
+                fontWeight: 800,
               }}
             >
               🎁 FREE
@@ -651,7 +650,7 @@ function FreeTournamentCard({ t }: { t: FreeTournament }) {
                     display: "flex",
                     justifyContent: "space-between",
                     fontSize: 11,
-                    color: "rgba(255,255,255,0.45)",
+                    color: "#666666",
                     marginTop: 4,
                     fontFamily: "'Rajdhani', sans-serif",
                   }}
@@ -739,8 +738,12 @@ function FreeTournamentCard({ t }: { t: FreeTournament }) {
                 fontFamily: "'Orbitron', sans-serif",
               }}
               data-ocid="free_tournament.live_button"
+              onClick={() =>
+                matchStarted &&
+                window.open("https://www.youtube.com/@KL_Tournaments", "_blank")
+              }
             >
-              🟡 LIVE
+              🔴 LIVE
             </button>
 
             <button
@@ -796,10 +799,11 @@ function FreeTournamentCard({ t }: { t: FreeTournament }) {
                 fontFamily: "'Orbitron', sans-serif",
                 cursor: isFull ? "not-allowed" : "pointer",
                 transition: "transform 0.15s ease, box-shadow 0.15s ease",
+                borderRadius: 50,
               }}
               data-ocid="free_tournament.primary_button"
             >
-              {isFull ? "🚫 TOURNAMENT FULL" : "🎬 WATCH AD & JOIN FREE"}
+              {isFull ? "🚫 TOURNAMENT FULL" : "🔥 WATCH AD & JOIN FREE"}
             </button>
           )}
         </div>
@@ -837,15 +841,13 @@ function FreeTournamentCard({ t }: { t: FreeTournament }) {
             <div
               className="rounded-lg p-3 space-y-2"
               style={{
-                background: "rgba(255,255,255,0.05)",
-                border: "1px solid rgba(255,255,255,0.1)",
+                background: "#F5F5F5",
+                border: "1px solid #E0E0E0",
               }}
             >
               {/* Room ID row */}
               <div className="space-y-1">
-                <span style={{ color: "rgba(255,255,255,0.5)", fontSize: 12 }}>
-                  Room ID
-                </span>
+                <span style={{ color: "#666666", fontSize: 12 }}>Room ID</span>
                 <div className="flex items-center justify-between gap-2">
                   <span
                     className="font-mono font-bold text-white text-lg"
@@ -879,9 +881,7 @@ function FreeTournamentCard({ t }: { t: FreeTournament }) {
               </div>
               {/* Password row */}
               <div className="space-y-1">
-                <span style={{ color: "rgba(255,255,255,0.5)", fontSize: 12 }}>
-                  Password
-                </span>
+                <span style={{ color: "#666666", fontSize: 12 }}>Password</span>
                 <div className="flex items-center justify-between gap-2">
                   <span
                     className="font-mono font-bold text-white text-lg"
@@ -921,9 +921,9 @@ function FreeTournamentCard({ t }: { t: FreeTournament }) {
               type="button"
               className="w-full py-1.5 rounded-lg text-sm"
               style={{
-                color: "rgba(255,255,255,0.4)",
+                color: "#666666",
                 background: "transparent",
-                border: "1px solid rgba(255,255,255,0.1)",
+                border: "1px solid #E0E0E0",
               }}
               onClick={() => setShowRoomPopup(false)}
             >
@@ -1102,10 +1102,7 @@ export function TournamentsPage() {
               style={{ width: 20, height: 20, color: "#00FF88", flexShrink: 0 }}
             />
           </div>
-          <p
-            className="pl-4 md:pl-0"
-            style={{ color: "rgba(255,255,255,0.5)" }}
-          >
+          <p className="pl-4 md:pl-0" style={{ color: "#666666" }}>
             Browse and register for Free Fire tournaments
           </p>
         </div>
@@ -1119,13 +1116,8 @@ export function TournamentsPage() {
               onClick={() => setSection(tab)}
               className="flex-shrink-0 px-5 py-2 rounded-full text-xs font-bold uppercase tracking-wider transition-all"
               style={{
-                background:
-                  section === tab
-                    ? tab === "free"
-                      ? "#28a745"
-                      : "#6f42c1"
-                    : "#F0F0F0",
-                color: section === tab ? "#FFFFFF" : "#666666",
+                background: section === tab ? "#00FF88" : "#F0F0F0",
+                color: section === tab ? "#000000" : "#666666",
                 border: section === tab ? "none" : "1px solid #E0E0E0",
                 boxShadow: "none",
                 fontFamily: "'Orbitron', sans-serif",
@@ -1159,16 +1151,12 @@ export function TournamentsPage() {
                 flexShrink: 0,
                 padding: "6px 16px",
                 borderRadius: 20,
-                background:
-                  filterChip === chip ? "#00FF88" : "rgba(255,255,255,0.08)",
+                background: filterChip === chip ? "#00FF88" : "#F0F0F0",
                 color: filterChip === chip ? "#0A0A0A" : "#888",
                 fontFamily: "'Orbitron', sans-serif",
                 fontSize: 11,
                 fontWeight: 700,
-                border:
-                  filterChip === chip
-                    ? "none"
-                    : "1px solid rgba(255,255,255,0.12)",
+                border: filterChip === chip ? "none" : "1px solid #E0E0E0",
                 boxShadow:
                   filterChip === chip ? "0 0 12px rgba(0,255,136,0.4)" : "none",
                 cursor: "pointer",
@@ -1208,7 +1196,14 @@ export function TournamentsPage() {
                   <button
                     key={tab}
                     type="button"
-                    onClick={() => setFreeStatusTab(tab)}
+                    onClick={() => {
+                      setFreeStatusTab(tab);
+                      if (tab === "live")
+                        window.open(
+                          "https://www.youtube.com/@KL_Tournaments",
+                          "_blank",
+                        );
+                    }}
                     style={{
                       flexShrink: 0,
                       padding: "8px 20px",
@@ -1236,9 +1231,8 @@ export function TournamentsPage() {
             <div
               className="rounded-xl p-4"
               style={{
-                background:
-                  "linear-gradient(135deg, rgba(40,167,69,0.05), rgba(111,66,193,0.05))",
-                border: "1px solid rgba(40,167,69,0.2)",
+                background: "#F0FFF4",
+                border: "1px solid #D1FAE5",
               }}
             >
               <p
@@ -1247,22 +1241,19 @@ export function TournamentsPage() {
               >
                 🎉 FREE TOURNAMENTS — No Entry Fee!
               </p>
-              <p className="text-xs" style={{ color: "rgba(255,255,255,0.5)" }}>
+              <p className="text-xs" style={{ color: "#666666" }}>
                 Watch a 30-sec ad → Register instantly → Win real cash prizes 💰
               </p>
             </div>
 
             {visibleFreeTournaments.length === 0 ? (
-              <div
-                className="text-center py-12"
-                style={{ color: "rgba(255,255,255,0.4)" }}
-              >
+              <div className="text-center py-12" style={{ color: "#666666" }}>
                 <p className="text-4xl mb-3">🎮</p>
                 <p
                   className="font-bold"
                   style={{
                     fontFamily: "'Orbitron', sans-serif",
-                    color: "rgba(255,255,255,0.6)",
+                    color: "#666666",
                   }}
                 >
                   No tournaments available
@@ -1277,8 +1268,8 @@ export function TournamentsPage() {
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-5">
-                {visibleFreeTournaments.map((t) => (
-                  <FreeTournamentCard key={t.id} t={t} />
+                {visibleFreeTournaments.map((t, idx) => (
+                  <FreeTournamentCard key={t.id} t={t} index={idx} />
                 ))}
               </div>
             )}
@@ -1287,7 +1278,7 @@ export function TournamentsPage() {
 
         {/* ── PAID SECTION ── */}
         {section === "paid" && (
-          <div className="space-y-6">
+          <div className="space-y-6" style={{ paddingTop: 8 }}>
             {/* Filter chips — Type */}
             <div className="space-y-3">
               <div
@@ -1340,20 +1331,27 @@ export function TournamentsPage() {
                   <button
                     key={chip.value}
                     type="button"
-                    onClick={() => setStatusFilter(chip.value)}
+                    onClick={() => {
+                      setStatusFilter(chip.value);
+                      if (chip.value === "ongoing")
+                        window.open(
+                          "https://www.youtube.com/@KL_Tournaments",
+                          "_blank",
+                        );
+                    }}
                     className="flex-shrink-0 px-4 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wide transition-all"
                     style={{
                       background:
-                        statusFilter === chip.value ? "#6f42c1" : "#F0F0F0",
+                        statusFilter === chip.value ? "#00FF88" : "#F0F0F0",
                       color:
-                        statusFilter === chip.value ? "#FFFFFF" : "#555555",
+                        statusFilter === chip.value ? "#000000" : "#555555",
                       border:
                         statusFilter === chip.value
                           ? "none"
                           : "1px solid #E0E0E0",
                       boxShadow:
                         statusFilter === chip.value
-                          ? "0 0 8px rgba(111,66,193,0.3)"
+                          ? "0 0 8px rgba(0,255,136,0.3)"
                           : "none",
                     }}
                     data-ocid="tournaments.status_filter.tab"
@@ -1363,10 +1361,7 @@ export function TournamentsPage() {
                 ))}
               </div>
 
-              <div
-                className="text-sm"
-                style={{ color: "rgba(255,255,255,0.4)" }}
-              >
+              <div className="text-sm" style={{ color: "#555555" }}>
                 {filteredTournaments.length} tournament
                 {filteredTournaments.length !== 1 ? "s" : ""} found
               </div>
@@ -1385,10 +1380,11 @@ export function TournamentsPage() {
               </div>
             ) : filteredTournaments.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                {filteredTournaments.map((tournament) => (
+                {filteredTournaments.map((tournament, idx) => (
                   <TournamentCard
                     key={tournament.id.toString()}
                     tournament={tournament}
+                    index={idx}
                   />
                 ))}
               </div>
@@ -1416,7 +1412,10 @@ export function TournamentsPage() {
 // ─────────────────────────────────────────────
 // Paid Tournament Card (unchanged)
 // ─────────────────────────────────────────────
-function TournamentCard({ tournament }: { tournament: Tournament }) {
+function TournamentCard({
+  tournament,
+  index = 0,
+}: { tournament: Tournament; index?: number }) {
   const isUpcoming = tournament.status === "upcoming";
   const isOngoing = tournament.status === "ongoing";
   const isCompleted = tournament.status === "completed";
@@ -1434,9 +1433,10 @@ function TournamentCard({ tournament }: { tournament: Tournament }) {
     <div
       style={{
         background: "#FFFFFF",
-        border: "1px solid #E0E0E0",
-        borderRadius: 16,
-        boxShadow: "0 4px 12px rgba(0,0,0,0.05)",
+        border: "1px solid #E8E8E8",
+        borderRadius: 18,
+        borderLeft: `4px solid ${["#9d4edd", "#00FF88", "#FF6B35", "#00BFFF"][index % 4]}`,
+        boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
         overflow: "hidden",
         transition: "all 0.2s ease",
       }}
@@ -1590,9 +1590,10 @@ function TournamentCard({ tournament }: { tournament: Tournament }) {
                 }
               : isUpcoming
                 ? {
-                    background: "linear-gradient(135deg, #00FF88, #9d4edd)",
+                    background: "linear-gradient(135deg, #9d4edd, #6b21a8)",
                     color: "#FFFFFF",
-                    boxShadow: "0 0 12px rgba(0,255,136,0.3)",
+                    boxShadow: "0 0 12px rgba(157,78,221,0.4)",
+                    borderRadius: 50,
                   }
                 : {
                     background: "#F0F0F0",
@@ -1603,9 +1604,9 @@ function TournamentCard({ tournament }: { tournament: Tournament }) {
           data-ocid="tournaments.register.button"
         >
           {isOngoing
-            ? "View Live"
+            ? "🔴 View Live"
             : isUpcoming
-              ? "⚡ Register Now"
+              ? "⚡ PAY & REGISTER"
               : "View Details"}
         </Link>
       </div>

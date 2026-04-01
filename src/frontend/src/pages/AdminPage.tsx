@@ -245,187 +245,481 @@ function DynamicFreeTournamentAdminCard({
     onDelete();
   };
 
+  const handleCopyRoomId = () => {
+    if (!roomId) return;
+    navigator.clipboard
+      .writeText(roomId)
+      .then(() => toast.success("✅ Copied!", { duration: 2000 }));
+  };
+  const handleCopyPassword = () => {
+    if (!roomPassword) return;
+    navigator.clipboard
+      .writeText(roomPassword)
+      .then(() => toast.success("✅ Copied!", { duration: 2000 }));
+  };
+
+  const handleSubmitResults = () => {
+    toast.info("Go to Scores tab to submit results.", { duration: 3000 });
+  };
+
+  const formattedMatchTime = newMatchTime
+    ? new Date(newMatchTime).toLocaleString("en-IN", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+    : "Not set";
+
   return (
     <div
-      className="rounded-xl p-4 space-y-3"
-      style={{ background: "#f5f5f5", border: "1px solid #e0e0e0" }}
+      className="rounded-2xl p-6 space-y-5"
+      style={{
+        background: "#FFFFFF",
+        border: "1px solid #E5E7EB",
+        boxShadow: "0 4px 20px rgba(0,0,0,0.08)",
+        borderRadius: 20,
+      }}
     >
-      <div className="flex items-start justify-between">
-        <div className="flex-1 min-w-0">
-          <h3
-            className="font-bold text-sm truncate"
-            style={{ fontFamily: "'Orbitron', sans-serif", color: "#000" }}
-          >
-            {data.name}
-          </h3>
-          <p className="text-xs text-gray-500 mt-0.5">
-            {data.mode} · {data.maxPlayers} players · Prize: {data.prizePool}
-          </p>
-          <p className="text-xs text-gray-400">
-            👥 {joinCount}/{data.maxPlayers} joined
-          </p>
-        </div>
-        <div className="flex gap-1 ml-2 flex-shrink-0 flex-wrap justify-end">
+      {/* Header */}
+      <div className="flex items-start justify-between gap-3">
+        <h3
+          style={{
+            fontFamily: "'Orbitron', sans-serif",
+            color: "#000000",
+            fontWeight: 700,
+            fontSize: 18,
+          }}
+        >
+          🎮 {data.name}
+        </h3>
+        <div className="flex gap-2 flex-wrap justify-end">
           {matchStarted && (
             <span
-              className="px-2 py-0.5 rounded-full text-xs font-bold"
+              className="px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1"
               style={{
-                background: "rgba(255,215,0,0.2)",
-                color: "#d97706",
-                border: "1px solid rgba(255,215,0,0.4)",
+                background: "rgba(255,68,68,0.15)",
+                color: "#FF4444",
+                border: "1px solid rgba(255,68,68,0.4)",
+                animation: "pulse 1.5s infinite",
               }}
             >
-              🟡 LIVE
+              <span
+                style={{
+                  width: 6,
+                  height: 6,
+                  borderRadius: "50%",
+                  background: "#FF4444",
+                  display: "inline-block",
+                }}
+              />
+              LIVE
             </span>
           )}
           {isPublished && (
             <span
-              className="px-2 py-0.5 rounded-full text-xs font-bold"
+              className="px-3 py-1 rounded-full text-xs font-bold"
               style={{
-                background: "rgba(0,255,136,0.1)",
+                background: "rgba(0,255,136,0.15)",
                 color: "#00AA55",
-                border: "1px solid rgba(0,255,136,0.3)",
+                border: "1px solid rgba(0,255,136,0.4)",
               }}
             >
-              ✅ Published
+              ✅ PUBLISHED
+            </span>
+          )}
+          {!matchStarted && !isPublished && (
+            <span
+              className="px-3 py-1 rounded-full text-xs font-bold"
+              style={{
+                background: "rgba(59,130,246,0.15)",
+                color: "#3B82F6",
+                border: "1px solid rgba(59,130,246,0.4)",
+              }}
+            >
+              ⏰ UPCOMING
             </span>
           )}
         </div>
       </div>
 
-      <div className="flex gap-2">
-        <div className="flex-1 space-y-1">
-          <label
-            htmlFor={`dyn-room-id-${id}`}
-            className="text-xs font-semibold text-gray-600"
-          >
-            Room ID
-          </label>
-          <input
-            id={`dyn-room-id-${id}`}
-            type="text"
-            value={roomId}
-            onChange={(e) => setRoomId(e.target.value)}
-            placeholder="e.g., 213579050"
-            className="w-full rounded-lg px-3 py-2 text-sm font-mono outline-none"
-            style={{ background: "#fff", border: "1px solid #e0e0e0" }}
-            data-ocid="admin.free_tournament.room_id.input"
-          />
-        </div>
-        <div className="flex-1 space-y-1">
-          <label
-            htmlFor={`dyn-room-pw-${id}`}
-            className="text-xs font-semibold text-gray-600"
-          >
-            Password
-          </label>
-          <input
-            id={`dyn-room-pw-${id}`}
-            type="text"
-            value={roomPassword}
-            onChange={(e) => setRoomPassword(e.target.value)}
-            placeholder="e.g., 00"
-            className="w-full rounded-lg px-3 py-2 text-sm font-mono outline-none"
-            style={{ background: "#fff", border: "1px solid #e0e0e0" }}
-            data-ocid="admin.free_tournament.password.input"
-          />
+      {/* Stats Section */}
+      <div
+        className="rounded-xl p-4 space-y-3"
+        style={{ background: "#f9fafb", border: "1px solid #E5E7EB" }}
+      >
+        <p style={{ fontWeight: 600, fontSize: 15, color: "#333333" }}>
+          📊 TOURNAMENT STATS
+        </p>
+        <div className="grid grid-cols-2 gap-3 text-sm">
+          <div>
+            <span style={{ color: "#666666", fontSize: 13 }}>👥 Format</span>
+            <br />
+            <span style={{ color: "#111827", fontWeight: 600 }}>
+              {data.mode}
+            </span>
+          </div>
+          <div>
+            <span style={{ color: "#666666", fontSize: 13 }}>
+              🏆 Prize Pool
+            </span>
+            <br />
+            <span style={{ color: "#111827", fontWeight: 600 }}>
+              {data.prizePool}
+            </span>
+          </div>
+          <div>
+            <span style={{ color: "#666666", fontSize: 13 }}>🎁 Entry</span>
+            <br />
+            <span style={{ color: "#00AA55", fontWeight: 700 }}>FREE</span>
+          </div>
+          <div>
+            <span style={{ color: "#666666", fontSize: 13 }}>📅 Date</span>
+            <br />
+            <span style={{ color: "#111827", fontWeight: 600, fontSize: 12 }}>
+              {formattedMatchTime}
+            </span>
+          </div>
+          <div>
+            <span style={{ color: "#666666", fontSize: 13 }}>👥 Joined</span>
+            <br />
+            <span style={{ color: "#111827", fontWeight: 600 }}>
+              {joinCount}/{data.maxPlayers} players
+            </span>
+          </div>
         </div>
       </div>
-      <button
-        type="button"
-        onClick={handleSave}
-        className="w-full py-2 rounded-lg text-xs font-bold uppercase tracking-wide"
-        style={{
-          background: saved ? "rgba(0,255,136,0.1)" : "rgba(157,78,221,0.1)",
-          color: saved ? "#00AA55" : "#9d4edd",
-          border: `1px solid ${saved ? "rgba(0,255,136,0.4)" : "rgba(157,78,221,0.4)"}`,
-          fontFamily: "'Orbitron', sans-serif",
-        }}
-        data-ocid="admin.free_tournament.save_room.button"
-      >
-        {saved ? "✅ Saved!" : "🔑 Set Room ID & Password"}
-      </button>
 
-      <button
-        type="button"
-        onClick={toggleMatchStarted}
-        className="w-full py-2 rounded-lg text-xs font-bold uppercase tracking-wide"
-        style={{
-          background: matchStarted
-            ? "rgba(255,50,50,0.1)"
-            : "rgba(255,215,0,0.1)",
-          color: matchStarted ? "#ef4444" : "#d97706",
-          border: `1px solid ${matchStarted ? "rgba(255,50,50,0.4)" : "rgba(255,215,0,0.4)"}`,
-          fontFamily: "'Orbitron', sans-serif",
-        }}
-        data-ocid="admin.free_tournament.match_started.toggle"
+      {/* Match Details */}
+      <div
+        className="rounded-xl p-4 space-y-3"
+        style={{ background: "#f9fafb", border: "1px solid #E5E7EB" }}
       >
-        {matchStarted ? "⏹️ STOP MATCH" : "▶️ START MATCH (Activate LIVE)"}
-      </button>
+        <p style={{ fontWeight: 600, fontSize: 15, color: "#333333" }}>
+          🔐 MATCH DETAILS
+        </p>
+        <div className="space-y-2">
+          <div className="flex items-center justify-between gap-2">
+            <div>
+              <span style={{ color: "#666666", fontSize: 12 }}>Room ID</span>
+              <p
+                style={{
+                  fontFamily: "monospace",
+                  fontWeight: 700,
+                  color: "#111827",
+                  fontSize: 16,
+                }}
+              >
+                {roomId || "Not set"}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={handleCopyRoomId}
+              disabled={!roomId}
+              style={{
+                background: "#00FF88",
+                color: "#000",
+                border: "none",
+                borderRadius: 8,
+                padding: "6px 14px",
+                fontWeight: 700,
+                fontSize: 12,
+                cursor: roomId ? "pointer" : "not-allowed",
+                opacity: roomId ? 1 : 0.5,
+              }}
+            >
+              📋 COPY
+            </button>
+          </div>
+          <div className="flex items-center justify-between gap-2">
+            <div>
+              <span style={{ color: "#666666", fontSize: 12 }}>Password</span>
+              <p
+                style={{
+                  fontFamily: "monospace",
+                  fontWeight: 700,
+                  color: "#111827",
+                  fontSize: 16,
+                }}
+              >
+                {roomPassword || "Not set"}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={handleCopyPassword}
+              disabled={!roomPassword}
+              style={{
+                background: "#00FF88",
+                color: "#000",
+                border: "none",
+                borderRadius: 8,
+                padding: "6px 14px",
+                fontWeight: 700,
+                fontSize: 12,
+                cursor: roomPassword ? "pointer" : "not-allowed",
+                opacity: roomPassword ? 1 : 0.5,
+              }}
+            >
+              📋 COPY
+            </button>
+          </div>
+        </div>
+      </div>
 
-      <div className="space-y-2">
-        <label
-          htmlFor={`dyn-match-time-${id}`}
-          className="text-xs font-semibold text-gray-600"
-        >
-          ⏰ Edit Match Time
-        </label>
+      {/* Set Room Details form */}
+      <div
+        className="rounded-xl p-4 space-y-3"
+        style={{ background: "#f9fafb", border: "1px solid #E5E7EB" }}
+      >
+        <p style={{ fontWeight: 600, fontSize: 15, color: "#333333" }}>
+          ⚙️ ADMIN CONTROLS
+        </p>
+        <div className="flex gap-2">
+          <div className="flex-1 space-y-1">
+            <label
+              htmlFor={`dyn-room-id-${id}`}
+              style={{
+                color: "#666666",
+                fontSize: 12,
+                fontWeight: 600,
+                display: "block",
+              }}
+            >
+              Room ID
+            </label>
+            <input
+              id={`dyn-room-id-${id}`}
+              type="text"
+              value={roomId}
+              onChange={(e) => setRoomId(e.target.value)}
+              placeholder="e.g., 213579050"
+              style={{
+                width: "100%",
+                borderRadius: 8,
+                padding: "8px 12px",
+                fontSize: 13,
+                fontFamily: "monospace",
+                background: "#fff",
+                border: "1px solid #D1D5DB",
+                color: "#111827",
+              }}
+              data-ocid="admin.free_tournament.room_id.input"
+            />
+          </div>
+          <div className="flex-1 space-y-1">
+            <label
+              htmlFor={`dyn-room-pw-${id}`}
+              style={{
+                color: "#666666",
+                fontSize: 12,
+                fontWeight: 600,
+                display: "block",
+              }}
+            >
+              Password
+            </label>
+            <input
+              id={`dyn-room-pw-${id}`}
+              type="text"
+              value={roomPassword}
+              onChange={(e) => setRoomPassword(e.target.value)}
+              placeholder="e.g., 00"
+              style={{
+                width: "100%",
+                borderRadius: 8,
+                padding: "8px 12px",
+                fontSize: 13,
+                fontFamily: "monospace",
+                background: "#fff",
+                border: "1px solid #D1D5DB",
+                color: "#111827",
+              }}
+              data-ocid="admin.free_tournament.password.input"
+            />
+          </div>
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          <button
+            type="button"
+            onClick={handleSave}
+            style={{
+              background: "#00FF88",
+              color: "#000",
+              border: "none",
+              borderRadius: 10,
+              padding: "10px 0",
+              fontWeight: 700,
+              fontSize: 12,
+              cursor: "pointer",
+              fontFamily: "'Orbitron', sans-serif",
+            }}
+            data-ocid="admin.free_tournament.save_room.button"
+          >
+            {saved ? "✅ Saved!" : "🔧 SET ROOM ID & PASSWORD"}
+          </button>
+          <button
+            type="button"
+            onClick={toggleMatchStarted}
+            style={{
+              background: matchStarted ? "#FF4444" : "#00FF88",
+              color: matchStarted ? "#fff" : "#000",
+              border: "none",
+              borderRadius: 10,
+              padding: "10px 0",
+              fontWeight: 700,
+              fontSize: 12,
+              cursor: "pointer",
+              fontFamily: "'Orbitron', sans-serif",
+            }}
+            data-ocid="admin.free_tournament.match_started.toggle"
+          >
+            {matchStarted ? "⏹️ STOP MATCH" : "▶️ START MATCH"}
+          </button>
+          <button
+            type="button"
+            onClick={handleSubmitResults}
+            style={{
+              background: "#AA44FF",
+              color: "#fff",
+              border: "none",
+              borderRadius: 10,
+              padding: "10px 0",
+              fontWeight: 700,
+              fontSize: 12,
+              cursor: "pointer",
+              fontFamily: "'Orbitron', sans-serif",
+            }}
+          >
+            📝 SUBMIT RESULTS
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              if (window.confirm("Cancel match?")) {
+                localStorage.removeItem(`freeMatchStarted_${id}`);
+                setMatchStarted(false);
+                window.dispatchEvent(new Event("freeTournamentUpdated"));
+                toast.success("Match cancelled.");
+              }
+            }}
+            style={{
+              background: "#666666",
+              color: "#fff",
+              border: "none",
+              borderRadius: 10,
+              padding: "10px 0",
+              fontWeight: 700,
+              fontSize: 12,
+              cursor: "pointer",
+              fontFamily: "'Orbitron', sans-serif",
+            }}
+          >
+            ❌ CANCEL MATCH
+          </button>
+        </div>
+      </div>
+
+      {/* Match Timing */}
+      <div
+        className="rounded-xl p-4 space-y-3"
+        style={{ background: "#f9fafb", border: "1px solid #E5E7EB" }}
+      >
+        <p style={{ fontWeight: 600, fontSize: 15, color: "#333333" }}>
+          🕐 MATCH TIMING
+        </p>
+        <p style={{ color: "#666666", fontSize: 13 }}>
+          Match Time:{" "}
+          <span style={{ color: "#111827", fontWeight: 600 }}>
+            {formattedMatchTime}
+          </span>
+        </p>
         <input
           id={`dyn-match-time-${id}`}
           type="datetime-local"
           value={newMatchTime}
           onChange={(e) => setNewMatchTime(e.target.value)}
-          className="w-full rounded-lg px-3 py-2 text-sm outline-none"
-          style={{ background: "#fff", border: "1px solid #e0e0e0" }}
+          style={{
+            width: "100%",
+            borderRadius: 8,
+            padding: "8px 12px",
+            fontSize: 13,
+            background: "#fff",
+            border: "1px solid #D1D5DB",
+            color: "#111827",
+          }}
           data-ocid="admin.free_tournament.match_time.input"
         />
         <button
           type="button"
           onClick={handleUpdateTime}
-          className="w-full py-2 rounded-lg text-xs font-bold uppercase tracking-wide"
           style={{
-            background: timeSaved ? "rgba(0,255,136,0.1)" : "rgba(0,0,0,0.05)",
-            color: timeSaved ? "#00AA55" : "#666",
-            border: "1px solid #e0e0e0",
+            width: "100%",
+            background: "#00FF88",
+            color: "#000",
+            border: "none",
+            borderRadius: 10,
+            padding: "10px 0",
+            fontWeight: 700,
+            fontSize: 12,
+            cursor: "pointer",
             fontFamily: "'Orbitron', sans-serif",
           }}
           data-ocid="admin.free_tournament.update_time.button"
         >
-          {timeSaved ? "✅ Time Updated!" : "✅ Update Match Time"}
+          {timeSaved ? "✅ Time Updated!" : "🟢 UPDATE MATCH TIME"}
         </button>
       </div>
 
-      <div className="flex gap-2">
-        <button
-          type="button"
-          onClick={togglePublish}
-          className="flex-1 py-2 rounded-lg text-xs font-bold uppercase tracking-wide"
-          style={{
-            background: isPublished
-              ? "rgba(255,50,50,0.1)"
-              : "rgba(0,255,136,0.1)",
-            color: isPublished ? "#ef4444" : "#00AA55",
-            border: `1px solid ${isPublished ? "rgba(255,50,50,0.4)" : "rgba(0,255,136,0.4)"}`,
-            fontFamily: "'Orbitron', sans-serif",
-          }}
-          data-ocid="admin.free_tournament.publish.toggle"
-        >
-          {isPublished ? "⛔ Unpublish" : "🚀 Publish"}
-        </button>
-        <button
-          type="button"
-          onClick={handleDelete}
-          className="px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wide"
-          style={{
-            background: "rgba(255,50,50,0.1)",
-            color: "#ef4444",
-            border: "1px solid rgba(255,50,50,0.4)",
-            fontFamily: "'Orbitron', sans-serif",
-          }}
-          data-ocid="admin.free_tournament.delete_button"
-        >
-          🗑️ Delete
-        </button>
+      {/* Status / Publish / Delete */}
+      <div
+        className="rounded-xl p-4 space-y-3"
+        style={{ background: "#f9fafb", border: "1px solid #E5E7EB" }}
+      >
+        <p style={{ fontWeight: 600, fontSize: 15, color: "#333333" }}>
+          🏷️ TOURNAMENT STATUS
+        </p>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={togglePublish}
+            className="flex-1"
+            style={{
+              background: isPublished ? "#FFAA33" : "#00FF88",
+              color: "#000",
+              border: "none",
+              borderRadius: 10,
+              padding: "10px 0",
+              fontWeight: 700,
+              fontSize: 12,
+              cursor: "pointer",
+              fontFamily: "'Orbitron', sans-serif",
+            }}
+            data-ocid="admin.free_tournament.publish.toggle"
+          >
+            {isPublished ? "🟡 UNPUBLISH" : "🚀 PUBLISH"}
+          </button>
+          <button
+            type="button"
+            onClick={handleDelete}
+            style={{
+              background: "#FF4444",
+              color: "#fff",
+              border: "none",
+              borderRadius: 10,
+              padding: "10px 16px",
+              fontWeight: 700,
+              fontSize: 12,
+              cursor: "pointer",
+              fontFamily: "'Orbitron', sans-serif",
+            }}
+            data-ocid="admin.free_tournament.delete_button"
+          >
+            🔴 DELETE
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -2627,15 +2921,22 @@ function ScoresTab() {
                 <SelectValue placeholder="Select tournament" />
               </SelectTrigger>
               <SelectContent>
+                {/* Paid tournaments */}
                 {tournaments
                   ?.filter(
                     (t) => t.status === "ongoing" || t.status === "completed",
                   )
                   .map((t) => (
                     <SelectItem key={t.id.toString()} value={t.id.toString()}>
-                      {t.name}
+                      [PAID] {t.name}
                     </SelectItem>
                   ))}
+                {/* Free tournaments from localStorage */}
+                {loadStoredFreeTournaments().map(({ id, data }) => (
+                  <SelectItem key={id} value={id}>
+                    [FREE] {data.name}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -2878,7 +3179,7 @@ function WithdrawalsTab() {
     <div className="space-y-4">
       {/* Fraud alerts */}
       {fraudUpiIds.size > 0 && (
-        <Card className="border-destructive/30 bg-destructive/5">
+        <Card className="border-red-200 bg-red-50">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm text-destructive flex items-center gap-2">
               <AlertTriangle className="h-4 w-4" />
@@ -3186,6 +3487,51 @@ function VoucherTransactionsLog() {
 
 function UsersTab() {
   const { data: users } = useGetAllUsers();
+  const [firestoreUsers, setFirestoreUsers] = useState<
+    Array<{ username: string; email: string; role: string; banned: boolean }>
+  >([]);
+
+  useEffect(() => {
+    const fetchFirestoreUsers = async () => {
+      try {
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
+        const { collection, getDocs } = await import("firebase/firestore");
+        // @ts-ignore
+        const { getFirebaseDb } = await import("../lib/firebase");
+        const db = getFirebaseDb();
+        // @ts-ignore
+        const snap = await getDocs(collection(db, "users"));
+        const fUsers = snap.docs.map((d) => {
+          const data = d.data();
+          return {
+            username: data.display_name || data.username || d.id,
+            email: data.email || "",
+            role: "user",
+            banned: false,
+          };
+        });
+        setFirestoreUsers(fUsers);
+      } catch {
+        /* ignore */
+      }
+    };
+    fetchFirestoreUsers();
+  }, []);
+
+  const mergedUsers = (() => {
+    const motokoUsers = users ?? [];
+    if (motokoUsers.length > 0) {
+      const existingEmails = new Set(
+        motokoUsers.map((u) => u.email?.toLowerCase()).filter(Boolean),
+      );
+      const extraFirestore = firestoreUsers.filter(
+        (u) => !existingEmails.has(u.email?.toLowerCase()),
+      );
+      return [...motokoUsers, ...extraFirestore];
+    }
+    return firestoreUsers;
+  })();
 
   return (
     <Card>
@@ -3204,8 +3550,8 @@ function UsersTab() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {users && users.length > 0 ? (
-              users.map((user) => (
+            {mergedUsers.length > 0 ? (
+              mergedUsers.map((user) => (
                 <TableRow
                   key={`${user.username}-${user.email}`}
                   data-ocid={"admin.users.row"}
@@ -4180,9 +4526,9 @@ function ReferralsTab() {
       <div
         className="rounded-2xl p-5"
         style={{
-          background: "rgba(10,10,10,0.92)",
-          border: "1.5px solid rgba(0,255,136,0.35)",
-          boxShadow: "0 0 24px rgba(0,255,136,0.1)",
+          background: "#FFFFFF",
+          border: "1px solid #E0E0E0",
+          boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
         }}
       >
         <p
@@ -4314,8 +4660,8 @@ function ReferralsTab() {
           <div
             className="rounded-xl p-3 text-center"
             style={{
-              background: "rgba(0,255,136,0.06)",
-              border: "1px solid rgba(0,255,136,0.15)",
+              background: "#F0FFF8",
+              border: "1px solid #D1FAE5",
             }}
           >
             <p
@@ -4343,8 +4689,8 @@ function ReferralsTab() {
           <div
             className="rounded-xl p-3 text-center"
             style={{
-              background: "rgba(157,78,221,0.06)",
-              border: "1px solid rgba(157,78,221,0.15)",
+              background: "#FAF0FF",
+              border: "1px solid #E9D5FF",
             }}
           >
             <p
@@ -4392,7 +4738,7 @@ function ReferralsTab() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="border-green-500/30 bg-green-950/20">
+        <Card className="border-green-200 bg-green-50">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm text-muted-foreground flex items-center gap-2">
               <Gift className="h-4 w-4 text-green-400" />
@@ -4400,13 +4746,13 @@ function ReferralsTab() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-bold text-green-400">
+            <p className="text-3xl font-bold text-green-600">
               {stats.totalReferrals}
             </p>
           </CardContent>
         </Card>
 
-        <Card className="border-yellow-500/30 bg-yellow-950/20">
+        <Card className="border-yellow-200 bg-yellow-50">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm text-muted-foreground flex items-center gap-2">
               <IndianRupee className="h-4 w-4 text-yellow-400" />
@@ -4414,13 +4760,13 @@ function ReferralsTab() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-bold text-yellow-400">
+            <p className="text-3xl font-bold text-yellow-600">
               ₹{stats.totalEarnings.toFixed(2)}
             </p>
           </CardContent>
         </Card>
 
-        <Card className="border-destructive/30 bg-destructive/5">
+        <Card className="border-red-200 bg-red-50">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm text-muted-foreground flex items-center gap-2">
               <ShieldAlert className="h-4 w-4 text-destructive" />
@@ -4428,7 +4774,7 @@ function ReferralsTab() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-bold text-destructive">
+            <p className="text-3xl font-bold text-red-600">
               {stats.fraudAttempts}
             </p>
           </CardContent>
@@ -4437,7 +4783,7 @@ function ReferralsTab() {
 
       {/* Fraud Alerts */}
       {fraudOnly.length > 0 && (
-        <Card className="border-yellow-500/40 bg-yellow-950/20">
+        <Card className="border-yellow-200 bg-yellow-50">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-yellow-400">
               <AlertTriangle className="h-5 w-5" />

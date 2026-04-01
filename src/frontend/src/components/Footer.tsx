@@ -103,10 +103,10 @@ export function Footer() {
             <h4 className="font-semibold mb-3">Connect With Us</h4>
             <div className="flex space-x-4 items-center">
               <a
-                href="https://www.instagram.com/khalnayak_esports007?igsh=MWdqOWJ4MW1wbzM4bQ=="
+                href="https://www.instagram.com/kl_tournaments007?igsh=eHRqdXdqMG5xMGJs"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-muted-foreground hover:text-pink-500 transition-colors"
+                className="text-muted-foreground hover:text-[#00FF88] transition-colors"
                 aria-label="Instagram"
                 data-ocid="footer.instagram.link"
               >
