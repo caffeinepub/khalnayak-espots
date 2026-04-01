@@ -33,7 +33,7 @@ import {
 import { useState } from "react";
 import { toast } from "sonner";
 
-const YOUTUBE_URL = "https://www.youtube.com/@KL_Tournaments";
+const YOUTUBE_URL = "https://www.youtube.com/@kl_tournament_007";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 type FreeMyMatch = {
@@ -305,7 +305,8 @@ function FreeMatchCard({
         <div style={{ display: "flex", gap: 10 }}>
           <button
             type="button"
-            onClick={() => window.open(YOUTUBE_URL, "_blank")}
+            disabled={!isLive}
+            onClick={() => isLive && window.open(YOUTUBE_URL, "_blank")}
             style={{
               flex: 1,
               background: isLive ? "#EF4444" : "#f1f5f9",
@@ -315,7 +316,7 @@ function FreeMatchCard({
               padding: "10px 0",
               fontWeight: 700,
               fontSize: 12,
-              cursor: "pointer",
+              cursor: isLive ? "pointer" : "not-allowed",
               fontFamily: "'Orbitron', sans-serif",
               display: "flex",
               alignItems: "center",
@@ -324,7 +325,14 @@ function FreeMatchCard({
             }}
             data-ocid={`free_match.live_button.${index}`}
           >
-            🔗 LIVE
+            {isLive ? (
+              <>
+                <span className="inline-block w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+                🔗 VIEW LIVE
+              </>
+            ) : (
+              "🔗 LIVE"
+            )}
           </button>
           <button
             type="button"
@@ -819,7 +827,8 @@ function MatchCard({
         <div style={{ display: "flex", gap: 10 }}>
           <button
             type="button"
-            onClick={() => window.open(YOUTUBE_URL, "_blank")}
+            disabled={!isLive}
+            onClick={() => isLive && window.open(YOUTUBE_URL, "_blank")}
             style={{
               flex: 1,
               background: isLive ? "#EF4444" : "#f1f5f9",
@@ -829,12 +838,23 @@ function MatchCard({
               padding: "10px 0",
               fontWeight: 700,
               fontSize: 12,
-              cursor: "pointer",
+              cursor: isLive ? "pointer" : "not-allowed",
               fontFamily: "'Orbitron', sans-serif",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 6,
             }}
             data-ocid={`my_matches.live_button.${index}`}
           >
-            🔗 LIVE
+            {isLive ? (
+              <>
+                <span className="inline-block w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+                VIEW LIVE
+              </>
+            ) : (
+              "🔗 LIVE"
+            )}
           </button>
 
           {hasRoom ? (

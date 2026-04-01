@@ -507,13 +507,21 @@ function FreeTournamentCard({
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
         style={{
-          background: "#FFFFFF",
-          border: "1px solid #E8E8E8",
+          background: matchStarted ? "rgba(255,0,0,0.03)" : "#FFFFFF",
+          border: matchStarted
+            ? "1.5px solid rgba(220,53,69,0.4)"
+            : "1px solid #E8E8E8",
           borderRadius: 18,
-          borderLeft: `4px solid ${["#00FF88", "#9d4edd", "#FF6B35", "#00BFFF"][index % 4]}`,
-          boxShadow: hovered
-            ? "0 8px 24px rgba(0,0,0,0.15)"
-            : "0 4px 12px rgba(0,0,0,0.08)",
+          borderLeft: matchStarted
+            ? "4px solid #dc3545"
+            : `4px solid ${["#00FF88", "#9d4edd", "#FF6B35", "#00BFFF"][index % 4]}`,
+          boxShadow: matchStarted
+            ? hovered
+              ? "0 8px 24px rgba(220,53,69,0.25)"
+              : "0 4px 16px rgba(220,53,69,0.15)"
+            : hovered
+              ? "0 8px 24px rgba(0,0,0,0.15)"
+              : "0 4px 12px rgba(0,0,0,0.08)",
           transform: hovered ? "scale(1.02)" : "scale(1)",
           transition: "all 0.2s ease",
           overflow: "hidden",
@@ -524,18 +532,29 @@ function FreeTournamentCard({
           {/* Badges row */}
           <div className="flex items-center justify-between gap-2">
             {/* FREE badge */}
-            <span
-              className="text-xs font-bold uppercase px-2 py-0.5 rounded-full"
-              style={{
-                background: "#00FF88",
-                color: "#000000",
-                borderRadius: 20,
-                boxShadow: "0 0 10px rgba(0,255,136,0.5)",
-                fontWeight: 800,
-              }}
-            >
-              🎁 FREE
-            </span>
+            <div className="flex items-center gap-1.5">
+              <span
+                className="text-xs font-bold uppercase px-2 py-0.5 rounded-full"
+                style={{
+                  background: "#00FF88",
+                  color: "#000000",
+                  borderRadius: 20,
+                  boxShadow: "0 0 10px rgba(0,255,136,0.5)",
+                  fontWeight: 800,
+                }}
+              >
+                🎁 FREE
+              </span>
+              {matchStarted && (
+                <span
+                  className="text-xs font-bold uppercase px-2 py-0.5 rounded-full flex items-center gap-1"
+                  style={{ background: "#dc3545", color: "#FFFFFF" }}
+                >
+                  <span className="inline-block w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+                  LIVE
+                </span>
+              )}
+            </div>
             <span
               className="text-xs font-medium px-2 py-0.5 rounded-full"
               style={{
@@ -740,7 +759,10 @@ function FreeTournamentCard({
               data-ocid="free_tournament.live_button"
               onClick={() =>
                 matchStarted &&
-                window.open("https://www.youtube.com/@KL_Tournaments", "_blank")
+                window.open(
+                  "https://www.youtube.com/@kl_tournament_007",
+                  "_blank",
+                )
               }
             >
               🔴 LIVE
@@ -1175,6 +1197,18 @@ export function TournamentsPage() {
         {section === "free" && (
           <div className="space-y-4">
             {/* Status tabs — Upcoming / Live / Done */}
+            <div style={{ marginBottom: 6 }}>
+              <p
+                className="text-xs font-bold uppercase"
+                style={{
+                  color: "#888888",
+                  fontFamily: "'Orbitron', sans-serif",
+                  letterSpacing: 1,
+                }}
+              >
+                ALL STATUS
+              </p>
+            </div>
             <div
               style={{
                 display: "flex",
@@ -1196,14 +1230,7 @@ export function TournamentsPage() {
                   <button
                     key={tab}
                     type="button"
-                    onClick={() => {
-                      setFreeStatusTab(tab);
-                      if (tab === "live")
-                        window.open(
-                          "https://www.youtube.com/@KL_Tournaments",
-                          "_blank",
-                        );
-                    }}
+                    onClick={() => setFreeStatusTab(tab)}
                     style={{
                       flexShrink: 0,
                       padding: "8px 20px",
@@ -1331,14 +1358,7 @@ export function TournamentsPage() {
                   <button
                     key={chip.value}
                     type="button"
-                    onClick={() => {
-                      setStatusFilter(chip.value);
-                      if (chip.value === "ongoing")
-                        window.open(
-                          "https://www.youtube.com/@KL_Tournaments",
-                          "_blank",
-                        );
-                    }}
+                    onClick={() => setStatusFilter(chip.value)}
                     className="flex-shrink-0 px-4 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wide transition-all"
                     style={{
                       background:
