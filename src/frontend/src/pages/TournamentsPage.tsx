@@ -341,7 +341,11 @@ function FreeRegistrationModal({
             <form onSubmit={handleSubmit} className="space-y-4 pt-1">
               {/* Nickname */}
               <div className="space-y-1.5">
-                <Label htmlFor="fn-nick" className="font-semibold text-white">
+                <Label
+                  htmlFor="fn-nick"
+                  className="font-semibold"
+                  style={{ color: "#111827", fontWeight: 700 }}
+                >
                   Free Fire Nickname *
                 </Label>
                 <Input
@@ -355,7 +359,8 @@ function FreeRegistrationModal({
                   }
                   style={{
                     background: "#F5F5F5",
-                    color: "#fff",
+                    color: "#111827",
+                    border: "1px solid #D1D5DB",
                   }}
                   data-ocid="free_tournament.input"
                 />
@@ -368,7 +373,11 @@ function FreeRegistrationModal({
 
               {/* UID */}
               <div className="space-y-1.5">
-                <Label htmlFor="fn-uid" className="font-semibold text-white">
+                <Label
+                  htmlFor="fn-uid"
+                  className="font-semibold"
+                  style={{ color: "#111827", fontWeight: 700 }}
+                >
                   Free Fire UID *{" "}
                   <span
                     className="text-xs font-normal"
@@ -396,7 +405,8 @@ function FreeRegistrationModal({
                   }
                   style={{
                     background: "#F5F5F5",
-                    color: "#fff",
+                    color: "#111827",
+                    border: "1px solid #D1D5DB",
                   }}
                   data-ocid="free_tournament.input"
                 />
@@ -417,7 +427,7 @@ function FreeRegistrationModal({
                 <Label
                   htmlFor="fn-confirm"
                   className="text-sm cursor-pointer leading-relaxed"
-                  style={{ color: "#666666" }}
+                  style={{ color: "#333333" }}
                 >
                   Main confirm karta/karti hoon ki ye details sahi hain aur main
                   tournament rules se agree karta/karti hoon.
@@ -434,15 +444,13 @@ function FreeRegistrationModal({
                 disabled={state === "submitting"}
                 className="w-full py-4 rounded-xl font-bold uppercase tracking-widest text-base transition-all active:scale-95 disabled:opacity-60"
                 style={{
-                  background:
-                    state === "submitting"
-                      ? "#5a2d91"
-                      : "linear-gradient(135deg, #9d4edd, #7b2fbf)",
-                  color: "#fff",
+                  background: state === "submitting" ? "#00cc6a" : "#00FF88",
+                  color: "#000000",
+                  fontWeight: 700,
                   boxShadow:
                     state === "submitting"
                       ? "none"
-                      : "0 0 20px rgba(157,78,221,0.5)",
+                      : "0 0 20px rgba(0,255,136,0.5)",
                   fontFamily: "'Orbitron', sans-serif",
                 }}
                 data-ocid="free_tournament.submit_button"
@@ -475,10 +483,61 @@ function FreeTournamentCard({
   const [matchStarted, setMatchStarted] = useState(() =>
     isFreeMatchStarted(t.id),
   );
+  const [isDone, setIsDone] = useState(
+    () => localStorage.getItem(`freeMatchDone_${t.id}`) === "true",
+  );
   const [showRoomPopup, setShowRoomPopup] = useState(false);
   const [isJoined, setIsJoined] = useState(
     () => localStorage.getItem(`ke_free_joined_${t.id}`) === "true",
   );
+  const [showResultModal, setShowResultModal] = useState(false);
+  const [resultData, setResultData] = useState<
+    Array<{
+      id?: string;
+      tournamentId: string;
+      tournamentName: string;
+      playerName: string;
+      kills: number;
+      rank: number;
+      rankLabel: string;
+      prizeAmount: number;
+      completedAt: string;
+    }>
+  >([]);
+  const [resultLoading, setResultLoading] = useState(false);
+
+  const fetchResults = async () => {
+    setResultLoading(true);
+    try {
+      const { collection, query, where, getDocs } = await import(
+        "firebase/firestore"
+      );
+      const { getFirebaseDb } = await import("../lib/firebase");
+      const db = getFirebaseDb();
+      const q = query(
+        collection(db, "matchResults"),
+        where("tournamentId", "==", t.id),
+      );
+      const snap = await getDocs(q);
+      const all = snap.docs.map(
+        (d) =>
+          ({ id: d.id, ...d.data() }) as {
+            id: string;
+            tournamentId: string;
+            tournamentName: string;
+            playerName: string;
+            kills: number;
+            rank: number;
+            rankLabel: string;
+            prizeAmount: number;
+            completedAt: string;
+          },
+      );
+      all.sort((a, b) => a.rank - b.rank);
+      setResultData(all);
+    } catch {}
+    setResultLoading(false);
+  };
 
   useEffect(() => {
     const handler = () => {
@@ -486,6 +545,7 @@ function FreeTournamentCard({
       setRoomId(getFreeRoomId(t.id));
       setRoomPassword(getFreeRoomPassword(t.id));
       setMatchStarted(isFreeMatchStarted(t.id));
+      setIsDone(localStorage.getItem(`freeMatchDone_${t.id}`) === "true");
       setIsJoined(localStorage.getItem(`ke_free_joined_${t.id}`) === "true");
     };
     window.addEventListener("storage", handler);
@@ -742,55 +802,81 @@ function FreeTournamentCard({
 
           {/* Action Buttons Row */}
           <div className="flex gap-2">
-            <button
-              type="button"
-              disabled={!matchStarted}
-              className="flex-1 py-2 rounded-lg font-bold text-xs uppercase tracking-wide transition-all"
-              style={{
-                background: matchStarted
-                  ? "linear-gradient(135deg, #dc3545, #a71d2a)"
-                  : "#F0F0F0",
-                color: matchStarted ? "#FFFFFF" : "#CCCCCC",
-                border: matchStarted ? "none" : "1px solid #E0E0E0",
-                boxShadow: "none",
-                cursor: matchStarted ? "pointer" : "not-allowed",
-                fontFamily: "'Orbitron', sans-serif",
-              }}
-              data-ocid="free_tournament.live_button"
-              onClick={() =>
-                matchStarted &&
-                window.open(
-                  "https://www.youtube.com/@kl_tournament_007",
-                  "_blank",
-                )
-              }
-            >
-              🔴 LIVE
-            </button>
+            {matchStarted && !isDone && (
+              <button
+                type="button"
+                className="flex-1 py-2 rounded-lg font-bold text-xs uppercase tracking-wide transition-all flex items-center justify-center gap-1"
+                style={{
+                  background: "linear-gradient(135deg, #dc3545, #a71d2a)",
+                  color: "#FFFFFF",
+                  border: "none",
+                  boxShadow: "0 0 12px rgba(220,53,69,0.4)",
+                  cursor: "pointer",
+                  fontFamily: "'Orbitron', sans-serif",
+                  borderRadius: 25,
+                }}
+                data-ocid="free_tournament.live_button"
+                onClick={() =>
+                  window.open(
+                    "https://www.youtube.com/@kl_tournament_007",
+                    "_blank",
+                  )
+                }
+              >
+                <span className="inline-block w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+                🔴 VIEW LIVE
+              </button>
+            )}
 
-            <button
-              type="button"
-              disabled={!roomId}
-              onClick={() => roomId && setShowRoomPopup(true)}
-              className="flex-1 py-2 rounded-lg font-bold text-xs uppercase tracking-wide transition-all"
-              style={{
-                background: roomId
-                  ? "linear-gradient(135deg, #9d4edd, #6a0dad)"
-                  : "#F0F0F0",
-                color: roomId ? "#FFFFFF" : "#CCCCCC",
-                border: roomId ? "none" : "1px solid #E0E0E0",
-                boxShadow: roomId ? "0 0 10px rgba(157,78,221,0.3)" : "none",
-                cursor: roomId ? "pointer" : "not-allowed",
-                fontFamily: "'Orbitron', sans-serif",
-              }}
-              data-ocid="free_tournament.id_password_button"
-            >
-              🔑 ID/PASSWORD
-            </button>
+            {!matchStarted && !isDone && (
+              <button
+                type="button"
+                disabled={!roomId}
+                onClick={() => roomId && setShowRoomPopup(true)}
+                className="flex-1 py-2 rounded-lg font-bold text-xs uppercase tracking-wide transition-all"
+                style={{
+                  background: roomId
+                    ? "linear-gradient(135deg, #9d4edd, #6a0dad)"
+                    : "#F0F0F0",
+                  color: roomId ? "#FFFFFF" : "#CCCCCC",
+                  border: roomId ? "none" : "1px solid #E0E0E0",
+                  boxShadow: roomId ? "0 0 10px rgba(157,78,221,0.3)" : "none",
+                  cursor: roomId ? "pointer" : "not-allowed",
+                  fontFamily: "'Orbitron', sans-serif",
+                }}
+                data-ocid="free_tournament.id_password_button"
+              >
+                🔑 ID/PASSWORD
+              </button>
+            )}
+
+            {isDone && (
+              <button
+                type="button"
+                className="flex-1 py-2.5 rounded-lg font-bold text-xs uppercase tracking-wide transition-all active:scale-95"
+                style={{
+                  background: "#00FF88",
+                  color: "#000000",
+                  border: "none",
+                  borderRadius: 25,
+                  fontWeight: 700,
+                  cursor: "pointer",
+                  fontFamily: "'Orbitron', sans-serif",
+                  boxShadow: "0 0 12px rgba(0,255,136,0.4)",
+                }}
+                data-ocid="free_tournament.result_button"
+                onClick={() => {
+                  fetchResults();
+                  setShowResultModal(true);
+                }}
+              >
+                📊 Result
+              </button>
+            )}
           </div>
 
-          {/* Main JOIN button */}
-          {isJoined ? (
+          {/* Main JOIN / JOINED / Status button */}
+          {isDone ? null : matchStarted ? null : isJoined ? (
             <button
               type="button"
               disabled
@@ -846,17 +932,17 @@ function FreeTournamentCard({
           <div
             className="w-full max-w-xs rounded-xl p-5 space-y-4"
             style={{
-              background: "rgba(16,24,48,0.97)",
-              border: "1px solid rgba(157,78,221,0.5)",
-              boxShadow: "0 0 32px rgba(157,78,221,0.3)",
+              background: "#FFFFFF",
+              border: "1px solid #E0E0E0",
+              boxShadow: "0 8px 32px rgba(0,0,0,0.15)",
             }}
             role="presentation"
             onClick={(e) => e.stopPropagation()}
             onKeyDown={(e) => e.stopPropagation()}
           >
             <h3
-              className="text-center font-bold text-white text-lg"
-              style={{ fontFamily: "'Orbitron', sans-serif" }}
+              className="text-center font-bold text-lg"
+              style={{ fontFamily: "'Orbitron', sans-serif", color: "#000000" }}
             >
               🔑 Room Details
             </h3>
@@ -869,11 +955,20 @@ function FreeTournamentCard({
             >
               {/* Room ID row */}
               <div className="space-y-1">
-                <span style={{ color: "#666666", fontSize: 12 }}>Room ID</span>
+                <span
+                  style={{ color: "#111827", fontSize: 12, fontWeight: 700 }}
+                >
+                  Room ID
+                </span>
                 <div className="flex items-center justify-between gap-2">
                   <span
-                    className="font-mono font-bold text-white text-lg"
-                    style={{ letterSpacing: "0.05em" }}
+                    style={{
+                      fontFamily: "monospace",
+                      fontWeight: 700,
+                      fontSize: 20,
+                      color: "#111827",
+                      letterSpacing: "0.05em",
+                    }}
                   >
                     {roomId}
                   </span>
@@ -885,9 +980,9 @@ function FreeTournamentCard({
                       fontWeight: 700,
                       padding: "5px 12px",
                       borderRadius: 7,
-                      border: "1.5px solid #00FF88",
-                      background: "rgba(0,255,136,0.13)",
-                      color: "#00FF88",
+                      border: "none",
+                      background: "#00FF88",
+                      color: "#000000",
                       cursor: "pointer",
                       whiteSpace: "nowrap",
                     }}
@@ -903,11 +998,20 @@ function FreeTournamentCard({
               </div>
               {/* Password row */}
               <div className="space-y-1">
-                <span style={{ color: "#666666", fontSize: 12 }}>Password</span>
+                <span
+                  style={{ color: "#111827", fontSize: 12, fontWeight: 700 }}
+                >
+                  Password
+                </span>
                 <div className="flex items-center justify-between gap-2">
                   <span
-                    className="font-mono font-bold text-white text-lg"
-                    style={{ letterSpacing: "0.05em" }}
+                    style={{
+                      fontFamily: "monospace",
+                      fontWeight: 700,
+                      fontSize: 20,
+                      color: "#111827",
+                      letterSpacing: "0.05em",
+                    }}
                   >
                     {roomPassword || "—"}
                   </span>
@@ -919,9 +1023,9 @@ function FreeTournamentCard({
                       fontWeight: 700,
                       padding: "5px 12px",
                       borderRadius: 7,
-                      border: "1.5px solid #9d4edd",
-                      background: "rgba(157,78,221,0.13)",
-                      color: "#9d4edd",
+                      border: "none",
+                      background: "#00FF88",
+                      color: "#000000",
                       cursor: roomPassword ? "pointer" : "not-allowed",
                       opacity: roomPassword ? 1 : 0.5,
                       whiteSpace: "nowrap",
@@ -943,8 +1047,8 @@ function FreeTournamentCard({
               type="button"
               className="w-full py-1.5 rounded-lg text-sm"
               style={{
-                color: "#666666",
-                background: "transparent",
+                color: "#333333",
+                background: "#F5F5F5",
                 border: "1px solid #E0E0E0",
               }}
               onClick={() => setShowRoomPopup(false)}
@@ -960,6 +1064,167 @@ function FreeTournamentCard({
         isOpen={modalOpen}
         onClose={() => setModalOpen(false)}
       />
+
+      {/* Result Modal */}
+      {showResultModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ background: "rgba(0,0,0,0.7)" }}
+          role="presentation"
+          onClick={() => setShowResultModal(false)}
+          onKeyDown={(e) => e.key === "Escape" && setShowResultModal(false)}
+        >
+          <div
+            className="w-full max-w-sm rounded-2xl p-6 space-y-4"
+            style={{
+              background: "#FFFFFF",
+              border: "1px solid #e5e7eb",
+              boxShadow: "0 8px 32px rgba(0,0,0,0.15)",
+              maxHeight: "80vh",
+              overflowY: "auto",
+            }}
+            role="presentation"
+            onClick={(e) => e.stopPropagation()}
+            onKeyDown={(e) => e.stopPropagation()}
+          >
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                marginBottom: 4,
+              }}
+            >
+              <h3
+                style={{
+                  fontFamily: "'Orbitron', sans-serif",
+                  color: "#000000",
+                  fontWeight: 700,
+                  fontSize: 18,
+                }}
+              >
+                🏆 MATCH RESULT
+              </h3>
+              <button
+                type="button"
+                onClick={() => setShowResultModal(false)}
+                style={{
+                  background: "none",
+                  border: "none",
+                  fontSize: 20,
+                  cursor: "pointer",
+                  color: "#666",
+                }}
+              >
+                ×
+              </button>
+            </div>
+            <div
+              style={{
+                background: "#f9fafb",
+                borderRadius: 12,
+                padding: 14,
+                border: "1px solid #e5e7eb",
+                marginBottom: 8,
+              }}
+            >
+              <p style={{ color: "#666", fontSize: 12 }}>🎮 Tournament</p>
+              <p style={{ color: "#111827", fontWeight: 700, marginBottom: 8 }}>
+                {t.name}
+              </p>
+            </div>
+            {resultLoading ? (
+              <p style={{ color: "#888", textAlign: "center", padding: 16 }}>
+                ⏳ Loading results...
+              </p>
+            ) : resultData.length === 0 ? (
+              <p style={{ color: "#888", textAlign: "center", padding: 16 }}>
+                📊 Results not announced yet
+              </p>
+            ) : (
+              <div className="space-y-3">
+                {resultData.slice(0, 3).map((res, i) => (
+                  <div
+                    key={res.id || i}
+                    style={{
+                      background: "#f9fafb",
+                      borderRadius: 12,
+                      padding: 14,
+                      border: "1px solid #e5e7eb",
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns: "1fr 1fr",
+                        gap: 8,
+                        fontSize: 13,
+                      }}
+                    >
+                      <div>
+                        <span
+                          style={{
+                            color: "#666",
+                            display: "block",
+                            fontSize: 11,
+                          }}
+                        >
+                          👤 Player
+                        </span>
+                        <span style={{ color: "#111827", fontWeight: 700 }}>
+                          {res.playerName}
+                        </span>
+                      </div>
+                      <div>
+                        <span
+                          style={{
+                            color: "#666",
+                            display: "block",
+                            fontSize: 11,
+                          }}
+                        >
+                          🏆 Rank
+                        </span>
+                        <span style={{ color: "#AA44FF", fontWeight: 700 }}>
+                          {res.rankLabel}
+                        </span>
+                      </div>
+                      <div>
+                        <span
+                          style={{
+                            color: "#666",
+                            display: "block",
+                            fontSize: 11,
+                          }}
+                        >
+                          🔫 Kills
+                        </span>
+                        <span style={{ color: "#111827", fontWeight: 700 }}>
+                          {res.kills}
+                        </span>
+                      </div>
+                      <div>
+                        <span
+                          style={{
+                            color: "#666",
+                            display: "block",
+                            fontSize: 11,
+                          }}
+                        >
+                          💰 Prize
+                        </span>
+                        <span style={{ color: "#00AA55", fontWeight: 800 }}>
+                          ₹{res.prizeAmount.toFixed(2)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </>
   );
 }
@@ -1597,38 +1862,60 @@ function TournamentCard({
           );
         })()}
 
-        <Link
-          to="/tournament/$id"
-          params={{ id: tournament.id.toString() }}
-          className="block w-full text-center py-2.5 rounded-lg font-bold text-sm uppercase tracking-wide transition-all"
-          style={
-            isOngoing
-              ? {
-                  background: "linear-gradient(135deg, #dc3545, #a71d2a)",
-                  color: "#FFFFFF",
-                  boxShadow: "0 0 12px rgba(220,53,69,0.3)",
-                }
-              : isUpcoming
-                ? {
-                    background: "linear-gradient(135deg, #9d4edd, #6b21a8)",
-                    color: "#FFFFFF",
-                    boxShadow: "0 0 12px rgba(157,78,221,0.4)",
-                    borderRadius: 50,
-                  }
-                : {
-                    background: "#F0F0F0",
-                    color: "#999999",
-                    border: "1px solid #E0E0E0",
-                  }
-          }
-          data-ocid="tournaments.register.button"
-        >
-          {isOngoing
-            ? "🔴 View Live"
-            : isUpcoming
-              ? "⚡ PAY & REGISTER"
-              : "View Details"}
-        </Link>
+        {isOngoing ? (
+          <button
+            type="button"
+            className="block w-full text-center py-2.5 rounded-lg font-bold text-sm uppercase tracking-wide transition-all flex items-center justify-center gap-2"
+            style={{
+              background: "linear-gradient(135deg, #dc3545, #a71d2a)",
+              color: "#FFFFFF",
+              boxShadow: "0 0 12px rgba(220,53,69,0.3)",
+              border: "none",
+              cursor: "pointer",
+              borderRadius: 8,
+            }}
+            data-ocid="tournaments.view_live.button"
+            onClick={() =>
+              window.open(
+                "https://www.youtube.com/@kl_tournament_007",
+                "_blank",
+              )
+            }
+          >
+            <span className="inline-block w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+            🔴 VIEW LIVE
+          </button>
+        ) : isCompleted ? (
+          <Link
+            to="/tournament/$id"
+            params={{ id: tournament.id.toString() }}
+            className="block w-full text-center py-2.5 rounded-lg font-bold text-sm uppercase tracking-wide transition-all"
+            style={{
+              background: "#00FF88",
+              color: "#000000",
+              fontWeight: 700,
+              borderRadius: 25,
+            }}
+            data-ocid="tournaments.result.button"
+          >
+            📊 Result
+          </Link>
+        ) : (
+          <Link
+            to="/tournament/$id"
+            params={{ id: tournament.id.toString() }}
+            className="block w-full text-center py-2.5 rounded-lg font-bold text-sm uppercase tracking-wide transition-all"
+            style={{
+              background: "linear-gradient(135deg, #9d4edd, #6b21a8)",
+              color: "#FFFFFF",
+              boxShadow: "0 0 12px rgba(157,78,221,0.4)",
+              borderRadius: 50,
+            }}
+            data-ocid="tournaments.register.button"
+          >
+            ⚡ PAY & REGISTER
+          </Link>
+        )}
       </div>
     </div>
   );

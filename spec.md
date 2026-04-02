@@ -1,40 +1,35 @@
-# Khalnayak Esports
+# Khalnayak Esports — Tournament Button Logic + Readability + Scoreboard
 
 ## Current State
-- Tournament cards exist for free and paid tournaments
-- Admin panel has tabs: Overview, Manage Matches, Registrations, Tournaments, Scores, Deposits, Withdrawals, Users, Ad Stats, Referrals, Security, Free Registrations, Paid Registrations
-- My Matches page shows joined tournaments
-- Earn page has token earning via ads
-- Token earning currently may fire from multiple places
-- Admin free tournament detail page exists but looks basic
-- Paid tournaments may lack same controls as free tournaments
+- Free tournament join button always shows regardless of LIVE/DONE status (no state-based hiding)
+- Paid tournament DONE state shows "View Details" gray link — no Result button
+- No LIVE state disables registration — user can still try to join while match is ongoing
+- FreeMatchCard in MyMatchesPage labels "📊 RESULTS" but actually opens Room ID dialog
+- Admin Scores tab has one combined dropdown for both free and paid tournaments (not separated)
+- Text readability issues: registration form labels, room details popup numbers, inputs have dark background
 
 ## Requested Changes (Diff)
 
 ### Add
-- LIVE tab click → open YouTube channel (https://www.youtube.com/@KL_Tournaments) in new tab for both free & paid
-- Score entry for both free AND paid tournaments in admin Scores section (dropdown showing both types)
-- My Matches page: detailed card with tournament name, date, format, prize, type, UID, player name, status, room ID, password, LIVE button, RESULTS button
-- Admin free tournament detail page: premium redesign with sections (Stats, Match Details, Admin Controls, Match Timing, Tournament Status), colored buttons, copy buttons with toast, pulsing LIVE badge
-- Paid tournament detail page: same premium style, purple accents
-- Paid tournament full controls: Room ID/Password set, match start/stop, scores update, results publish, unpublish/delete
-- Earn page message: "Watch ads to earn tokens! Only ads watched here give tokens."
+- Result button on tournament cards (free + paid) when status is DONE/completed
+- Result button navigates to result page showing: player name, kills, rank, prize
+- Separate Free Scoreboard tab and Paid Scoreboard tab in Admin Scores section
+- Each scoreboard: tournament dropdown (filtered by type), player name, kills, rank, prize auto-calc
 
 ### Modify
-- Free tournament cards: branded design — white+gradient bg, 16-20px radius, shadow, hover scale, FREE badge neon green glow, prize neon green, join button gradient pill, status badges (UPCOMING blue, LIVE red pulsing, DONE gray)
-- Paid tournament cards: same premium design, PAID badge neon purple glow, join button "PAY & REGISTER" purple gradient
-- Token earning: ONLY fire from Earn page Watch Ad button — remove token award from tournament registration ads, deposit ads, withdrawal ads
-- Admin panel tabs: full names visible, no cut-off, horizontally scrollable
-- Tournaments page tabs (ALL, BG, 4V4, 1V1, 2V2): properly aligned
-- Free & Paid sections properly spaced
-- Overall layout: mobile responsive, no overlapping
+- Free tournament card: UPCOMING/LIVE → show "Watch Ad & Join" button; DONE → hide join button, show "Result" button
+- Free tournament card LIVE state: hide/disable join button completely, show "VIEW LIVE" button only
+- Paid tournament card: UPCOMING → show "Pay & Register" button; LIVE/ongoing → show "View Live" button, hide register; DONE/completed → show "Result" button
+- FreeMatchCard in MyMatchesPage: fix "RESULTS" button to open actual result data (not Room ID popup)
+- Registration form: label colors black/dark gray bold, inputs light gray bg #F5F5F5 black text, checkbox text dark gray #333333, COMPLETE REGISTRATION button neon green #00FF88 black text
+- Room Details popup: Room ID label black bold, numbers black bold 20px, COPY buttons neon green black text, white card background
 
 ### Remove
-- Token award from non-Earn-page ad interactions
+- Mixed dropdown in Admin Scores tab (replaced by separate tabs)
 
 ## Implementation Plan
-1. TournamentsPage.tsx: LIVE tab → window.open YouTube URL; redesign free/paid tournament cards with branded styles
-2. AdminPage.tsx: Scores section — dropdown includes both free & paid tournaments; free tournament detail view premium redesign; paid tournament detail view with full controls (Room ID/Password, start/stop, results, unpublish/delete); fix tab names cut-off
-3. MyMatchesPage.tsx: redesign match cards with all details (name, date, format, prize, type, UID, player, status, roomID, password, LIVE/RESULTS buttons)
-4. EarnPage.tsx: add message, ensure token only from here
-5. Any other files where token is awarded outside Earn page: remove token award logic
+1. TournamentsPage.tsx: Add status check in free tournament card — LIVE/DONE states control button visibility
+2. TournamentsPage.tsx: Paid tournament card — completed state shows Result button linking to /tournament/:id
+3. TournamentsPage.tsx + registration modal: Fix colors for labels, inputs, buttons per readability spec
+4. AdminPage.tsx Scores section: Split into two sub-tabs — Free Scoreboard (free tournament dropdown) and Paid Scoreboard (paid tournament dropdown) with separate prize calculation
+5. MyMatchesPage.tsx: Fix FreeMatchCard RESULTS button to show actual match result data

@@ -238,11 +238,11 @@ export function TournamentDetailPage() {
       {showRoomCredentials && (
         <div
           className="rounded-2xl p-5 space-y-4"
-          style={{ background: "#0d1117", border: "1.5px solid #00FF8844" }}
+          style={{ background: "#F9FAFB", border: "1px solid #E5E7EB" }}
         >
           <p
             className="flex items-center gap-2 font-bold text-base"
-            style={{ fontFamily: "Orbitron, sans-serif", color: "#00FF88" }}
+            style={{ fontFamily: "Orbitron, sans-serif", color: "#111827" }}
           >
             🔑 MATCH DETAILS
           </p>
@@ -250,14 +250,14 @@ export function TournamentDetailPage() {
           <div className="space-y-1">
             <p
               className="text-xs"
-              style={{ color: "#888", fontFamily: "Rajdhani, sans-serif" }}
+              style={{ color: "#666666", fontFamily: "Rajdhani, sans-serif" }}
             >
               Room ID
             </p>
             <div className="flex items-center gap-3">
               <p
                 className="text-xl font-mono font-bold"
-                style={{ color: "#fff", letterSpacing: "0.08em" }}
+                style={{ color: "#111827", letterSpacing: "0.08em" }}
               >
                 {tournament.roomId}
               </p>
@@ -296,7 +296,7 @@ export function TournamentDetailPage() {
             <div className="flex items-center gap-3">
               <p
                 className="text-xl font-mono font-bold"
-                style={{ color: "#fff", letterSpacing: "0.08em" }}
+                style={{ color: "#111827", letterSpacing: "0.08em" }}
               >
                 {tournament.roomPassword}
               </p>

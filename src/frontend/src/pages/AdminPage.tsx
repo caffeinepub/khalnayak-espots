@@ -1886,7 +1886,7 @@ function RescheduleDialog({
   );
 }
 
-function ManageMatchCard({
+function DynamicPaidTournamentAdminCard({
   tournament,
   index,
 }: {
@@ -1894,26 +1894,69 @@ function ManageMatchCard({
   index: number;
 }) {
   const updateStatusMutation = useUpdateTournamentStatus();
+  const updateRoomMutation = useUpdateTournamentRoomCredentials();
+  const [roomIdInput, setRoomIdInput] = useState(tournament.roomId || "");
+  const [roomPasswordInput, setRoomPasswordInput] = useState(
+    tournament.roomPassword || "",
+  );
+  const [saved, setSaved] = useState(false);
+  const [newMatchTime, setNewMatchTime] = useState("");
+  const [timeSaved, setTimeSaved] = useState(false);
   const [setRoomOpen, setSetRoomOpen] = useState(false);
   const [rescheduleOpen, setRescheduleOpen] = useState(false);
   const [cancelConfirmOpen, setCancelConfirmOpen] = useState(false);
 
-  const statusColors: Record<string, string> = {
-    upcoming: "bg-secondary/20 text-secondary border-secondary/30",
-    ongoing: "bg-primary/20 text-primary border-primary/30",
-    completed: "bg-muted text-muted-foreground border-border/40",
+  const isLive = tournament.status === "ongoing";
+  const isCompleted = tournament.status === "completed";
+
+  const startMs = Number(tournament.startTime) / 1_000_000;
+  const formattedMatchTime = new Date(startMs).toLocaleString("en-IN", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
+  const entryFee = Number(tournament.entryFee) / 100_000_000;
+  const maxTeams = Number(tournament.maxTeams);
+  const prizePool = Number(tournament.prizePool) / 100_000_000;
+
+  const handleSaveRoom = async () => {
+    try {
+      await updateRoomMutation.mutateAsync({
+        tournamentId: tournament.id,
+        roomId: roomIdInput,
+        roomPassword: roomPasswordInput,
+      });
+      setSaved(true);
+      toast.success(`Room details saved for ${tournament.name}`);
+      setTimeout(() => setSaved(false), 2000);
+    } catch (error: any) {
+      toast.error(error?.message || "Failed to save room details");
+    }
   };
-  const statusLabel: Record<string, string> = {
-    upcoming: "Upcoming",
-    ongoing: "🔴 Live",
-    completed: "Completed",
+
+  const handleStartStop = async () => {
+    try {
+      const newStatus = isLive ? "upcoming" : "ongoing";
+      await updateStatusMutation.mutateAsync({
+        tournamentId: tournament.id,
+        status: newStatus as any,
+      });
+      toast.success(
+        isLive ? "⏹️ Match stopped." : "✅ Match started! LIVE for users.",
+      );
+    } catch (error: any) {
+      toast.error(error?.message || "Failed to update status");
+    }
   };
 
   const handleCancel = async () => {
     try {
       await updateStatusMutation.mutateAsync({
         tournamentId: tournament.id,
-        status: "upcoming" as TournamentStatus,
+        status: "upcoming" as any,
       });
       toast.success("Match cancelled — status reset to Upcoming.");
       setCancelConfirmOpen(false);
@@ -1922,184 +1965,586 @@ function ManageMatchCard({
     }
   };
 
-  const startMs = Number(tournament.startTime) / 1_000_000;
-  const formattedStart = new Date(startMs).toLocaleString("en-IN", {
-    weekday: "short",
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+  const handleCopyRoomId = () => {
+    const val = tournament.roomId || roomIdInput;
+    if (!val) return;
+    navigator.clipboard
+      .writeText(val)
+      .then(() => toast.success("✅ Copied!", { duration: 2000 }));
+  };
+
+  const handleCopyPassword = () => {
+    const val = tournament.roomPassword || roomPasswordInput;
+    if (!val) return;
+    navigator.clipboard
+      .writeText(val)
+      .then(() => toast.success("✅ Copied!", { duration: 2000 }));
+  };
+
+  const displayRoomId = tournament.roomId || roomIdInput || "";
+  const displayPassword = tournament.roomPassword || roomPasswordInput || "";
 
   return (
-    <Card
-      className="border-border/40 bg-card/60 overflow-hidden"
-      style={
-        tournament.status === "ongoing"
-          ? {
-              boxShadow: "0 0 16px oklch(0.75 0.18 195 / 0.2)",
-              border: "1px solid oklch(0.75 0.18 195 / 0.35)",
-            }
-          : {}
-      }
+    <div
+      data-ocid={`admin.paid_match.card.${index}`}
+      className="rounded-2xl p-6 space-y-5"
+      style={{
+        background: "#FFFFFF",
+        border: "1px solid #E5E7EB",
+        boxShadow: "0 4px 20px rgba(0,0,0,0.08)",
+        borderRadius: 20,
+      }}
     >
-      <CardContent className="p-4 space-y-3">
-        {/* Header row */}
-        <div className="flex items-start justify-between gap-2">
-          <div className="min-w-0">
-            <h3 className="font-bold font-display text-base leading-snug truncate">
-              {tournament.name}
-            </h3>
-            <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1">
-              <Calendar className="h-3 w-3 flex-shrink-0" />
-              {formattedStart}
-            </p>
-          </div>
-          <div className="flex items-center gap-2 shrink-0">
-            <Badge
-              variant="outline"
-              className={`text-[10px] uppercase tracking-wide ${statusColors[tournament.status] ?? "bg-muted"}`}
+      {/* Header */}
+      <div className="flex items-start justify-between gap-3">
+        <h3
+          style={{
+            fontFamily: "'Orbitron', sans-serif",
+            color: "#000000",
+            fontWeight: 700,
+            fontSize: 18,
+          }}
+        >
+          🎮 {tournament.name}
+        </h3>
+        <div className="flex gap-2 flex-wrap justify-end">
+          {isLive && (
+            <span
+              className="px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1"
+              style={{
+                background: "rgba(255,68,68,0.15)",
+                color: "#FF4444",
+                border: "1px solid rgba(255,68,68,0.4)",
+                animation: "pulse 1.5s infinite",
+              }}
             >
-              {statusLabel[tournament.status] ?? tournament.status}
-            </Badge>
-            <Badge variant="outline" className="text-[10px]">
-              {getTournamentTypeLabel(tournament.tournamentType)}
-            </Badge>
-          </div>
-        </div>
-
-        {/* Room credentials indicator */}
-        {(tournament.roomId || tournament.roomPassword) && (
-          <div
-            className="text-xs flex items-center gap-2 px-2 py-1.5 rounded-lg"
+              <span
+                style={{
+                  width: 6,
+                  height: 6,
+                  borderRadius: "50%",
+                  background: "#FF4444",
+                  display: "inline-block",
+                }}
+              />
+              LIVE
+            </span>
+          )}
+          {isCompleted && (
+            <span
+              className="px-3 py-1 rounded-full text-xs font-bold"
+              style={{
+                background: "rgba(107,114,128,0.15)",
+                color: "#6B7280",
+                border: "1px solid rgba(107,114,128,0.4)",
+              }}
+            >
+              ✅ COMPLETED
+            </span>
+          )}
+          {!isLive && !isCompleted && (
+            <span
+              className="px-3 py-1 rounded-full text-xs font-bold"
+              style={{
+                background: "rgba(170,68,255,0.15)",
+                color: "#AA44FF",
+                border: "1px solid rgba(170,68,255,0.4)",
+              }}
+            >
+              ⏰ UPCOMING
+            </span>
+          )}
+          <span
+            className="px-2 py-1 rounded-full text-xs font-bold"
             style={{
-              background: "oklch(0.12 0.06 160 / 0.3)",
-              border: "1px solid oklch(0.70 0.20 160 / 0.25)",
+              background: "rgba(170,68,255,0.12)",
+              color: "#AA44FF",
+              border: "1px solid rgba(170,68,255,0.3)",
             }}
           >
-            <KeyRound className="h-3.5 w-3.5 text-green-400 flex-shrink-0" />
-            <span className="text-green-400 font-mono">
-              Room: {tournament.roomId}
-            </span>
-            {tournament.roomPassword && (
-              <span className="text-muted-foreground">
-                / Pass: {tournament.roomPassword}
-              </span>
-            )}
-          </div>
-        )}
+            💰 PAID
+          </span>
+        </div>
+      </div>
 
-        {/* Action buttons */}
-        <div className="flex flex-wrap gap-2">
-          {/* Set Room Details */}
+      {/* Stats Section */}
+      <div
+        className="rounded-xl p-4 space-y-3"
+        style={{ background: "#f9fafb", border: "1px solid #E5E7EB" }}
+      >
+        <p
+          style={{
+            fontWeight: 600,
+            fontSize: 15,
+            color: "#333333",
+            borderLeft: "3px solid #AA44FF",
+            paddingLeft: 8,
+          }}
+        >
+          📊 TOURNAMENT STATS
+        </p>
+        <div className="grid grid-cols-2 gap-3 text-sm">
+          <div>
+            <span style={{ color: "#666666", fontSize: 13 }}>👥 Format</span>
+            <br />
+            <span style={{ color: "#111827", fontWeight: 600 }}>
+              {getTournamentTypeLabel(tournament.tournamentType)}
+            </span>
+          </div>
+          <div>
+            <span style={{ color: "#666666", fontSize: 13 }}>
+              🏆 Prize Pool
+            </span>
+            <br />
+            <span style={{ color: "#AA44FF", fontWeight: 700 }}>
+              ₹{prizePool.toFixed(2)}
+            </span>
+          </div>
+          <div>
+            <span style={{ color: "#666666", fontSize: 13 }}>💰 Entry Fee</span>
+            <br />
+            <span style={{ color: "#AA44FF", fontWeight: 700 }}>
+              ₹{entryFee.toFixed(2)}
+            </span>
+          </div>
+          <div>
+            <span style={{ color: "#666666", fontSize: 13 }}>📅 Date</span>
+            <br />
+            <span style={{ color: "#111827", fontWeight: 600, fontSize: 12 }}>
+              {formattedMatchTime}
+            </span>
+          </div>
+          <div>
+            <span style={{ color: "#666666", fontSize: 13 }}>👥 Teams</span>
+            <br />
+            <span style={{ color: "#111827", fontWeight: 600 }}>
+              0/{maxTeams}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Match Details */}
+      <div
+        className="rounded-xl p-4 space-y-3"
+        style={{ background: "#f9fafb", border: "1px solid #E5E7EB" }}
+      >
+        <p
+          style={{
+            fontWeight: 600,
+            fontSize: 15,
+            color: "#333333",
+            borderLeft: "3px solid #AA44FF",
+            paddingLeft: 8,
+          }}
+        >
+          🔐 MATCH DETAILS
+        </p>
+        <div className="space-y-2">
+          <div
+            style={{
+              background: "#faf5ff",
+              border: "1px solid #e9d5ff",
+              borderRadius: 10,
+              padding: 12,
+              borderLeft: "3px solid #AA44FF",
+            }}
+          >
+            <span style={{ color: "#666666", fontSize: 12 }}>Room ID</span>
+            <div className="flex items-center justify-between gap-2 mt-1">
+              <p
+                style={{
+                  fontFamily: "monospace",
+                  fontWeight: 700,
+                  fontSize: 20,
+                  color: "#111827",
+                }}
+              >
+                {displayRoomId || (
+                  <span
+                    style={{ color: "#aaa", fontStyle: "italic", fontSize: 14 }}
+                  >
+                    Not set yet
+                  </span>
+                )}
+              </p>
+              <button
+                type="button"
+                onClick={handleCopyRoomId}
+                disabled={!displayRoomId}
+                style={{
+                  padding: "5px 12px",
+                  borderRadius: 8,
+                  fontSize: 11,
+                  fontWeight: 700,
+                  cursor: displayRoomId ? "pointer" : "not-allowed",
+                  border: "1.5px solid #AA44FF",
+                  background: "#AA44FF22",
+                  color: "#AA44FF",
+                }}
+              >
+                📋 COPY
+              </button>
+            </div>
+          </div>
+          <div
+            style={{
+              background: "#faf5ff",
+              border: "1px solid #e9d5ff",
+              borderRadius: 10,
+              padding: 12,
+              borderLeft: "3px solid #AA44FF",
+            }}
+          >
+            <span style={{ color: "#666666", fontSize: 12 }}>Password</span>
+            <div className="flex items-center justify-between gap-2 mt-1">
+              <p
+                style={{
+                  fontFamily: "monospace",
+                  fontWeight: 700,
+                  fontSize: 20,
+                  color: "#111827",
+                }}
+              >
+                {displayPassword || (
+                  <span
+                    style={{ color: "#aaa", fontStyle: "italic", fontSize: 14 }}
+                  >
+                    Not set yet
+                  </span>
+                )}
+              </p>
+              <button
+                type="button"
+                onClick={handleCopyPassword}
+                disabled={!displayPassword}
+                style={{
+                  padding: "5px 12px",
+                  borderRadius: 8,
+                  fontSize: 11,
+                  fontWeight: 700,
+                  cursor: displayPassword ? "pointer" : "not-allowed",
+                  border: "1.5px solid #AA44FF",
+                  background: "#AA44FF22",
+                  color: "#AA44FF",
+                }}
+              >
+                📋 COPY
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Admin Controls */}
+      <div
+        className="rounded-xl p-4 space-y-3"
+        style={{ background: "#f9fafb", border: "1px solid #E5E7EB" }}
+      >
+        <p
+          style={{
+            fontWeight: 600,
+            fontSize: 15,
+            color: "#333333",
+            borderLeft: "3px solid #AA44FF",
+            paddingLeft: 8,
+          }}
+        >
+          ⚙️ ADMIN CONTROLS
+        </p>
+        <div className="flex gap-2 flex-wrap">
+          <input
+            type="text"
+            value={roomIdInput}
+            onChange={(e) => setRoomIdInput(e.target.value)}
+            placeholder="Room ID"
+            style={{
+              flex: 1,
+              minWidth: 120,
+              borderRadius: 8,
+              padding: "8px 12px",
+              fontSize: 13,
+              fontFamily: "monospace",
+              background: "#fff",
+              border: "1px solid #D1D5DB",
+              color: "#111827",
+            }}
+            data-ocid={`admin.paid_tournament.room_id.input.${index}`}
+          />
+          <input
+            type="text"
+            value={roomPasswordInput}
+            onChange={(e) => setRoomPasswordInput(e.target.value)}
+            placeholder="Password"
+            style={{
+              flex: 1,
+              minWidth: 120,
+              borderRadius: 8,
+              padding: "8px 12px",
+              fontSize: 13,
+              fontFamily: "monospace",
+              background: "#fff",
+              border: "1px solid #D1D5DB",
+              color: "#111827",
+            }}
+            data-ocid={`admin.paid_tournament.password.input.${index}`}
+          />
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          <button
+            type="button"
+            onClick={handleSaveRoom}
+            disabled={updateRoomMutation.isPending}
+            style={{
+              background: "#AA44FF",
+              color: "#fff",
+              border: "none",
+              borderRadius: 10,
+              padding: "10px 0",
+              fontWeight: 700,
+              fontSize: 12,
+              cursor: "pointer",
+              fontFamily: "'Orbitron', sans-serif",
+            }}
+            data-ocid={`admin.paid_tournament.save_room.button.${index}`}
+          >
+            {saved ? "✅ Saved!" : "🔧 SET ROOM ID & PASSWORD"}
+          </button>
+          <button
+            type="button"
+            onClick={handleStartStop}
+            disabled={updateStatusMutation.isPending}
+            style={{
+              background: isLive ? "#FF4444" : "#AA44FF",
+              color: "#fff",
+              border: "none",
+              borderRadius: 10,
+              padding: "10px 0",
+              fontWeight: 700,
+              fontSize: 12,
+              cursor: "pointer",
+              fontFamily: "'Orbitron', sans-serif",
+            }}
+            data-ocid={`admin.paid_tournament.match_started.toggle.${index}`}
+          >
+            {isLive ? "⏹️ STOP MATCH" : "▶️ START MATCH"}
+          </button>
+          <button
+            type="button"
+            onClick={() =>
+              toast.info("Go to Scores tab to submit results.", {
+                duration: 3000,
+              })
+            }
+            style={{
+              background: "#AA44FF",
+              color: "#fff",
+              border: "none",
+              borderRadius: 10,
+              padding: "10px 0",
+              fontWeight: 700,
+              fontSize: 12,
+              cursor: "pointer",
+              fontFamily: "'Orbitron', sans-serif",
+            }}
+          >
+            📝 SUBMIT RESULTS
+          </button>
+          <button
+            type="button"
+            onClick={() => setCancelConfirmOpen(true)}
+            style={{
+              background: "#666666",
+              color: "#fff",
+              border: "none",
+              borderRadius: 10,
+              padding: "10px 0",
+              fontWeight: 700,
+              fontSize: 12,
+              cursor: "pointer",
+              fontFamily: "'Orbitron', sans-serif",
+            }}
+          >
+            ❌ CANCEL MATCH
+          </button>
+        </div>
+      </div>
+
+      {/* Match Timing */}
+      <div
+        className="rounded-xl p-4 space-y-3"
+        style={{ background: "#f9fafb", border: "1px solid #E5E7EB" }}
+      >
+        <p
+          style={{
+            fontWeight: 600,
+            fontSize: 15,
+            color: "#333333",
+            borderLeft: "3px solid #AA44FF",
+            paddingLeft: 8,
+          }}
+        >
+          🕐 MATCH TIMING
+        </p>
+        <p style={{ color: "#666666", fontSize: 13 }}>
+          Match Time:{" "}
+          <span style={{ color: "#111827", fontWeight: 600 }}>
+            {formattedMatchTime}
+          </span>
+        </p>
+        <div className="flex gap-2 items-center">
+          <input
+            type="datetime-local"
+            value={newMatchTime}
+            onChange={(e) => setNewMatchTime(e.target.value)}
+            style={{
+              flex: 1,
+              borderRadius: 8,
+              padding: "8px 12px",
+              fontSize: 13,
+              background: "#fff",
+              border: "1px solid #D1D5DB",
+              color: "#111827",
+            }}
+          />
+          <button
+            type="button"
+            onClick={() => {
+              if (!newMatchTime) {
+                toast.error("Please select a date and time.");
+                return;
+              }
+              setTimeSaved(true);
+              toast.success(
+                "Match time noted. Use Reschedule in dialog for backend update.",
+              );
+              setTimeout(() => setTimeSaved(false), 2000);
+            }}
+            style={{
+              background: "#AA44FF",
+              color: "#fff",
+              border: "none",
+              borderRadius: 10,
+              padding: "10px 16px",
+              fontWeight: 700,
+              fontSize: 12,
+              cursor: "pointer",
+              fontFamily: "'Orbitron', sans-serif",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {timeSaved ? "✅ Noted" : "🟢 UPDATE TIME"}
+          </button>
+        </div>
+      </div>
+
+      {/* Tournament Status */}
+      <div
+        className="rounded-xl p-4 space-y-3"
+        style={{ background: "#f9fafb", border: "1px solid #E5E7EB" }}
+      >
+        <p
+          style={{
+            fontWeight: 600,
+            fontSize: 15,
+            color: "#333333",
+            borderLeft: "3px solid #AA44FF",
+            paddingLeft: 8,
+          }}
+        >
+          🏷️ TOURNAMENT STATUS
+        </p>
+        <div className="flex gap-2 flex-wrap">
           <Dialog open={setRoomOpen} onOpenChange={setSetRoomOpen}>
             <DialogTrigger asChild>
-              <Button
-                size="sm"
-                variant="outline"
-                className="border-primary/30 text-primary hover:bg-primary/10 gap-1.5 text-xs"
-                data-ocid={`admin.matches.set_room.button.${index}`}
+              <button
+                type="button"
+                style={{
+                  background: "#FFAA33",
+                  color: "#000",
+                  border: "none",
+                  borderRadius: 10,
+                  padding: "10px 20px",
+                  fontWeight: 700,
+                  fontSize: 12,
+                  cursor: "pointer",
+                  fontFamily: "'Orbitron', sans-serif",
+                }}
+                data-ocid={`admin.paid_match.set_room.button.${index}`}
               >
-                <KeyRound className="h-3.5 w-3.5" />
-                Set Room Details
-              </Button>
+                🔧 SET ROOM DETAILS (DIALOG)
+              </button>
             </DialogTrigger>
             <SetRoomDetailsDialog
               tournament={tournament}
               onClose={() => setSetRoomOpen(false)}
             />
           </Dialog>
-
-          {/* Reschedule */}
           <Dialog open={rescheduleOpen} onOpenChange={setRescheduleOpen}>
             <DialogTrigger asChild>
-              <Button
-                size="sm"
-                variant="outline"
-                className="border-secondary/30 text-secondary hover:bg-secondary/10 gap-1.5 text-xs"
+              <button
+                type="button"
+                style={{
+                  background: "#3B82F6",
+                  color: "#fff",
+                  border: "none",
+                  borderRadius: 10,
+                  padding: "10px 20px",
+                  fontWeight: 700,
+                  fontSize: 12,
+                  cursor: "pointer",
+                  fontFamily: "'Orbitron', sans-serif",
+                }}
               >
-                <Calendar className="h-3.5 w-3.5" />
-                Reschedule
-              </Button>
+                📅 RESCHEDULE
+              </button>
             </DialogTrigger>
             <RescheduleDialog
               tournament={tournament}
               onClose={() => setRescheduleOpen(false)}
             />
           </Dialog>
-
-          {/* Submit Results (go to Scores) */}
-          <Button
-            size="sm"
-            variant="outline"
-            className="border-yellow-500/30 text-yellow-400 hover:bg-yellow-950/20 gap-1.5 text-xs"
-            onClick={() => {
-              toast.info(
-                "Go to the Scores tab to submit results for this tournament.",
-                { description: tournament.name, duration: 3000 },
-              );
-            }}
-          >
-            <Trophy className="h-3.5 w-3.5" />
-            Submit Results
-          </Button>
-
-          {/* Cancel Match */}
-          {tournament.status !== "completed" && (
-            <Dialog
-              open={cancelConfirmOpen}
-              onOpenChange={setCancelConfirmOpen}
-            >
-              <DialogTrigger asChild>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="border-destructive/30 text-destructive hover:bg-destructive/10 gap-1.5 text-xs"
-                >
-                  <X className="h-3.5 w-3.5" />
-                  Cancel Match
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle className="text-destructive">
-                    Cancel Match?
-                  </DialogTitle>
-                  <DialogDescription>
-                    This will reset the match status to "Upcoming".{" "}
-                    <strong>{tournament.name}</strong>
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="flex gap-3 pt-2">
-                  <Button
-                    variant="destructive"
-                    className="flex-1"
-                    onClick={handleCancel}
-                    disabled={updateStatusMutation.isPending}
-                    data-ocid="admin.matches.cancel.confirm_button"
-                  >
-                    {updateStatusMutation.isPending ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      "Yes, Cancel Match"
-                    )}
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="flex-1"
-                    onClick={() => setCancelConfirmOpen(false)}
-                    data-ocid="admin.matches.cancel.cancel_button"
-                  >
-                    Keep Match
-                  </Button>
-                </div>
-              </DialogContent>
-            </Dialog>
-          )}
         </div>
-      </CardContent>
-    </Card>
+      </div>
+
+      {/* Cancel Confirm Dialog */}
+      <Dialog open={cancelConfirmOpen} onOpenChange={setCancelConfirmOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="text-destructive">
+              Cancel Match?
+            </DialogTitle>
+            <DialogDescription>
+              This will reset the match status to "Upcoming".{" "}
+              <strong>{tournament.name}</strong>
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex gap-3 pt-2">
+            <Button
+              variant="destructive"
+              className="flex-1"
+              onClick={handleCancel}
+              disabled={updateStatusMutation.isPending}
+              data-ocid="admin.paid_matches.cancel.confirm_button"
+            >
+              {updateStatusMutation.isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                "Yes, Cancel Match"
+              )}
+            </Button>
+            <Button
+              variant="outline"
+              className="flex-1"
+              onClick={() => setCancelConfirmOpen(false)}
+              data-ocid="admin.paid_matches.cancel.cancel_button"
+            >
+              Keep Match
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </div>
   );
 }
 
@@ -2178,7 +2623,7 @@ function ManageMatchesTab() {
       {sorted.length > 0 ? (
         <div className="space-y-4">
           {sorted.map((tournament, idx) => (
-            <ManageMatchCard
+            <DynamicPaidTournamentAdminCard
               key={tournament.id.toString()}
               tournament={tournament}
               index={idx + 1}
@@ -2841,6 +3286,260 @@ function RegistrationsTab() {
 }
 
 function ScoresTab() {
+  const [scoreboardTab, setScoreboardTab] = useState<"free" | "paid">("free");
+
+  return (
+    <div className="space-y-4">
+      {/* Sub-tabs */}
+      <div
+        style={{
+          display: "flex",
+          gap: 8,
+          borderBottom: "2px solid #E5E7EB",
+          paddingBottom: 8,
+        }}
+      >
+        {(["free", "paid"] as const).map((tab) => {
+          const isActive = scoreboardTab === tab;
+          return (
+            <button
+              key={tab}
+              type="button"
+              onClick={() => setScoreboardTab(tab)}
+              style={{
+                padding: "8px 20px",
+                borderRadius: 8,
+                border: "none",
+                cursor: "pointer",
+                fontFamily: "'Orbitron', sans-serif",
+                fontSize: 13,
+                fontWeight: 700,
+                background: isActive ? "#00FF88" : "#F3F4F6",
+                color: isActive ? "#000000" : "#6B7280",
+                transition: "all 0.15s ease",
+              }}
+              data-ocid={`admin.scores.${tab}.tab`}
+            >
+              {tab === "free" ? "🎁 Free Scoreboard" : "💰 Paid Scoreboard"}
+            </button>
+          );
+        })}
+      </div>
+
+      {scoreboardTab === "free" ? (
+        <FreeScoreboardForm />
+      ) : (
+        <PaidScoreboardForm />
+      )}
+    </div>
+  );
+}
+
+function FreeScoreboardForm() {
+  const [selectedTournament, setSelectedTournament] = useState<string>("");
+  const [kills, setKills] = useState("");
+  const [placement, setPlacement] = useState("");
+  const [playerName, setPlayerName] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+
+  const freeTournaments = loadStoredFreeTournaments();
+
+  const getFreeTournamentMode = (): string => {
+    const ft = freeTournaments.find(({ id }) => id === selectedTournament);
+    return ft?.data.mode ?? "Solo";
+  };
+
+  const getFreeTournamentName = (): string => {
+    const ft = freeTournaments.find(({ id }) => id === selectedTournament);
+    return ft?.data.name ?? selectedTournament;
+  };
+
+  const calculateFreePrize = (): number => {
+    const rank = Number.parseInt(placement, 10);
+    if (!selectedTournament || !rank) return 0;
+    const mode = getFreeTournamentMode();
+    const prizeMap: Record<string, Record<number, number>> = {
+      Solo: { 1: 10 }, // Booyah ₹10 (most kills is separate admin decision)
+      "4v4": { 1: 1.25 }, // per player
+      "1v1": { 1: 0.5 },
+      "2v2": { 1: 0.8 }, // per player
+    };
+    return prizeMap[mode]?.[rank] ?? 0;
+  };
+
+  const calculatedPrize = calculateFreePrize();
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedTournament || !playerName) {
+      toast.error("Please select a tournament and enter player name");
+      return;
+    }
+    setIsSaving(true);
+    try {
+      const { collection, addDoc } = await import("firebase/firestore");
+      const { getFirebaseDb } = await import("../lib/firebase");
+      const db = getFirebaseDb();
+      const rankNum = Number.parseInt(placement, 10);
+      const rankLabel =
+        rankNum === 1
+          ? "1st"
+          : rankNum === 2
+            ? "2nd"
+            : rankNum === 3
+              ? "3rd"
+              : `${rankNum}th`;
+      await addDoc(collection(db, "matchResults"), {
+        tournamentId: selectedTournament,
+        tournamentName: getFreeTournamentName(),
+        playerName,
+        kills: Number.parseInt(kills, 10) || 0,
+        rank: rankNum,
+        rankLabel,
+        prizeAmount: calculatedPrize,
+        completedAt: new Date().toISOString(),
+        type: "free",
+      });
+      // Mark tournament as done
+      localStorage.setItem(`freeMatchDone_${selectedTournament}`, "true");
+      window.dispatchEvent(new Event("freeTournamentUpdated"));
+      toast.success(`✅ Score saved! Prize: ₹${calculatedPrize.toFixed(2)}`);
+      setPlayerName("");
+      setKills("");
+      setPlacement("");
+    } catch (_err) {
+      toast.error("Failed to save score");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>🎁 Free Tournament Scoreboard</CardTitle>
+        <CardDescription>
+          Enter scores for free tournaments — prize auto-calculates
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Label>Free Tournament</Label>
+            <Select
+              value={selectedTournament}
+              onValueChange={setSelectedTournament}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select free tournament" />
+              </SelectTrigger>
+              <SelectContent>
+                {freeTournaments.length === 0 ? (
+                  <SelectItem value="__none__" disabled>
+                    No free tournaments created
+                  </SelectItem>
+                ) : (
+                  freeTournaments.map(({ id, data }) => (
+                    <SelectItem key={id} value={id}>
+                      {data.name} [{data.mode}]
+                    </SelectItem>
+                  ))
+                )}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="free-score-player">👤 Player Name</Label>
+            <Input
+              id="free-score-player"
+              type="text"
+              placeholder="Enter player name"
+              value={playerName}
+              onChange={(e) => setPlayerName(e.target.value)}
+              data-ocid="admin.free_scores.player_name.input"
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Kills</Label>
+              <Input
+                type="number"
+                min="0"
+                value={kills}
+                onChange={(e) => setKills(e.target.value)}
+                required
+                data-ocid="admin.free_scores.kills.input"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Placement Rank</Label>
+              <Input
+                type="number"
+                min="1"
+                value={placement}
+                onChange={(e) => setPlacement(e.target.value)}
+                required
+                data-ocid="admin.free_scores.rank.input"
+              />
+            </div>
+          </div>
+          {selectedTournament && (
+            <div
+              style={{
+                background: "#F0FFF4",
+                border: "1px solid #D1FAE5",
+                borderRadius: 10,
+                padding: 12,
+                fontSize: 13,
+              }}
+            >
+              <p style={{ color: "#666", fontWeight: 600, marginBottom: 6 }}>
+                🏆 Prize Structure ({getFreeTournamentMode()})
+              </p>
+              {getFreeTournamentMode() === "Solo" && (
+                <>
+                  <p style={{ color: "#333" }}>Rank 1 (Booyah): ₹10</p>
+                  <p style={{ color: "#333" }}>Most Kills (6+): ₹10</p>
+                </>
+              )}
+              {getFreeTournamentMode() === "4v4" && (
+                <p style={{ color: "#333" }}>Winning Team (each): ₹1.25</p>
+              )}
+              {getFreeTournamentMode() === "1v1" && (
+                <p style={{ color: "#333" }}>Winner: ₹0.50</p>
+              )}
+              {getFreeTournamentMode() === "2v2" && (
+                <p style={{ color: "#333" }}>Winning Team (each): ₹0.80</p>
+              )}
+              {calculatedPrize > 0 && (
+                <p
+                  style={{
+                    color: "#00AA55",
+                    fontWeight: 800,
+                    fontSize: 16,
+                    marginTop: 8,
+                  }}
+                >
+                  💰 Auto-calculated: ₹{calculatedPrize.toFixed(2)}
+                </p>
+              )}
+            </div>
+          )}
+          <Button
+            type="submit"
+            disabled={isSaving}
+            style={{ background: "#00FF88", color: "#000000", fontWeight: 700 }}
+            data-ocid="admin.free_scores.submit_button"
+          >
+            {isSaving ? "Saving..." : "Update Score & Save Result"}
+          </Button>
+        </form>
+      </CardContent>
+    </Card>
+  );
+}
+
+function PaidScoreboardForm() {
   const { data: tournaments } = useGetTournaments();
   const { data: teams } = useGetTeams();
   const updateScoreMutation = useUpdateTeamScore();
@@ -2848,14 +3547,69 @@ function ScoresTab() {
   const [selectedTeam, setSelectedTeam] = useState<string>("");
   const [kills, setKills] = useState("");
   const [placement, setPlacement] = useState("");
+  const [playerName, setPlayerName] = useState("");
+  const [isSavingResult, setIsSavingResult] = useState(false);
   const { refresh: refreshFlags } = useGetCheaterFlags();
+
+  const calculatePaidPrize = (): number => {
+    const rank = Number.parseInt(placement, 10);
+    if (!selectedTournament || !rank) return 0;
+    const paidTournament = tournaments?.find(
+      (t) => t.id.toString() === selectedTournament,
+    );
+    if (!paidTournament) return 0;
+    const prizePool = Number(paidTournament.prizePool) / 100_000_000;
+    if (rank === 1) return Math.round(prizePool * 0.4 * 100) / 100;
+    if (rank === 2) return Math.round(prizePool * 0.25 * 100) / 100;
+    if (rank === 3) return Math.round(prizePool * 0.15 * 100) / 100;
+    return 0;
+  };
+
+  const calculatedPrize = calculatePaidPrize();
+
+  const getPaidTournamentName = (): string => {
+    return (
+      tournaments?.find((t) => t.id.toString() === selectedTournament)?.name ??
+      selectedTournament
+    );
+  };
+
+  const saveResultToFirestore = async () => {
+    if (!selectedTournament || !playerName) return;
+    try {
+      const { collection, addDoc } = await import("firebase/firestore");
+      const { getFirebaseDb } = await import("../lib/firebase");
+      const db = getFirebaseDb();
+      const rankNum = Number.parseInt(placement, 10);
+      const rankLabel =
+        rankNum === 1
+          ? "1st"
+          : rankNum === 2
+            ? "2nd"
+            : rankNum === 3
+              ? "3rd"
+              : `${rankNum}th`;
+      await addDoc(collection(db, "matchResults"), {
+        tournamentId: selectedTournament,
+        tournamentName: getPaidTournamentName(),
+        playerName,
+        kills: Number.parseInt(kills, 10) || 0,
+        rank: rankNum,
+        rankLabel,
+        prizeAmount: calculatedPrize,
+        completedAt: new Date().toISOString(),
+        type: "paid",
+      });
+    } catch (err) {
+      console.error("Failed to save match result:", err);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedTournament || !selectedTeam) return;
-
     const killsNum = Number.parseInt(kills, 10);
-
+    setIsSavingResult(true);
     try {
       await updateScoreMutation.mutateAsync({
         tournamentId: BigInt(selectedTournament),
@@ -2864,8 +3618,12 @@ function ScoresTab() {
         placementRank: BigInt(placement),
       });
       toast.success("Score updated successfully");
-
-      // Auto-flag if kills >= 15
+      await saveResultToFirestore();
+      if (calculatedPrize > 0) {
+        toast.success(
+          `💰 Prize auto-calculated: ₹${calculatedPrize.toFixed(2)} for ${playerName || "player"}`,
+        );
+      }
       if (killsNum >= 15) {
         const team = teams?.find((t) => t.id.toString() === selectedTeam);
         const tournament = tournaments?.find(
@@ -2886,57 +3644,57 @@ function ScoresTab() {
             refreshFlags();
             toast.warning(
               `⚠️ Auto-flagged: ${team.name} has ${killsNum} kills!`,
-              {
-                description:
-                  "This team has been flagged for suspicious activity. Check the Security tab.",
-                duration: 6000,
-              },
+              { duration: 6000 },
             );
           }
         }
       }
-
       setKills("");
       setPlacement("");
+      setPlayerName("");
     } catch (error: any) {
       toast.error(error?.message || "Failed to update score");
+    } finally {
+      setIsSavingResult(false);
     }
   };
+
+  const paidTournaments =
+    tournaments?.filter(
+      (t) => t.status === "ongoing" || t.status === "completed",
+    ) ?? [];
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Update Team Scores</CardTitle>
-        <CardDescription>Enter kills and placement for teams</CardDescription>
+        <CardTitle>💰 Paid Tournament Scoreboard</CardTitle>
+        <CardDescription>
+          Enter scores for paid tournaments — prize auto-calculates
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label>Tournament</Label>
+            <Label>Paid Tournament</Label>
             <Select
               value={selectedTournament}
               onValueChange={setSelectedTournament}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Select tournament" />
+                <SelectValue placeholder="Select paid tournament" />
               </SelectTrigger>
               <SelectContent>
-                {/* Paid tournaments */}
-                {tournaments
-                  ?.filter(
-                    (t) => t.status === "ongoing" || t.status === "completed",
-                  )
-                  .map((t) => (
-                    <SelectItem key={t.id.toString()} value={t.id.toString()}>
-                      [PAID] {t.name}
-                    </SelectItem>
-                  ))}
-                {/* Free tournaments from localStorage */}
-                {loadStoredFreeTournaments().map(({ id, data }) => (
-                  <SelectItem key={id} value={id}>
-                    [FREE] {data.name}
+                {paidTournaments.length === 0 ? (
+                  <SelectItem value="__none__" disabled>
+                    No ongoing/completed paid tournaments
                   </SelectItem>
-                ))}
+                ) : (
+                  paidTournaments.map((t) => (
+                    <SelectItem key={t.id.toString()} value={t.id.toString()}>
+                      {t.name}
+                    </SelectItem>
+                  ))
+                )}
               </SelectContent>
             </Select>
           </div>
@@ -2955,6 +3713,17 @@ function ScoresTab() {
               </SelectContent>
             </Select>
           </div>
+          <div className="space-y-2">
+            <Label htmlFor="paid-score-player">👤 Player Name</Label>
+            <Input
+              id="paid-score-player"
+              type="text"
+              placeholder="Enter player name"
+              value={playerName}
+              onChange={(e) => setPlayerName(e.target.value)}
+              data-ocid="admin.paid_scores.player_name.input"
+            />
+          </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Kills</Label>
@@ -2964,6 +3733,7 @@ function ScoresTab() {
                 value={kills}
                 onChange={(e) => setKills(e.target.value)}
                 required
+                data-ocid="admin.paid_scores.kills.input"
               />
             </div>
             <div className="space-y-2">
@@ -2974,18 +3744,50 @@ function ScoresTab() {
                 value={placement}
                 onChange={(e) => setPlacement(e.target.value)}
                 required
+                data-ocid="admin.paid_scores.rank.input"
               />
             </div>
           </div>
-          <Button type="submit" disabled={updateScoreMutation.isPending}>
-            {updateScoreMutation.isPending ? "Updating..." : "Update Score"}
+          {calculatedPrize > 0 && (
+            <div
+              className="rounded-xl p-3 flex items-center gap-2"
+              style={{
+                background: "rgba(170,68,255,0.08)",
+                border: "1px solid rgba(170,68,255,0.3)",
+              }}
+              data-ocid="admin.paid_scores.prize_preview.panel"
+            >
+              <span style={{ fontSize: 18 }}>💰</span>
+              <span style={{ color: "#AA44FF", fontWeight: 700, fontSize: 15 }}>
+                Auto-calculated Prize: ₹{calculatedPrize.toFixed(2)}
+              </span>
+              <span style={{ color: "#666", fontSize: 12 }}>
+                (Rank{" "}
+                {placement === "1"
+                  ? "1st"
+                  : placement === "2"
+                    ? "2nd"
+                    : placement === "3"
+                      ? "3rd"
+                      : `${placement}th`}
+                )
+              </span>
+            </div>
+          )}
+          <Button
+            type="submit"
+            disabled={updateScoreMutation.isPending || isSavingResult}
+            data-ocid="admin.paid_scores.submit_button"
+          >
+            {updateScoreMutation.isPending || isSavingResult
+              ? "Saving..."
+              : "Update Score & Save Result"}
           </Button>
         </form>
       </CardContent>
     </Card>
   );
 }
-
 function DepositsTab() {
   const { data: deposits } = useGetDepositRequests();
   const approveMutation = useApproveDeposit();

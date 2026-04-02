@@ -30,7 +30,7 @@ import {
   Trophy,
   Zap,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 const YOUTUBE_URL = "https://www.youtube.com/@kl_tournament_007";
@@ -857,7 +857,33 @@ function MatchCard({
             )}
           </button>
 
-          {hasRoom ? (
+          {isCompleted ? (
+            <Link
+              to="/tournament/$id"
+              params={{ id: tournament.id.toString() }}
+              style={{
+                flex: 1,
+                background: "#00FF88",
+                color: "#000000",
+                fontWeight: 700,
+                border: "none",
+                borderRadius: 25,
+                padding: "10px 0",
+                fontSize: 12,
+                cursor: "pointer",
+                fontFamily: "'Orbitron', sans-serif",
+                textDecoration: "none",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 6,
+                boxShadow: "0 0 12px rgba(0,255,136,0.4)",
+              }}
+              data-ocid={`my_matches.result_button.${index}`}
+            >
+              <Trophy className="h-3.5 w-3.5" />📊 Result
+            </Link>
+          ) : hasRoom ? (
             <button
               type="button"
               onClick={() => setRoomDialogOpen(true)}
@@ -877,31 +903,6 @@ function MatchCard({
             >
               🔑 ROOM DETAILS
             </button>
-          ) : isCompleted ? (
-            <Link
-              to="/tournament/$id"
-              params={{ id: tournament.id.toString() }}
-              style={{
-                flex: 1,
-                background: "#3B82F6",
-                color: "#FFFFFF",
-                border: "none",
-                borderRadius: 10,
-                padding: "10px 0",
-                fontWeight: 700,
-                fontSize: 12,
-                cursor: "pointer",
-                fontFamily: "'Orbitron', sans-serif",
-                textDecoration: "none",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: 6,
-              }}
-              data-ocid={`my_matches.results_button.${index}`}
-            >
-              <Trophy className="h-3.5 w-3.5" />📊 RESULTS
-            </Link>
           ) : (
             <button
               type="button"
@@ -937,15 +938,317 @@ function MatchCard({
   );
 }
 
+// ── MatchResult type ─────────────────────────────────────────────────────────
+interface MatchResult {
+  id?: string;
+  tournamentId: string;
+  tournamentName: string;
+  playerName: string;
+  kills: number;
+  rank: number;
+  rankLabel: string;
+  prizeAmount: number;
+  completedAt: string;
+}
+
+// ── ResultCard ────────────────────────────────────────────────────────────────
+function ResultCard({ result, index }: { result: MatchResult; index: number }) {
+  const [showFullResult, setShowFullResult] = useState(false);
+  const [topPlayers, setTopPlayers] = useState<MatchResult[]>([]);
+
+  const fetchTopPlayers = async () => {
+    try {
+      const { collection, query, where, getDocs } = await import(
+        "firebase/firestore"
+      );
+      const { getFirebaseDb } = await import("../lib/firebase");
+      const db = getFirebaseDb();
+      const q = query(
+        collection(db, "matchResults"),
+        where("tournamentId", "==", result.tournamentId),
+      );
+      const snap = await getDocs(q);
+      const all: MatchResult[] = snap.docs.map(
+        (d) => ({ id: d.id, ...d.data() }) as MatchResult,
+      );
+      all.sort((a, b) => a.rank - b.rank);
+      setTopPlayers(all.slice(0, 3));
+    } catch {}
+  };
+
+  const handleViewFull = () => {
+    fetchTopPlayers();
+    setShowFullResult(true);
+  };
+
+  const formattedDate = result.completedAt
+    ? new Date(result.completedAt).toLocaleDateString("en-IN", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      })
+    : "—";
+
+  return (
+    <>
+      <div
+        data-ocid={`my_matches.results.card.${index}`}
+        style={{
+          background: "#FFFFFF",
+          borderRadius: 16,
+          boxShadow: "0 4px 16px rgba(0,0,0,0.08)",
+          border: "1px solid #e5e7eb",
+          padding: 20,
+          marginBottom: 16,
+        }}
+      >
+        <div style={{ marginBottom: 12 }}>
+          <span
+            style={{
+              background: "rgba(107,114,128,0.15)",
+              color: "#6B7280",
+              border: "1px solid rgba(107,114,128,0.4)",
+              borderRadius: 20,
+              padding: "3px 10px",
+              fontSize: 10,
+              fontWeight: 700,
+            }}
+          >
+            ✅ COMPLETED
+          </span>
+        </div>
+        <h3
+          style={{
+            fontFamily: "'Orbitron', sans-serif",
+            color: "#000000",
+            fontWeight: 700,
+            fontSize: 16,
+            marginBottom: 14,
+          }}
+        >
+          🎮 {result.tournamentName}
+        </h3>
+        <div
+          style={{
+            background: "#f9fafb",
+            borderRadius: 12,
+            padding: 14,
+            marginBottom: 14,
+            border: "1px solid #e5e7eb",
+          }}
+        >
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr",
+              gap: 10,
+              fontSize: 13,
+            }}
+          >
+            <div>
+              <span
+                style={{ color: "#666666", display: "block", fontSize: 11 }}
+              >
+                📅 Date
+              </span>
+              <span style={{ color: "#111827", fontWeight: 600 }}>
+                {formattedDate}
+              </span>
+            </div>
+            <div>
+              <span
+                style={{ color: "#666666", display: "block", fontSize: 11 }}
+              >
+                👤 Player
+              </span>
+              <span style={{ color: "#111827", fontWeight: 600 }}>
+                {result.playerName}
+              </span>
+            </div>
+            <div>
+              <span
+                style={{ color: "#666666", display: "block", fontSize: 11 }}
+              >
+                🔫 Kills
+              </span>
+              <span style={{ color: "#111827", fontWeight: 700 }}>
+                {result.kills}
+              </span>
+            </div>
+            <div>
+              <span
+                style={{ color: "#666666", display: "block", fontSize: 11 }}
+              >
+                🏆 Rank
+              </span>
+              <span style={{ color: "#AA44FF", fontWeight: 700 }}>
+                {result.rankLabel}
+              </span>
+            </div>
+            <div className="col-span-2">
+              <span
+                style={{ color: "#666666", display: "block", fontSize: 11 }}
+              >
+                💰 Prize Won
+              </span>
+              <span style={{ color: "#00AA55", fontWeight: 800, fontSize: 18 }}>
+                ₹{result.prizeAmount.toFixed(2)}
+              </span>
+            </div>
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={handleViewFull}
+          style={{
+            width: "100%",
+            background: "linear-gradient(135deg, #AA44FF, #7700CC)",
+            color: "#fff",
+            border: "none",
+            borderRadius: 10,
+            padding: "11px 0",
+            fontWeight: 700,
+            fontSize: 12,
+            cursor: "pointer",
+            fontFamily: "'Orbitron', sans-serif",
+          }}
+          data-ocid={`my_matches.results.view_full.button.${index}`}
+        >
+          📊 VIEW FULL RESULTS
+        </button>
+      </div>
+
+      {/* Full Results Modal */}
+      <Dialog open={showFullResult} onOpenChange={setShowFullResult}>
+        <DialogContent
+          className="max-w-sm"
+          data-ocid="my_matches.results.dialog"
+          style={{ background: "#fff", border: "1px solid #e5e7eb" }}
+        >
+          <DialogHeader>
+            <DialogTitle
+              style={{
+                fontFamily: "'Orbitron', sans-serif",
+                color: "#000",
+                fontSize: 16,
+              }}
+            >
+              🏆 MATCH RESULT
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 pt-1">
+            <div
+              style={{
+                background: "#f9fafb",
+                borderRadius: 12,
+                padding: 14,
+                border: "1px solid #e5e7eb",
+              }}
+            >
+              <p style={{ color: "#666", fontSize: 12 }}>🎮 Tournament</p>
+              <p style={{ color: "#111827", fontWeight: 700 }}>
+                {result.tournamentName}
+              </p>
+              <p style={{ color: "#666", fontSize: 12, marginTop: 8 }}>
+                📅 Date
+              </p>
+              <p style={{ color: "#111827", fontWeight: 600 }}>
+                {formattedDate}
+              </p>
+              <p style={{ color: "#666", fontSize: 12, marginTop: 8 }}>
+                👤 Player
+              </p>
+              <p style={{ color: "#111827", fontWeight: 700 }}>
+                {result.playerName}
+              </p>
+              <p style={{ color: "#666", fontSize: 12, marginTop: 8 }}>
+                🔫 My Kills
+              </p>
+              <p style={{ color: "#111827", fontWeight: 700 }}>
+                {result.kills}
+              </p>
+              <p style={{ color: "#666", fontSize: 12, marginTop: 8 }}>
+                🏆 Rank
+              </p>
+              <p style={{ color: "#AA44FF", fontWeight: 800, fontSize: 18 }}>
+                {result.rankLabel}
+              </p>
+              <p style={{ color: "#666", fontSize: 12, marginTop: 8 }}>
+                💰 Prize
+              </p>
+              <p style={{ color: "#00AA55", fontWeight: 800, fontSize: 22 }}>
+                ₹{result.prizeAmount.toFixed(2)}
+              </p>
+            </div>
+            {topPlayers.length > 0 && (
+              <div
+                style={{
+                  background: "#f9fafb",
+                  borderRadius: 12,
+                  padding: 14,
+                  border: "1px solid #e5e7eb",
+                }}
+              >
+                <p
+                  style={{
+                    color: "#333",
+                    fontWeight: 700,
+                    fontSize: 14,
+                    marginBottom: 10,
+                  }}
+                >
+                  🏆 TOP PLAYERS
+                </p>
+                {topPlayers.map((p) => (
+                  <div
+                    key={p.id || p.playerName}
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      marginBottom: 6,
+                      fontSize: 13,
+                    }}
+                  >
+                    <span style={{ color: "#111827", fontWeight: 600 }}>
+                      {p.rankLabel}: {p.playerName}
+                    </span>
+                    <span style={{ color: "#00AA55", fontWeight: 700 }}>
+                      ₹{p.prizeAmount.toFixed(2)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}
+
 // ── MyMatchesPage ─────────────────────────────────────────────────────────────
 export function MyMatchesPage() {
-  const [freeMatches] = useState<FreeMyMatch[]>(() => loadFreeMyMatches());
+  const [freeMatches, setFreeMatches] = useState<FreeMyMatch[]>(() =>
+    loadFreeMyMatches(),
+  );
+  const [activeTab, setActiveTab] = useState<"upcoming" | "live" | "results">(
+    "upcoming",
+  );
+  const [matchResults, setMatchResults] = useState<MatchResult[]>([]);
+  const [resultsLoading, setResultsLoading] = useState(false);
   const { data: myRegistrations, isLoading: regLoading } =
     useGetCallerTeamRegistrations();
   const { data: tournaments, isLoading: tournLoading } = useGetTournaments();
   const { data: allRegistrations } = useGetTeamRegistrations();
 
   const isLoading = regLoading || tournLoading;
+
+  // Refresh free matches when localStorage changes
+  useEffect(() => {
+    const handler = () => setFreeMatches(loadFreeMyMatches());
+    window.addEventListener("freeTournamentUpdated", handler);
+    return () => window.removeEventListener("freeTournamentUpdated", handler);
+  }, []);
 
   const regCountMap = new Map<string, number>();
   if (allRegistrations) {
@@ -969,6 +1272,73 @@ export function MyMatchesPage() {
       }
     }
   }
+
+  // Compute tournament IDs for results fetch
+  const allTournamentIds = [
+    ...myTournaments.map(({ tournament }) => tournament.id.toString()),
+    ...freeMatches.map((m) => m.tournamentId),
+  ];
+  const allTournamentIdsKey = allTournamentIds.join(",");
+
+  // Fetch match results from Firestore for tournaments user is registered in
+  useEffect(() => {
+    if (activeTab !== "results") return;
+    const tournamentIds = allTournamentIdsKey.split(",").filter(Boolean);
+    if (tournamentIds.length === 0) return;
+
+    setResultsLoading(true);
+    (async () => {
+      try {
+        const { collection, query, where, getDocs } = await import(
+          "firebase/firestore"
+        );
+        const { getFirebaseDb } = await import("../lib/firebase");
+        const db = getFirebaseDb();
+        const results: MatchResult[] = [];
+        // Firestore "in" supports max 10 items
+        const chunks: string[][] = [];
+        for (let i = 0; i < tournamentIds.length; i += 10) {
+          chunks.push(tournamentIds.slice(i, i + 10));
+        }
+        for (const chunk of chunks) {
+          const q = query(
+            collection(db, "matchResults"),
+            where("tournamentId", "in", chunk),
+          );
+          const snap = await getDocs(q);
+          for (const d of snap.docs) {
+            results.push({ id: d.id, ...d.data() } as MatchResult);
+          }
+        }
+        results.sort(
+          (a, b) =>
+            new Date(b.completedAt).getTime() -
+            new Date(a.completedAt).getTime(),
+        );
+        setMatchResults(results);
+      } catch (err) {
+        console.error("Failed to fetch match results:", err);
+      } finally {
+        setResultsLoading(false);
+      }
+    })();
+  }, [activeTab, allTournamentIdsKey]);
+
+  // Categorize matches by tab
+  const upcomingPaid = myTournaments.filter(
+    ({ tournament }) => tournament.status === "upcoming",
+  );
+  const livePaid = myTournaments.filter(
+    ({ tournament }) => tournament.status === "ongoing",
+  );
+  const upcomingFree = freeMatches.filter(
+    (m) => getFreeMatchStatus(m.tournamentId) !== "Live",
+  );
+  const liveFree = freeMatches.filter(
+    (m) => getFreeMatchStatus(m.tournamentId) === "Live",
+  );
+
+  const hasAnyMatches = myTournaments.length > 0 || freeMatches.length > 0;
 
   return (
     <div
@@ -1011,6 +1381,73 @@ export function MyMatchesPage() {
         </div>
       </div>
 
+      {/* Tabs */}
+      <div
+        style={{
+          display: "flex",
+          gap: 4,
+          background: "#f9fafb",
+          borderRadius: 14,
+          padding: 4,
+          border: "1px solid #e5e7eb",
+        }}
+        data-ocid="my_matches.tab"
+      >
+        {(
+          [
+            {
+              key: "upcoming",
+              label: "⏰ UPCOMING",
+              count: upcomingPaid.length + upcomingFree.length,
+            },
+            {
+              key: "live",
+              label: "🔴 LIVE",
+              count: livePaid.length + liveFree.length,
+            },
+            { key: "results", label: "🏆 RESULTS", count: null },
+          ] as const
+        ).map(({ key, label, count }) => (
+          <button
+            key={key}
+            type="button"
+            onClick={() => setActiveTab(key)}
+            data-ocid={`my_matches.${key}.tab`}
+            style={{
+              flex: 1,
+              padding: "9px 4px",
+              borderRadius: 10,
+              border: "none",
+              cursor: "pointer",
+              fontFamily: "'Orbitron', sans-serif",
+              fontSize: 11,
+              fontWeight: 700,
+              transition: "all 0.15s ease",
+              background: activeTab === key ? "#00FF88" : "transparent",
+              color: activeTab === key ? "#000000" : "#666666",
+              boxShadow:
+                activeTab === key ? "0 2px 8px rgba(0,255,136,0.3)" : "none",
+            }}
+          >
+            {label}
+            {count !== null && count > 0 && (
+              <span
+                style={{
+                  marginLeft: 4,
+                  background:
+                    activeTab === key ? "rgba(0,0,0,0.15)" : "rgba(0,0,0,0.08)",
+                  borderRadius: 20,
+                  padding: "1px 6px",
+                  fontSize: 10,
+                }}
+              >
+                {count}
+              </span>
+            )}
+          </button>
+        ))}
+      </div>
+
       {/* Loading */}
       {isLoading && (
         <div className="space-y-4" data-ocid="my_matches.loading_state">
@@ -1024,8 +1461,8 @@ export function MyMatchesPage() {
         </div>
       )}
 
-      {/* Empty state */}
-      {!isLoading && myTournaments.length === 0 && freeMatches.length === 0 && (
+      {/* Empty state for all matches */}
+      {!isLoading && !hasAnyMatches && (
         <div
           className="py-16 text-center space-y-5"
           data-ocid="my_matches.empty_state"
@@ -1063,79 +1500,171 @@ export function MyMatchesPage() {
         </div>
       )}
 
-      {/* Paid Tournament Matches */}
-      {!isLoading && myTournaments.length > 0 && (
+      {/* UPCOMING Tab */}
+      {!isLoading && activeTab === "upcoming" && (
         <div className="space-y-4">
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 8,
-              marginBottom: 4,
-            }}
-          >
-            <span
-              style={{
-                color: "#9d4edd",
-                fontFamily: "'Orbitron', sans-serif",
-                fontSize: 13,
-                fontWeight: 700,
-              }}
+          {upcomingPaid.length === 0 && upcomingFree.length === 0 ? (
+            <div
+              className="py-12 text-center"
+              data-ocid="my_matches.upcoming.empty_state"
             >
-              💰 PAID TOURNAMENTS
-            </span>
-          </div>
-          {[...myTournaments]
-            .sort((a, b) => {
-              const order = { ongoing: 0, upcoming: 1, completed: 2 };
-              const ao = order[a.tournament.status as keyof typeof order] ?? 3;
-              const bo = order[b.tournament.status as keyof typeof order] ?? 3;
-              if (ao !== bo) return ao - bo;
-              return (
-                Number(b.tournament.startTime) / 1_000_000 -
-                Number(a.tournament.startTime) / 1_000_000
-              );
-            })
-            .map(({ tournament, index }) => (
-              <MatchCard
-                key={tournament.id.toString()}
-                tournament={tournament}
-                registeredCount={regCountMap.get(tournament.id.toString()) ?? 0}
-                index={index}
-              />
-            ))}
+              <p style={{ color: "#888", fontSize: 15 }}>No upcoming matches</p>
+              <p style={{ color: "#aaa", fontSize: 13, marginTop: 4 }}>
+                Your upcoming tournaments will appear here
+              </p>
+            </div>
+          ) : (
+            <>
+              {upcomingPaid.length > 0 && (
+                <div className="space-y-3">
+                  <p
+                    style={{
+                      color: "#9d4edd",
+                      fontFamily: "'Orbitron', sans-serif",
+                      fontSize: 12,
+                      fontWeight: 700,
+                    }}
+                  >
+                    💰 PAID
+                  </p>
+                  {upcomingPaid.map(({ tournament, index }) => (
+                    <MatchCard
+                      key={tournament.id.toString()}
+                      tournament={tournament}
+                      registeredCount={
+                        regCountMap.get(tournament.id.toString()) ?? 0
+                      }
+                      index={index}
+                    />
+                  ))}
+                </div>
+              )}
+              {upcomingFree.length > 0 && (
+                <div className="space-y-3">
+                  <p
+                    style={{
+                      color: "#00AA55",
+                      fontFamily: "'Orbitron', sans-serif",
+                      fontSize: 12,
+                      fontWeight: 700,
+                    }}
+                  >
+                    🎁 FREE
+                  </p>
+                  {upcomingFree.map((match, i) => (
+                    <FreeMatchCard
+                      key={`${match.tournamentId}-${match.uid}`}
+                      match={match}
+                      index={i + 1}
+                    />
+                  ))}
+                </div>
+              )}
+            </>
+          )}
         </div>
       )}
 
-      {/* Free Tournament Matches */}
-      {freeMatches.length > 0 && (
+      {/* LIVE Tab */}
+      {!isLoading && activeTab === "live" && (
         <div className="space-y-4">
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 8,
-              marginBottom: 4,
-            }}
-          >
-            <span
-              style={{
-                color: "#00FF88",
-                fontFamily: "'Orbitron', sans-serif",
-                fontSize: 13,
-                fontWeight: 700,
-              }}
+          {livePaid.length === 0 && liveFree.length === 0 ? (
+            <div
+              className="py-12 text-center"
+              data-ocid="my_matches.live.empty_state"
             >
-              🎁 FREE TOURNAMENTS
-            </span>
-          </div>
-          {freeMatches.map((match, i) => (
-            <FreeMatchCard
-              key={`${match.tournamentId}-${match.uid}`}
-              match={match}
-              index={i + 1}
-            />
-          ))}
+              <div style={{ fontSize: 32, marginBottom: 8 }}>🔴</div>
+              <p style={{ color: "#888", fontSize: 15 }}>
+                No live matches right now
+              </p>
+              <p style={{ color: "#aaa", fontSize: 13, marginTop: 4 }}>
+                Room ID & Password will appear here when match starts
+              </p>
+            </div>
+          ) : (
+            <>
+              {livePaid.length > 0 && (
+                <div className="space-y-3">
+                  <p
+                    style={{
+                      color: "#9d4edd",
+                      fontFamily: "'Orbitron', sans-serif",
+                      fontSize: 12,
+                      fontWeight: 700,
+                    }}
+                  >
+                    💰 PAID — LIVE
+                  </p>
+                  {livePaid.map(({ tournament, index }) => (
+                    <MatchCard
+                      key={tournament.id.toString()}
+                      tournament={tournament}
+                      registeredCount={
+                        regCountMap.get(tournament.id.toString()) ?? 0
+                      }
+                      index={index}
+                    />
+                  ))}
+                </div>
+              )}
+              {liveFree.length > 0 && (
+                <div className="space-y-3">
+                  <p
+                    style={{
+                      color: "#00AA55",
+                      fontFamily: "'Orbitron', sans-serif",
+                      fontSize: 12,
+                      fontWeight: 700,
+                    }}
+                  >
+                    🎁 FREE — LIVE
+                  </p>
+                  {liveFree.map((match, i) => (
+                    <FreeMatchCard
+                      key={`${match.tournamentId}-${match.uid}`}
+                      match={match}
+                      index={i + 1}
+                    />
+                  ))}
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      )}
+
+      {/* RESULTS Tab */}
+      {activeTab === "results" && (
+        <div className="space-y-4">
+          {resultsLoading ? (
+            <div
+              className="space-y-4"
+              data-ocid="my_matches.results.loading_state"
+            >
+              {[1, 2, 3].map((i) => (
+                <Skeleton
+                  key={i}
+                  className="h-48 w-full rounded-2xl"
+                  style={{ background: "#F0F0F0" }}
+                />
+              ))}
+            </div>
+          ) : matchResults.length === 0 ? (
+            <div
+              className="py-12 text-center"
+              data-ocid="my_matches.results.empty_state"
+            >
+              <div style={{ fontSize: 32, marginBottom: 8 }}>🏆</div>
+              <p style={{ color: "#888", fontSize: 15 }}>No results yet</p>
+              <p style={{ color: "#aaa", fontSize: 13, marginTop: 4 }}>
+                Your match results will appear here after the tournament ends
+              </p>
+            </div>
+          ) : (
+            matchResults.map((result, i) => (
+              <ResultCard key={result.id || i} result={result} index={i + 1} />
+            ))
+          )}
         </div>
       )}
     </div>
