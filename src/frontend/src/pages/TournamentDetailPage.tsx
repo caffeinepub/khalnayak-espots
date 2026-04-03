@@ -867,7 +867,7 @@ function RegistrationDialog({
       });
 
       saveRegisteredUid(uid);
-      // Save paid registration to Firestore
+      // Save paid registration to Firestore and localStorage for card status
       if (!isFree) {
         savePaidRegistration({
           nickname,
@@ -878,6 +878,14 @@ function RegistrationDialog({
           registeredAt: Date.now(),
           transactionId: `txn_${Date.now()}_${uid}`,
         });
+        // Save to localStorage so tournament card shows "✓ Registered"
+        try {
+          localStorage.setItem(
+            `ke_paid_joined_${tournament.id.toString()}`,
+            "true",
+          );
+          window.dispatchEvent(new Event("paidTournamentUpdated"));
+        } catch {}
       }
       setFlowState("done");
 
@@ -920,7 +928,7 @@ function RegistrationDialog({
         onCancel={handleAdCancel}
         duration={30}
         title="Watch Ad to Join Free"
-        rewardLabel="+1 Token Bonus"
+        hideClaimReward={true}
       />
 
       {/* Post-registration interstitial */}

@@ -238,7 +238,7 @@ function FreeRegistrationModal({
         onCancel={handleAdCancel}
         duration={30}
         title="Watch Ad to Join Free"
-        rewardLabel="+1 Token Bonus"
+        hideClaimReward={true}
       />
 
       {/* Post-registration interstitial */}
@@ -1705,6 +1705,32 @@ function TournamentCard({
   const isOngoing = tournament.status === "ongoing";
   const isCompleted = tournament.status === "completed";
 
+  // Check if current user has already registered for this paid tournament
+  const [isPaidRegistered, setIsPaidRegistered] = useState(() => {
+    try {
+      const key = `ke_paid_joined_${tournament.id.toString()}`;
+      return localStorage.getItem(key) === "true";
+    } catch {
+      return false;
+    }
+  });
+
+  // Listen for registration updates
+  useEffect(() => {
+    const handler = () => {
+      try {
+        const key = `ke_paid_joined_${tournament.id.toString()}`;
+        setIsPaidRegistered(localStorage.getItem(key) === "true");
+      } catch {}
+    };
+    window.addEventListener("storage", handler);
+    window.addEventListener("paidTournamentUpdated", handler);
+    return () => {
+      window.removeEventListener("storage", handler);
+      window.removeEventListener("paidTournamentUpdated", handler);
+    };
+  }, [tournament.id]);
+
   const modeIcon =
     tournament.tournamentType === "battleground"
       ? "⚔️"
@@ -1900,6 +1926,21 @@ function TournamentCard({
           >
             📊 Result
           </Link>
+        ) : isPaidRegistered ? (
+          <div
+            className="block w-full text-center py-2.5 rounded-lg font-bold text-sm uppercase tracking-wide"
+            style={{
+              background: "transparent",
+              color: "#00FF88",
+              border: "2px solid #00FF88",
+              borderRadius: 50,
+              fontFamily: "'Orbitron', sans-serif",
+              cursor: "default",
+            }}
+            data-ocid="tournaments.registered.badge"
+          >
+            ✓ Registered
+          </div>
         ) : (
           <Link
             to="/tournament/$id"

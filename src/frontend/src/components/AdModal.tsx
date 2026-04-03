@@ -21,6 +21,8 @@ interface AdModalProps {
   duration?: number;
   title?: string;
   rewardLabel?: string;
+  /** If true: hide token reward, show "Registration Successful!" instead */
+  hideClaimReward?: boolean;
 }
 
 type AdPhase = "playing" | "claiming";
@@ -32,6 +34,7 @@ export function AdModal({
   duration = 30,
   title = "Watch Ad to Earn",
   rewardLabel = "+1 Token",
+  hideClaimReward = false,
 }: AdModalProps) {
   const [phase, setPhase] = useState<AdPhase>("playing");
   const [countdown, setCountdown] = useState(duration);
@@ -193,21 +196,27 @@ export function AdModal({
                 </div>
                 <div className="space-y-1">
                   <p className="text-xl font-bold text-green-400">
-                    Ad Complete!
+                    {hideClaimReward
+                      ? "Registration Successful! 🎉"
+                      : "Ad Complete!"}
                   </p>
                   <p className="text-zinc-400 text-sm">
-                    Claim your reward below
+                    {hideClaimReward
+                      ? "You have joined the tournament"
+                      : "Claim your reward below"}
                   </p>
                 </div>
-                <div
-                  className="inline-flex items-center gap-2 px-6 py-2 rounded-full border-2 border-yellow-400 bg-yellow-950/40"
-                  style={{ boxShadow: "0 0 16px rgba(253,224,71,0.3)" }}
-                >
-                  <span className="text-2xl">🪙</span>
-                  <span className="text-xl font-bold text-yellow-300">
-                    {rewardLabel}
-                  </span>
-                </div>
+                {!hideClaimReward && (
+                  <div
+                    className="inline-flex items-center gap-2 px-6 py-2 rounded-full border-2 border-yellow-400 bg-yellow-950/40"
+                    style={{ boxShadow: "0 0 16px rgba(253,224,71,0.3)" }}
+                  >
+                    <span className="text-2xl">🪙</span>
+                    <span className="text-xl font-bold text-yellow-300">
+                      {rewardLabel}
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -241,13 +250,17 @@ export function AdModal({
               onClick={handleClaim}
               className="w-full py-3 rounded-xl font-bold text-lg transition-all active:scale-95"
               style={{
-                background: "linear-gradient(135deg, #eab308, #f59e0b)",
+                background: hideClaimReward
+                  ? "linear-gradient(135deg, #00FF88, #00cc6a)"
+                  : "linear-gradient(135deg, #eab308, #f59e0b)",
                 color: "#000",
-                boxShadow: "0 0 24px rgba(234,179,8,0.6)",
+                boxShadow: hideClaimReward
+                  ? "0 0 24px rgba(0,255,136,0.6)"
+                  : "0 0 24px rgba(234,179,8,0.6)",
               }}
               data-ocid="ad.confirm_button"
             >
-              🪙 Claim {rewardLabel}
+              {hideClaimReward ? "✅ Continue" : `🪙 Claim ${rewardLabel}`}
             </button>
           )}
 
