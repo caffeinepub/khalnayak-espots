@@ -71,6 +71,7 @@ import {
   saveReferralSettings,
 } from "@/hooks/useReferralSettings";
 import { useTokens } from "@/hooks/useTokens";
+import { getFirebaseDb } from "@/lib/firebase";
 import {
   type FreeRegistration,
   type PaidRegistration,
@@ -96,6 +97,7 @@ import {
   getTournamentTypeLabel,
 } from "@/utils/format";
 import { Navigate } from "@tanstack/react-router";
+import { addDoc, collection, getDocs, query, where } from "firebase/firestore";
 import {
   Activity,
   AlertTriangle,
@@ -123,6 +125,72 @@ import {
 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
+
+// ── Notification Helper ───────────────────────────────────────────────────────
+
+async function broadcastTournamentNotification(
+  tournamentId: string,
+  tournamentName: string,
+  type:
+    | "roomDetails"
+    | "matchLive"
+    | "resultDeclared"
+    | "timeUpdated"
+    | "matchCancelled",
+  title: string,
+  message: string,
+) {
+  try {
+    const db = getFirebaseDb();
+    // Save broadcast (for polling by free tournament users)
+    await addDoc(collection(db, "tournamentNotifications"), {
+      tournamentId,
+      tournamentName,
+      type,
+      title,
+      message,
+      createdAt: Date.now(),
+    });
+    // Also notify paid_registrations & freeRegistrations users directly
+    const paidQ = query(
+      collection(db, "paid_registrations"),
+      where("tournamentId", "==", tournamentId),
+    );
+    const freeQ = query(
+      collection(db, "freeRegistrations"),
+      where("tournamentId", "==", tournamentId),
+    );
+    const [paidSnap, freeSnap] = await Promise.all([
+      getDocs(paidQ),
+      getDocs(freeQ),
+    ]);
+    const userIds = new Set<string>();
+    for (const d of paidSnap.docs) {
+      const u = d.data().userId;
+      if (u) userIds.add(u as string);
+    }
+    for (const d of freeSnap.docs) {
+      const u = d.data().userId;
+      if (u) userIds.add(u as string);
+    }
+    await Promise.all(
+      Array.from(userIds).map((userId) =>
+        addDoc(collection(db, "notifications"), {
+          userId,
+          tournamentId,
+          tournamentName,
+          type,
+          title,
+          message,
+          read: false,
+          createdAt: Date.now(),
+        }),
+      ),
+    );
+  } catch {
+    /* ignore */
+  }
+}
 
 // ── StoredFreeTournament type ─────────────────────────────────────────────────
 
@@ -194,6 +262,13 @@ function DynamicFreeTournamentAdminCard({
     setSaved(true);
     toast.success(`Room details saved for ${data.name}`);
     setTimeout(() => setSaved(false), 2000);
+    void broadcastTournamentNotification(
+      id,
+      data.name,
+      "roomDetails",
+      "🔐 Room Details Updated",
+      `Room details updated for ${data.name}`,
+    );
   };
 
   const handleUpdateTime = () => {
@@ -206,6 +281,13 @@ function DynamicFreeTournamentAdminCard({
     setTimeSaved(true);
     toast.success(`Match time updated for ${data.name}`);
     setTimeout(() => setTimeSaved(false), 2000);
+    void broadcastTournamentNotification(
+      id,
+      data.name,
+      "timeUpdated",
+      "⏰ Match Time Updated",
+      `Match time updated for ${data.name}`,
+    );
   };
 
   const toggleMatchStarted = () => {
@@ -218,6 +300,15 @@ function DynamicFreeTournamentAdminCard({
         ? "✅ Match started! LIVE button active for users."
         : "⏹️ Match stopped.",
     );
+    if (newVal) {
+      void broadcastTournamentNotification(
+        id,
+        data.name,
+        "matchLive",
+        "🔥 Match is LIVE!",
+        `${data.name} is LIVE! Join now`,
+      );
+    }
   };
 
   const togglePublish = () => {
@@ -260,6 +351,13 @@ function DynamicFreeTournamentAdminCard({
 
   const handleSubmitResults = () => {
     toast.info("Go to Scores tab to submit results.", { duration: 3000 });
+    void broadcastTournamentNotification(
+      id,
+      data.name,
+      "resultDeclared",
+      "📊 Result Declared",
+      `Result declared for ${data.name}`,
+    );
   };
 
   const formattedMatchTime = newMatchTime
@@ -603,6 +701,13 @@ function DynamicFreeTournamentAdminCard({
                 setMatchStarted(false);
                 window.dispatchEvent(new Event("freeTournamentUpdated"));
                 toast.success("Match cancelled.");
+                void broadcastTournamentNotification(
+                  id,
+                  data.name,
+                  "matchCancelled",
+                  "❌ Match Cancelled",
+                  `Match ${data.name} has been cancelled`,
+                );
               }
             }}
             style={{
@@ -1973,6 +2078,13 @@ function DynamicPaidTournamentAdminCard({
       setSaved(true);
       toast.success(`Room details saved for ${tournament.name}`);
       setTimeout(() => setSaved(false), 2000);
+      void broadcastTournamentNotification(
+        tournament.id.toString(),
+        tournament.name,
+        "roomDetails",
+        "🔐 Room Details Updated",
+        `Room details updated for ${tournament.name}`,
+      );
     } catch (error: any) {
       toast.error(error?.message || "Failed to save room details");
     }
@@ -1988,6 +2100,15 @@ function DynamicPaidTournamentAdminCard({
       toast.success(
         isLive ? "⏹️ Match stopped." : "✅ Match started! LIVE for users.",
       );
+      if (!isLive) {
+        void broadcastTournamentNotification(
+          tournament.id.toString(),
+          tournament.name,
+          "matchLive",
+          "🔥 Match is LIVE!",
+          `${tournament.name} is LIVE! Join now`,
+        );
+      }
     } catch (error: any) {
       toast.error(error?.message || "Failed to update status");
     }
@@ -2001,6 +2122,13 @@ function DynamicPaidTournamentAdminCard({
       });
       toast.success("Match cancelled — status reset to Upcoming.");
       setCancelConfirmOpen(false);
+      void broadcastTournamentNotification(
+        tournament.id.toString(),
+        tournament.name,
+        "matchCancelled",
+        "❌ Match Cancelled",
+        `Match ${tournament.name} has been cancelled`,
+      );
     } catch (error: any) {
       toast.error(error?.message || "Failed to cancel match");
     }

@@ -227,3 +227,74 @@ export async function getPaidRegistrationCount(
     return 0;
   }
 }
+
+// ── Notifications ─────────────────────────────────────────────────────────────
+
+export interface KLNotification {
+  id?: string;
+  userId: string;
+  title: string;
+  message: string;
+  type:
+    | "roomDetails"
+    | "matchLive"
+    | "resultDeclared"
+    | "timeUpdated"
+    | "matchCancelled";
+  tournamentId: string;
+  tournamentName: string;
+  read: boolean;
+  createdAt: number;
+}
+
+export async function addNotification(
+  data: Omit<KLNotification, "id">,
+): Promise<void> {
+  try {
+    const db = getFirebaseDb();
+    await addDoc(collection(db, "notifications"), data);
+  } catch {
+    /* ignore */
+  }
+}
+
+export async function getUserNotifications(
+  userId: string,
+): Promise<KLNotification[]> {
+  try {
+    const db = getFirebaseDb();
+    const q = query(
+      collection(db, "notifications"),
+      where("userId", "==", userId),
+      orderBy("createdAt", "desc"),
+    );
+    const snap = await getDocs(q);
+    return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as KLNotification);
+  } catch {
+    return [];
+  }
+}
+
+export async function markNotificationRead(notifId: string): Promise<void> {
+  try {
+    const db = getFirebaseDb();
+    await updateDoc(doc(db, "notifications", notifId), { read: true });
+  } catch {
+    /* ignore */
+  }
+}
+
+export async function markAllNotificationsRead(userId: string): Promise<void> {
+  try {
+    const db = getFirebaseDb();
+    const q = query(
+      collection(db, "notifications"),
+      where("userId", "==", userId),
+      where("read", "==", false),
+    );
+    const snap = await getDocs(q);
+    await Promise.all(snap.docs.map((d) => updateDoc(d.ref, { read: true })));
+  } catch {
+    /* ignore */
+  }
+}

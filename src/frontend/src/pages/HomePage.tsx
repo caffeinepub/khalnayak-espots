@@ -1,3 +1,5 @@
+import { LiveClock } from "@/components/LiveClock";
+import { NotificationBell } from "@/components/NotificationBell";
 import { useUnifiedAuth } from "@/context/UnifiedAuthContext";
 import { useIIProfile } from "@/hooks/useIIProfile";
 import {
@@ -6,9 +8,8 @@ import {
 } from "@/hooks/useQueries";
 import { decodeTournament, formatCurrency } from "@/utils/format";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { Bell, Swords, User, Users, Zap } from "lucide-react";
+import { Swords, User, Users, Zap } from "lucide-react";
 import { useEffect, useState } from "react";
-import { toast } from "sonner";
 
 // ─── KL Esports Life Logo Component ─────────────────────────────────────────────────
 
@@ -93,24 +94,7 @@ function TopBar() {
       <div className="flex items-center gap-2">
         {isLoggedIn ? (
           <>
-            <button
-              type="button"
-              aria-label="Notifications"
-              onClick={() => toast.info("No new notifications")}
-              data-ocid="home.topbar.notifications.button"
-              style={{
-                background: "rgba(0,0,0,0.04)",
-                border: "1px solid #E0E0E0",
-                borderRadius: 10,
-                padding: 8,
-                color: "#666666",
-                cursor: "pointer",
-                transition: "all 0.2s",
-                lineHeight: 0,
-              }}
-            >
-              <Bell strokeWidth={1.5} style={{ width: 20, height: 20 }} />
-            </button>
+            <NotificationBell />
 
             <Link
               to="/profile"
@@ -901,6 +885,7 @@ export function HomePage() {
       style={{ background: "#FFFFFF", paddingBottom: 80 }}
     >
       <TopBar />
+      <LiveClock />
       <HeroSection />
       <MyMatchesPreview />
       <UpcomingTournamentsSection />

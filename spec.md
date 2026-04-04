@@ -1,35 +1,40 @@
 # Khalnayak Esports
 
 ## Current State
-- Free tournament join count reads from localStorage only (`freeJoinCount_{id}`) — not synced with Firestore
-- Paid tournament progress bar uses a hardcoded fake percentage (30/75/100%) and shows `0/{maxTeams}` statically
-- Registration status (✓ Registered) uses localStorage only
-- Admin Manage Matches shows all tournament cards fully expanded at once — becomes very long with many tournaments
-- Home page has no My Matches inline section
-- MyMatchesPage exists in menu and works fine
+- React + Firebase (Firestore) app
+- HomePage has TopBar with Bell icon (shows toast), Hero section, My Matches preview, Upcoming Tournaments
+- AdminPage has all tournament management (SET ROOM ID, START MATCH, SUBMIT RESULTS, CANCEL MATCH, UPDATE MATCH TIME)
+- Firestore collections: users, transactions, freeRegistrations, paid_registrations, tournaments
+- NotificationPoller exists but uses backend (ICP) notifications — NOT Firestore
+- No IST live clock anywhere
+- No Firestore notification system
+- Bell icon in TopBar just shows a toast, no real notification panel
 
 ## Requested Changes (Diff)
 
 ### Add
-- Real-time joined count for free tournaments: fetch count from Firestore `freeRegistrations` collection filtered by `tournamentId`, display as "X/Total teams joined"; update after registration success
-- Real-time joined count for paid tournaments: fetch count from Firestore `paid_registrations` collection filtered by `tournamentId`, display as "X/Total teams joined"
-- Show "Full" label when count reaches maxTeams/maxPlayers
-- My Matches mini-section on Home page: shows user's registered matches (free from localStorage, paid from useGetCallerTeamRegistrations), each card with tournament name, date, status, Room ID if LIVE, Result if DONE
-- Accordion/collapsible design for Admin Panel Manage Matches: each tournament card collapsed by default showing only Name | Mode | Status | Date; click to expand full details
+1. **IST Live Clock** — component that shows current IST time updating every second, format: "Thursday, 04 April 2026 — 08:45:30 PM", with green pulsing LIVE badge. Position: below TopBar / in HeroSection on HomePage.
+2. **Tournament card countdown timer** — on each tournament card in TournamentsPage/HomePage, show countdown to match start time for UPCOMING tournaments.
+3. **Firestore notifications collection** — new `notifications` collection with fields: userId, title, message, type (roomDetails/matchLive/resultDeclared/timeUpdated/matchCancelled), tournamentId, tournamentName, read (bool), createdAt.
+4. **Firestore notification helpers** in `src/frontend/src/lib/firestore.ts` — addNotification(), getUserNotifications(), markNotificationRead(), markAllRead().
+5. **useNotifications hook** — fetches notifications from Firestore for logged-in user (real-time listener), returns {notifications, unreadCount, markRead, markAllRead}.
+6. **Notification panel UI** — bell icon click pe slide-down dropdown panel with list of notifications. Bell shows red badge with unread count.
+7. **Admin triggers** — in AdminPage, after each action (SET ROOM ID & PASSWORD, START MATCH, SUBMIT RESULTS, CANCEL MATCH, UPDATE MATCH TIME), send Firestore notifications to all registered users of that tournament.
 
 ### Modify
-- FreeTournamentCard: fetch count from Firestore on mount and after registration; also keep localStorage as fallback/optimistic update
-- TournamentCard (paid): fetch real count from `paid_registrations` on mount instead of fake percentage
-- Admin ManageMatchesTab: wrap each DynamicPaidTournamentAdminCard and free tournament card in accordion
-- HomePage: add MyMatchesPreview section between HeroSection and UpcomingTournamentsSection
+- `src/frontend/src/pages/HomePage.tsx` — Add `LiveClock` component between TopBar and HeroSection.
+- `src/frontend/src/pages/HomePage.tsx` — TopBar: replace simple Bell toast with NotificationBell component (badge + panel).
+- `src/frontend/src/lib/firestore.ts` — Add notification CRUD functions.
+- `src/frontend/src/pages/AdminPage.tsx` — Add notification triggers to 5 admin actions (free + paid tournaments both).
 
 ### Remove
-- Hardcoded fake percentage in paid tournament progress bar
+- Nothing removed
 
 ## Implementation Plan
-1. Add `getFreeRegistrationCount(tournamentId)` helper in firestore.ts using `getDocs` with filter
-2. Add `getPaidRegistrationCount(tournamentId)` helper similarly
-3. Update FreeTournamentCard to fetch Firestore count on mount + listen for `freeTournamentUpdated` event to refetch
-4. Update TournamentCard (paid) to fetch Firestore count on mount
-5. Add MyMatchesPreview component to HomePage between Hero and Upcoming sections
-6. Convert Admin ManageMatchesTab cards to accordion (collapsible) design with expand/collapse toggle
+1. Add notification Firestore helpers to `firestore.ts`
+2. Create `useNotifications.ts` hook with real-time Firestore listener
+3. Create `LiveClock.tsx` component (IST, updates every second, LIVE badge)
+4. Create `NotificationBell.tsx` component (bell + unread badge + dropdown panel)
+5. Update `HomePage.tsx` — add LiveClock, replace bell with NotificationBell
+6. Update `AdminPage.tsx` — add notification calls after each of 5 admin actions for both free and paid tournaments
+7. Add countdown display to tournament cards in TournamentsPage where startTime is available
