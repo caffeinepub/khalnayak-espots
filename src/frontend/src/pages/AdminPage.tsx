@@ -75,6 +75,7 @@ import { getFirebaseDb } from "@/lib/firebase";
 import {
   type FreeRegistration,
   type PaidRegistration,
+  broadcastNotificationToAllUsers,
   getFreeRegistrations,
   getPaidRegistrations,
 } from "@/lib/firestore";
@@ -1094,6 +1095,14 @@ export function AdminPage() {
                 <span className="admin-nav-icon">💳</span>
                 <span>Paid Registrations</span>
               </TabsTrigger>
+              <TabsTrigger
+                value="broadcast"
+                data-ocid="admin.broadcast.tab"
+                className="admin-nav-trigger"
+              >
+                <span className="admin-nav-icon">📢</span>
+                <span>Broadcast</span>
+              </TabsTrigger>
             </TabsList>
           </div>
           {/* Scroll fade indicator on the right */}
@@ -1156,6 +1165,9 @@ export function AdminPage() {
         </TabsContent>
         <TabsContent value="paidRegistrations">
           <PaidRegistrationsTab />
+        </TabsContent>
+        <TabsContent value="broadcast">
+          <BroadcastNotificationTab />
         </TabsContent>
       </Tabs>
     </div>
@@ -6397,6 +6409,338 @@ function FreeRegistrationsTab() {
               </p>
             </div>
           )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+// ── Broadcast Notification Tab ────────────────────────────────────────────────
+
+function BroadcastNotificationTab() {
+  const [title, setTitle] = useState("");
+  const [message, setMessage] = useState("");
+  const [notifType, setNotifType] = useState("broadcast");
+  const [sending, setSending] = useState(false);
+  const [sent, setSent] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleSend = async () => {
+    if (!title.trim() || !message.trim()) {
+      setError("Title aur Message dono required hain.");
+      return;
+    }
+    setSending(true);
+    setError("");
+    setSent(false);
+    try {
+      await broadcastNotificationToAllUsers({
+        title: title.trim(),
+        message: message.trim(),
+        type: "broadcast",
+      });
+      setSent(true);
+      setTitle("");
+      setMessage("");
+      setTimeout(() => setSent(false), 4000);
+    } catch {
+      setError("Broadcast failed. Please try again.");
+    } finally {
+      setSending(false);
+    }
+  };
+
+  return (
+    <div style={{ maxWidth: 560, margin: "0 auto" }}>
+      <Card style={{ border: "1px solid #E5E7EB", borderRadius: 16 }}>
+        <CardHeader style={{ borderBottom: "1px solid #F0F0F0" }}>
+          <CardTitle
+            style={{
+              fontFamily: "'Orbitron', sans-serif",
+              fontSize: 18,
+              color: "#111827",
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+            }}
+          >
+            📢 Broadcast Notification
+          </CardTitle>
+          <CardDescription style={{ color: "#666666", fontSize: 13 }}>
+            Sabhi registered users ko ek saath message bhejo.
+          </CardDescription>
+        </CardHeader>
+        <CardContent style={{ padding: 24 }}>
+          {sent && (
+            <div
+              style={{
+                background: "rgba(0,255,136,0.08)",
+                border: "1px solid #00FF88",
+                borderRadius: 10,
+                padding: "10px 14px",
+                marginBottom: 16,
+                color: "#007744",
+                fontFamily: "'Rajdhani', sans-serif",
+                fontWeight: 700,
+                fontSize: 14,
+              }}
+            >
+              ✅ Broadcast successfully sent to all users!
+            </div>
+          )}
+          {error && (
+            <div
+              style={{
+                background: "rgba(255,68,68,0.08)",
+                border: "1px solid #FF4444",
+                borderRadius: 10,
+                padding: "10px 14px",
+                marginBottom: 16,
+                color: "#CC0000",
+                fontFamily: "'Rajdhani', sans-serif",
+                fontWeight: 700,
+                fontSize: 14,
+              }}
+            >
+              ❌ {error}
+            </div>
+          )}
+
+          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+            {/* Type */}
+            <div>
+              <label
+                htmlFor="broadcast-type"
+                style={{
+                  display: "block",
+                  fontFamily: "'Rajdhani', sans-serif",
+                  fontWeight: 700,
+                  fontSize: 13,
+                  color: "#333333",
+                  marginBottom: 6,
+                }}
+              >
+                Notification Type
+              </label>
+              <select
+                id="broadcast-type"
+                value={notifType}
+                onChange={(e) => setNotifType(e.target.value)}
+                style={{
+                  width: "100%",
+                  padding: "10px 12px",
+                  border: "1px solid #D1D5DB",
+                  borderRadius: 8,
+                  background: "#F9FAFB",
+                  color: "#111827",
+                  fontSize: 14,
+                  fontFamily: "'Rajdhani', sans-serif",
+                  outline: "none",
+                }}
+              >
+                <option value="broadcast">📢 General Broadcast</option>
+                <option value="matchLive">🔥 Match Live Alert</option>
+                <option value="resultDeclared">📊 Result Declared</option>
+                <option value="timeUpdated">⏰ Time Updated</option>
+                <option value="matchCancelled">❌ Match Cancelled</option>
+              </select>
+            </div>
+
+            {/* Title */}
+            <div>
+              <label
+                htmlFor="broadcast-title"
+                style={{
+                  display: "block",
+                  fontFamily: "'Rajdhani', sans-serif",
+                  fontWeight: 700,
+                  fontSize: 13,
+                  color: "#333333",
+                  marginBottom: 6,
+                }}
+              >
+                Title *
+              </label>
+              <input
+                id="broadcast-title"
+                type="text"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="e.g. New Tournament Announced!"
+                maxLength={80}
+                style={{
+                  width: "100%",
+                  padding: "10px 12px",
+                  border: "1px solid #D1D5DB",
+                  borderRadius: 8,
+                  background: "#FFFFFF",
+                  color: "#111827",
+                  fontSize: 14,
+                  fontFamily: "'Rajdhani', sans-serif",
+                  outline: "none",
+                  boxSizing: "border-box",
+                }}
+              />
+              <p
+                style={{
+                  fontSize: 11,
+                  color: "#999",
+                  marginTop: 4,
+                  fontFamily: "'Rajdhani', sans-serif",
+                }}
+              >
+                {title.length}/80 characters
+              </p>
+            </div>
+
+            {/* Message */}
+            <div>
+              <label
+                htmlFor="broadcast-message"
+                style={{
+                  display: "block",
+                  fontFamily: "'Rajdhani', sans-serif",
+                  fontWeight: 700,
+                  fontSize: 13,
+                  color: "#333333",
+                  marginBottom: 6,
+                }}
+              >
+                Message *
+              </label>
+              <textarea
+                id="broadcast-message"
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                placeholder="Yahan apna message likhein..."
+                rows={4}
+                maxLength={300}
+                style={{
+                  width: "100%",
+                  padding: "10px 12px",
+                  border: "1px solid #D1D5DB",
+                  borderRadius: 8,
+                  background: "#FFFFFF",
+                  color: "#111827",
+                  fontSize: 14,
+                  fontFamily: "'Rajdhani', sans-serif",
+                  outline: "none",
+                  resize: "vertical",
+                  boxSizing: "border-box",
+                }}
+              />
+              <p
+                style={{
+                  fontSize: 11,
+                  color: "#999",
+                  marginTop: 4,
+                  fontFamily: "'Rajdhani', sans-serif",
+                }}
+              >
+                {message.length}/300 characters
+              </p>
+            </div>
+
+            {/* Preview */}
+            {(title || message) && (
+              <div
+                style={{
+                  background: "#F9FAFB",
+                  border: "1px solid #E5E7EB",
+                  borderRadius: 10,
+                  padding: "12px 14px",
+                }}
+              >
+                <p
+                  style={{
+                    fontSize: 11,
+                    color: "#999",
+                    fontFamily: "'Rajdhani', sans-serif",
+                    marginBottom: 6,
+                    textTransform: "uppercase",
+                    letterSpacing: "0.05em",
+                  }}
+                >
+                  Preview
+                </p>
+                <div
+                  style={{ display: "flex", gap: 10, alignItems: "flex-start" }}
+                >
+                  <span style={{ fontSize: 20 }}>📢</span>
+                  <div>
+                    <p
+                      style={{
+                        fontFamily: "'Rajdhani', sans-serif",
+                        fontWeight: 700,
+                        fontSize: 13,
+                        color: "#111827",
+                        margin: "0 0 2px 0",
+                      }}
+                    >
+                      {title || "(no title)"}
+                    </p>
+                    <p
+                      style={{
+                        fontFamily: "'Rajdhani', sans-serif",
+                        fontSize: 12,
+                        color: "#555",
+                        margin: 0,
+                      }}
+                    >
+                      {message || "(no message)"}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Send Button */}
+            <button
+              type="button"
+              onClick={() => void handleSend()}
+              disabled={sending || !title.trim() || !message.trim()}
+              data-ocid="admin.broadcast.send.button"
+              style={{
+                background:
+                  sending || !title.trim() || !message.trim()
+                    ? "#E5E7EB"
+                    : "linear-gradient(135deg, #00FF88, #00CC66)",
+                color:
+                  sending || !title.trim() || !message.trim()
+                    ? "#9CA3AF"
+                    : "#000000",
+                border: "none",
+                borderRadius: 10,
+                padding: "13px 24px",
+                fontFamily: "'Orbitron', sans-serif",
+                fontWeight: 700,
+                fontSize: 14,
+                cursor:
+                  sending || !title.trim() || !message.trim()
+                    ? "not-allowed"
+                    : "pointer",
+                width: "100%",
+                transition: "all 0.2s",
+                letterSpacing: "0.05em",
+              }}
+            >
+              {sending
+                ? "⏳ Sending to all users..."
+                : "📢 SEND BROADCAST TO ALL USERS"}
+            </button>
+
+            <p
+              style={{
+                fontSize: 12,
+                color: "#888",
+                textAlign: "center",
+                fontFamily: "'Rajdhani', sans-serif",
+              }}
+            >
+              ⚠️ Yeh message sabhi registered users ke notification panel mein
+              jayega.
+            </p>
+          </div>
         </CardContent>
       </Card>
     </div>

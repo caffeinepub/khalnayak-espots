@@ -4,7 +4,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { Bell, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
-function getNotifIcon(type: KLNotification["type"]): string {
+function getNotifIcon(type: KLNotification["type"] | string): string {
   switch (type) {
     case "roomDetails":
       return "\uD83D\uDD10";
@@ -16,8 +16,25 @@ function getNotifIcon(type: KLNotification["type"]): string {
       return "\u23F0";
     case "matchCancelled":
       return "\u274C";
+    case "broadcast":
+      return "\uD83D\uDCE2";
     default:
       return "\uD83D\uDD14";
+  }
+}
+
+function safeText(str: unknown): string {
+  if (typeof str !== "string") return "";
+  // Remove any garbled surrogate-pair literals like "3D\UDD14" or similar
+  // These appear when unicode escapes are stored as raw strings
+  try {
+    // Replace literal backslash-U sequences that aren't actual emoji
+    return str
+      .replace(/[\uD800-\uDFFF]/g, "")
+      .replace(/\\[Uu][0-9A-Fa-f]{4,8}/g, "")
+      .trim();
+  } catch {
+    return str;
   }
 }
 
@@ -117,6 +134,7 @@ export function NotificationBell() {
               justifyContent: "space-between",
               padding: "12px 16px",
               borderBottom: "1px solid #F0F0F0",
+              background: "#FAFAFA",
             }}
           >
             <span
@@ -127,7 +145,7 @@ export function NotificationBell() {
                 color: "#111827",
               }}
             >
-              \uD83D\uDD14 NOTIFICATIONS
+              {/* Direct emoji — no unicode escape */}🔔 NOTIFICATIONS
             </span>
             <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
               {unreadCount > 0 && (
@@ -177,14 +195,14 @@ export function NotificationBell() {
                 }}
                 data-ocid="home.notifications.empty_state"
               >
-                <p style={{ fontSize: 28, marginBottom: 8 }}>\uD83D\uDD15</p>
+                <p style={{ fontSize: 28, marginBottom: 8 }}>🔕</p>
                 <p>No notifications yet</p>
               </div>
             ) : (
               notifications.slice(0, 20).map((notif, idx) => (
                 <button
                   type="button"
-                  key={notif.id}
+                  key={notif.id ?? idx}
                   data-ocid={`home.notifications.item.${idx + 1}`}
                   onClick={() => {
                     if (notif.id) markRead(notif.id);
@@ -219,7 +237,9 @@ export function NotificationBell() {
                         marginTop: 1,
                       }}
                     >
-                      {getNotifIcon(notif.type)}
+                      {getNotifIcon(
+                        (notif as KLNotification & { type: string }).type,
+                      )}
                     </span>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <p
@@ -231,7 +251,7 @@ export function NotificationBell() {
                           margin: "0 0 2px 0",
                         }}
                       >
-                        {notif.title}
+                        {safeText(notif.title)}
                       </p>
                       <p
                         style={{
@@ -242,7 +262,7 @@ export function NotificationBell() {
                           lineHeight: 1.4,
                         }}
                       >
-                        {notif.message}
+                        {safeText(notif.message)}
                       </p>
                       <p
                         style={{

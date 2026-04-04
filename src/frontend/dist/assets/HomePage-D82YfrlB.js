@@ -1,0 +1,1486 @@
+const __vite__mapDeps=(i,m=__vite__mapDeps,d=(m.f||(m.f=["assets/index-DfjncSyi.js","assets/index-C3weBdYi.css"])))=>i.map(i=>d[i]);
+import { F as reactExports, j as jsxRuntimeExports, u as useUnifiedAuth, ak as getFirebaseDb, al as query, am as orderBy, an as where, ao as collection, ap as onSnapshot, aq as markNotificationRead, ar as markAllNotificationsRead, _ as __vitePreload, b as useNavigate, as as Bell, X, a as useIIProfile, L as Link, at as User, d as useGetCallerTeamRegistrations, e as useGetTournaments, aj as Swords, k as formatCurrency, au as decodeTournament } from "./index-DfjncSyi.js";
+import { Z as Zap } from "./zap-Bn6dJbxj.js";
+import { U as Users } from "./users-Dapk2rMs.js";
+const DAYS = [
+  "Sunday",
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday"
+];
+const MONTHS_SHORT = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec"
+];
+function getISTTime() {
+  const now = /* @__PURE__ */ new Date();
+  const utc = now.getTime() + now.getTimezoneOffset() * 6e4;
+  return new Date(utc + 5.5 * 36e5);
+}
+function formatIST(ist) {
+  const day = DAYS[ist.getDay()];
+  const dd = String(ist.getDate()).padStart(2, "0");
+  const month = MONTHS_SHORT[ist.getMonth()];
+  const yyyy = ist.getFullYear();
+  let hh = ist.getHours();
+  const mm = String(ist.getMinutes()).padStart(2, "0");
+  const ss = String(ist.getSeconds()).padStart(2, "0");
+  const ampm = hh >= 12 ? "PM" : "AM";
+  hh = hh % 12 || 12;
+  const hhStr = String(hh).padStart(2, "0");
+  return {
+    date: `${day}, ${dd} ${month} ${yyyy}`,
+    time: `${hhStr}:${mm}:${ss} ${ampm}`
+  };
+}
+function LiveClock() {
+  const [timeData, setTimeData] = reactExports.useState(() => formatIST(getISTTime()));
+  const [pulse, setPulse] = reactExports.useState(false);
+  const prevSecRef = reactExports.useRef(-1);
+  reactExports.useEffect(() => {
+    const tick = () => {
+      const ist = getISTTime();
+      const sec = ist.getSeconds();
+      if (sec !== prevSecRef.current) {
+        prevSecRef.current = sec;
+        setTimeData(formatIST(ist));
+        setPulse(true);
+        setTimeout(() => setPulse(false), 300);
+      }
+    };
+    tick();
+    const id = setInterval(tick, 200);
+    return () => clearInterval(id);
+  }, []);
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
+    /* @__PURE__ */ jsxRuntimeExports.jsx("style", { children: `
+        @keyframes liveDotBlink {
+          0%, 100% { opacity: 1; box-shadow: 0 0 6px #FF4444, 0 0 12px #FF4444; }
+          50% { opacity: 0.25; box-shadow: 0 0 2px #FF4444; }
+        }
+        @keyframes clockGlow {
+          0%, 100% { text-shadow: 0 0 8px rgba(0,255,136,0.8), 0 0 16px rgba(0,255,136,0.4); }
+          50% { text-shadow: 0 0 14px rgba(0,255,136,1), 0 0 28px rgba(0,255,136,0.7), 0 0 40px rgba(0,255,136,0.3); }
+        }
+        @keyframes secondScale {
+          0% { transform: scale(1); }
+          50% { transform: scale(1.05); }
+          100% { transform: scale(1); }
+        }
+        .clock-time-pulse {
+          animation: secondScale 0.3s ease-out;
+        }
+        .clock-time-base {
+          animation: clockGlow 1s ease-in-out infinite;
+        }
+      ` }),
+    /* @__PURE__ */ jsxRuntimeExports.jsxs(
+      "div",
+      {
+        style: {
+          display: "flex",
+          alignItems: "center",
+          gap: 10,
+          padding: "8px 14px",
+          background: "rgba(0,0,0,0.03)",
+          border: "1px solid rgba(0,255,136,0.18)",
+          borderRadius: 12,
+          margin: "0 16px 12px 16px",
+          flexWrap: "wrap",
+          rowGap: 4
+        },
+        "data-ocid": "home.live_clock.panel",
+        children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsxs(
+            "div",
+            {
+              style: {
+                display: "flex",
+                alignItems: "center",
+                gap: 5,
+                flexShrink: 0
+              },
+              children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsx(
+                  "span",
+                  {
+                    style: {
+                      width: 8,
+                      height: 8,
+                      borderRadius: "50%",
+                      background: "#FF4444",
+                      display: "inline-block",
+                      animation: "liveDotBlink 1s ease-in-out infinite",
+                      flexShrink: 0
+                    }
+                  }
+                ),
+                /* @__PURE__ */ jsxRuntimeExports.jsx(
+                  "span",
+                  {
+                    style: {
+                      fontFamily: "'Orbitron', sans-serif",
+                      fontSize: 10,
+                      fontWeight: 800,
+                      color: "#FF4444",
+                      letterSpacing: "0.12em"
+                    },
+                    children: "LIVE"
+                  }
+                )
+              ]
+            }
+          ),
+          /* @__PURE__ */ jsxRuntimeExports.jsx(
+            "span",
+            {
+              style: {
+                width: 1,
+                height: 18,
+                background: "rgba(0,255,136,0.25)",
+                flexShrink: 0
+              }
+            }
+          ),
+          /* @__PURE__ */ jsxRuntimeExports.jsx(
+            "span",
+            {
+              style: {
+                fontFamily: "'Rajdhani', sans-serif",
+                fontSize: "clamp(11px, 2.5vw, 13px)",
+                color: "#444444",
+                fontWeight: 600,
+                letterSpacing: "0.02em",
+                whiteSpace: "nowrap"
+              },
+              children: timeData.date
+            }
+          ),
+          /* @__PURE__ */ jsxRuntimeExports.jsx(
+            "span",
+            {
+              style: {
+                color: "rgba(0,255,136,0.5)",
+                fontSize: 12,
+                fontWeight: 700
+              },
+              children: "—"
+            }
+          ),
+          /* @__PURE__ */ jsxRuntimeExports.jsx(
+            "span",
+            {
+              className: `clock-time-base${pulse ? " clock-time-pulse" : ""}`,
+              style: {
+                fontFamily: "'Courier New', 'Roboto Mono', monospace",
+                fontSize: "clamp(12px, 3.2vw, 16px)",
+                color: "#00FF88",
+                fontWeight: 800,
+                letterSpacing: "0.06em",
+                whiteSpace: "nowrap",
+                display: "inline-block"
+              },
+              children: timeData.time
+            }
+          )
+        ]
+      }
+    )
+  ] });
+}
+function useNotifications() {
+  const { userId } = useUnifiedAuth();
+  const [notifications, setNotifications] = reactExports.useState([]);
+  reactExports.useEffect(() => {
+    if (!userId) {
+      setNotifications([]);
+      return;
+    }
+    const db = getFirebaseDb();
+    const q = query(
+      collection(db, "notifications"),
+      where("userId", "==", userId),
+      orderBy("createdAt", "desc")
+    );
+    const unsub = onSnapshot(
+      q,
+      (snap) => {
+        setNotifications(
+          snap.docs.map((d) => ({ id: d.id, ...d.data() }))
+        );
+      },
+      () => {
+      }
+    );
+    return () => unsub();
+  }, [userId]);
+  reactExports.useEffect(() => {
+    if (!userId) return;
+    const checkBroadcasts = async () => {
+      try {
+        const db = getFirebaseDb();
+        const lastCheck = Number(
+          localStorage.getItem("kl_notif_last_check") || "0"
+        );
+        const freeMatches = JSON.parse(
+          localStorage.getItem("ke_free_my_matches") || "[]"
+        );
+        if (freeMatches.length === 0) return;
+        const tIds = freeMatches.map((m) => m.tournamentId);
+        const {
+          getDocs,
+          query: fsQuery,
+          where: fsWhere,
+          collection: fsCollection,
+          addDoc
+        } = await __vitePreload(async () => {
+          const {
+            getDocs: getDocs2,
+            query: fsQuery2,
+            where: fsWhere2,
+            collection: fsCollection2,
+            addDoc: addDoc2
+          } = await import("./index-DfjncSyi.js").then((n) => n.bg);
+          return {
+            getDocs: getDocs2,
+            query: fsQuery2,
+            where: fsWhere2,
+            collection: fsCollection2,
+            addDoc: addDoc2
+          };
+        }, true ? __vite__mapDeps([0,1]) : void 0);
+        for (const tId of tIds) {
+          const q = fsQuery(
+            fsCollection(db, "tournamentNotifications"),
+            fsWhere("tournamentId", "==", tId),
+            fsWhere("createdAt", ">", lastCheck)
+          );
+          const snap = await getDocs(q);
+          for (const d of snap.docs) {
+            const data = d.data();
+            await addDoc(fsCollection(db, "notifications"), {
+              userId,
+              tournamentId: data.tournamentId,
+              tournamentName: data.tournamentName,
+              type: data.type,
+              title: data.title,
+              message: data.message,
+              read: false,
+              createdAt: data.createdAt
+            });
+          }
+        }
+        localStorage.setItem("kl_notif_last_check", String(Date.now()));
+      } catch {
+      }
+    };
+    void checkBroadcasts();
+    const interval = setInterval(() => void checkBroadcasts(), 3e4);
+    return () => clearInterval(interval);
+  }, [userId]);
+  const unreadCount = notifications.filter((n) => !n.read).length;
+  const markRead = reactExports.useCallback((id) => {
+    markNotificationRead(id);
+  }, []);
+  const markAllRead = reactExports.useCallback(() => {
+    if (userId) markAllNotificationsRead(userId);
+  }, [userId]);
+  return { notifications, unreadCount, markRead, markAllRead };
+}
+function getNotifIcon(type) {
+  switch (type) {
+    case "roomDetails":
+      return "🔐";
+    case "matchLive":
+      return "🔥";
+    case "resultDeclared":
+      return "📊";
+    case "timeUpdated":
+      return "⏰";
+    case "matchCancelled":
+      return "❌";
+    case "broadcast":
+      return "📢";
+    default:
+      return "🔔";
+  }
+}
+function safeText(str) {
+  if (typeof str !== "string") return "";
+  try {
+    return str.replace(/[\uD800-\uDFFF]/g, "").replace(/\\[Uu][0-9A-Fa-f]{4,8}/g, "").trim();
+  } catch {
+    return str;
+  }
+}
+function timeAgo(ts) {
+  const diff = Date.now() - ts;
+  const m = Math.floor(diff / 6e4);
+  if (m < 1) return "Just now";
+  if (m < 60) return `${m}m ago`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h ago`;
+  return `${Math.floor(h / 24)}d ago`;
+}
+function NotificationBell() {
+  const { notifications, unreadCount, markRead, markAllRead } = useNotifications();
+  const [open, setOpen] = reactExports.useState(false);
+  const ref = reactExports.useRef(null);
+  const navigate = useNavigate();
+  reactExports.useEffect(() => {
+    const handler = (e) => {
+      if (ref.current && !ref.current.contains(e.target))
+        setOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { ref, style: { position: "relative" }, children: [
+    /* @__PURE__ */ jsxRuntimeExports.jsxs(
+      "button",
+      {
+        type: "button",
+        "aria-label": "Notifications",
+        onClick: () => setOpen((o) => !o),
+        "data-ocid": "home.topbar.notifications.button",
+        style: {
+          background: "rgba(0,0,0,0.04)",
+          border: "1px solid #E0E0E0",
+          borderRadius: 10,
+          padding: 8,
+          color: "#666666",
+          cursor: "pointer",
+          lineHeight: 0,
+          position: "relative"
+        },
+        children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx(Bell, { strokeWidth: 1.5, style: { width: 20, height: 20 } }),
+          unreadCount > 0 && /* @__PURE__ */ jsxRuntimeExports.jsx(
+            "span",
+            {
+              style: {
+                position: "absolute",
+                top: -4,
+                right: -4,
+                background: "#FF4444",
+                color: "#fff",
+                borderRadius: "50%",
+                width: 18,
+                height: 18,
+                fontSize: 10,
+                fontWeight: 800,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontFamily: "'Orbitron', sans-serif",
+                border: "2px solid #fff"
+              },
+              "data-ocid": "home.topbar.notifications.badge",
+              children: unreadCount > 9 ? "9+" : unreadCount
+            }
+          )
+        ]
+      }
+    ),
+    open && /* @__PURE__ */ jsxRuntimeExports.jsxs(
+      "div",
+      {
+        "data-ocid": "home.notifications.panel",
+        style: {
+          position: "absolute",
+          top: "110%",
+          right: 0,
+          width: "min(340px, 90vw)",
+          background: "#FFFFFF",
+          border: "1px solid #E0E0E0",
+          borderRadius: 16,
+          boxShadow: "0 8px 32px rgba(0,0,0,0.15)",
+          zIndex: 9999,
+          overflow: "hidden"
+        },
+        children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsxs(
+            "div",
+            {
+              style: {
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                padding: "12px 16px",
+                borderBottom: "1px solid #F0F0F0",
+                background: "#FAFAFA"
+              },
+              children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsx(
+                  "span",
+                  {
+                    style: {
+                      fontFamily: "'Orbitron', sans-serif",
+                      fontWeight: 800,
+                      fontSize: 13,
+                      color: "#111827"
+                    },
+                    children: "🔔 NOTIFICATIONS"
+                  }
+                ),
+                /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: { display: "flex", gap: 8, alignItems: "center" }, children: [
+                  unreadCount > 0 && /* @__PURE__ */ jsxRuntimeExports.jsx(
+                    "button",
+                    {
+                      type: "button",
+                      onClick: markAllRead,
+                      "data-ocid": "home.notifications.mark_all_read.button",
+                      style: {
+                        fontSize: 11,
+                        color: "#00FF88",
+                        fontWeight: 700,
+                        background: "none",
+                        border: "none",
+                        cursor: "pointer",
+                        fontFamily: "'Rajdhani', sans-serif"
+                      },
+                      children: "Mark All Read"
+                    }
+                  ),
+                  /* @__PURE__ */ jsxRuntimeExports.jsx(
+                    "button",
+                    {
+                      type: "button",
+                      onClick: () => setOpen(false),
+                      "data-ocid": "home.notifications.close.button",
+                      style: {
+                        background: "none",
+                        border: "none",
+                        cursor: "pointer",
+                        color: "#666",
+                        lineHeight: 0
+                      },
+                      children: /* @__PURE__ */ jsxRuntimeExports.jsx(X, { size: 16 })
+                    }
+                  )
+                ] })
+              ]
+            }
+          ),
+          /* @__PURE__ */ jsxRuntimeExports.jsx("div", { style: { maxHeight: 360, overflowY: "auto" }, children: notifications.length === 0 ? /* @__PURE__ */ jsxRuntimeExports.jsxs(
+            "div",
+            {
+              style: {
+                padding: 32,
+                textAlign: "center",
+                color: "#999",
+                fontFamily: "'Rajdhani', sans-serif"
+              },
+              "data-ocid": "home.notifications.empty_state",
+              children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsx("p", { style: { fontSize: 28, marginBottom: 8 }, children: "🔕" }),
+                /* @__PURE__ */ jsxRuntimeExports.jsx("p", { children: "No notifications yet" })
+              ]
+            }
+          ) : notifications.slice(0, 20).map((notif, idx) => /* @__PURE__ */ jsxRuntimeExports.jsx(
+            "button",
+            {
+              type: "button",
+              "data-ocid": `home.notifications.item.${idx + 1}`,
+              onClick: () => {
+                if (notif.id) markRead(notif.id);
+                setOpen(false);
+                void navigate({ to: "/tournaments" });
+              },
+              style: {
+                display: "block",
+                width: "100%",
+                textAlign: "left",
+                padding: "12px 16px",
+                borderBottom: "1px solid #F5F5F5",
+                borderTop: "none",
+                borderRight: "none",
+                cursor: "pointer",
+                background: notif.read ? "#FFFFFF" : "rgba(0,255,136,0.04)",
+                borderLeft: notif.read ? "none" : "3px solid #00FF88",
+                transition: "background 0.15s"
+              },
+              children: /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                "div",
+                {
+                  style: {
+                    display: "flex",
+                    gap: 10,
+                    alignItems: "flex-start"
+                  },
+                  children: [
+                    /* @__PURE__ */ jsxRuntimeExports.jsx(
+                      "span",
+                      {
+                        style: {
+                          fontSize: 18,
+                          flexShrink: 0,
+                          marginTop: 1
+                        },
+                        children: getNotifIcon(
+                          notif.type
+                        )
+                      }
+                    ),
+                    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: { flex: 1, minWidth: 0 }, children: [
+                      /* @__PURE__ */ jsxRuntimeExports.jsx(
+                        "p",
+                        {
+                          style: {
+                            fontFamily: "'Rajdhani', sans-serif",
+                            fontWeight: 700,
+                            fontSize: 13,
+                            color: "#111827",
+                            margin: "0 0 2px 0"
+                          },
+                          children: safeText(notif.title)
+                        }
+                      ),
+                      /* @__PURE__ */ jsxRuntimeExports.jsx(
+                        "p",
+                        {
+                          style: {
+                            fontFamily: "'Rajdhani', sans-serif",
+                            fontSize: 12,
+                            color: "#555",
+                            margin: "0 0 4px 0",
+                            lineHeight: 1.4
+                          },
+                          children: safeText(notif.message)
+                        }
+                      ),
+                      /* @__PURE__ */ jsxRuntimeExports.jsx(
+                        "p",
+                        {
+                          style: {
+                            fontFamily: "'Rajdhani', sans-serif",
+                            fontSize: 11,
+                            color: "#999",
+                            margin: 0
+                          },
+                          children: timeAgo(notif.createdAt)
+                        }
+                      )
+                    ] }),
+                    !notif.read && /* @__PURE__ */ jsxRuntimeExports.jsx(
+                      "span",
+                      {
+                        style: {
+                          width: 8,
+                          height: 8,
+                          borderRadius: "50%",
+                          background: "#00FF88",
+                          flexShrink: 0,
+                          marginTop: 4
+                        }
+                      }
+                    )
+                  ]
+                }
+              )
+            },
+            notif.id ?? idx
+          )) })
+        ]
+      }
+    )
+  ] });
+}
+function KLLogo({ size = "md" }) {
+  const fontSize = size === "sm" ? "clamp(11px,3vw,13px)" : size === "lg" ? "clamp(20px,6vw,28px)" : "clamp(14px,4vw,17px)";
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs(
+    "span",
+    {
+      style: {
+        fontFamily: "'Orbitron', 'Rajdhani', sans-serif",
+        fontWeight: 900,
+        fontSize,
+        letterSpacing: "0.07em",
+        textTransform: "uppercase",
+        lineHeight: 1,
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 4
+      },
+      children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsx(
+          "span",
+          {
+            style: {
+              background: "linear-gradient(90deg, #00FF88, #00cc66)",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              backgroundClip: "text",
+              filter: "drop-shadow(0 0 8px rgba(0,255,136,0.8))"
+            },
+            children: "KL"
+          }
+        ),
+        /* @__PURE__ */ jsxRuntimeExports.jsx(
+          "span",
+          {
+            style: {
+              background: "linear-gradient(90deg, #9d4edd, #c77dff)",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              backgroundClip: "text",
+              filter: "drop-shadow(0 0 8px rgba(157,78,221,0.7))"
+            },
+            children: "Esports Life"
+          }
+        )
+      ]
+    }
+  );
+}
+function TopBar() {
+  const { userId } = useUnifiedAuth();
+  const { profile } = useIIProfile();
+  const navigate = useNavigate();
+  const isLoggedIn = !!userId;
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs(
+    "header",
+    {
+      className: "sticky top-0 z-50 flex items-center justify-between px-4",
+      style: {
+        height: 60,
+        background: "rgba(255,255,255,0.97)",
+        backdropFilter: "blur(20px)",
+        WebkitBackdropFilter: "blur(20px)",
+        borderBottom: "1px solid #E0E0E0"
+      },
+      "data-ocid": "home.topbar.panel",
+      children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsx(
+          Link,
+          {
+            to: "/",
+            className: "flex items-center gap-2",
+            "data-ocid": "home.topbar.logo.link",
+            style: { textDecoration: "none" },
+            children: /* @__PURE__ */ jsxRuntimeExports.jsx(KLLogo, { size: "md" })
+          }
+        ),
+        /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "flex items-center gap-2", children: isLoggedIn ? /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx(NotificationBell, {}),
+          /* @__PURE__ */ jsxRuntimeExports.jsxs(
+            Link,
+            {
+              to: "/profile",
+              "aria-label": "Profile",
+              "data-ocid": "home.topbar.profile.link",
+              style: {
+                background: "rgba(0,255,136,0.08)",
+                border: "1px solid rgba(0,255,136,0.35)",
+                borderRadius: 10,
+                padding: 8,
+                color: "#00FF88",
+                cursor: "pointer",
+                transition: "all 0.2s",
+                lineHeight: 0,
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 6
+              },
+              children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsx(User, { strokeWidth: 1.5, style: { width: 18, height: 18 } }),
+                (profile == null ? void 0 : profile.display_name) && /* @__PURE__ */ jsxRuntimeExports.jsx(
+                  "span",
+                  {
+                    style: {
+                      fontFamily: "'Rajdhani', sans-serif",
+                      fontSize: 12,
+                      fontWeight: 700,
+                      maxWidth: 80,
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap"
+                    },
+                    children: profile.display_name
+                  }
+                )
+              ]
+            }
+          )
+        ] }) : /* @__PURE__ */ jsxRuntimeExports.jsx(
+          "button",
+          {
+            type: "button",
+            onClick: () => void navigate({ to: "/login" }),
+            "data-ocid": "home.topbar.login.button",
+            style: {
+              fontFamily: "'Orbitron', 'Rajdhani', sans-serif",
+              fontWeight: 800,
+              fontSize: "clamp(10px, 2.5vw, 12px)",
+              textTransform: "uppercase",
+              letterSpacing: "0.05em",
+              padding: "8px 14px",
+              borderRadius: 10,
+              border: "none",
+              cursor: "pointer",
+              background: "linear-gradient(135deg, #00FF88 0%, #9d4edd 100%)",
+              color: "#FFFFFF",
+              boxShadow: "0 0 16px rgba(0,255,136,0.4)",
+              transition: "all 0.2s ease",
+              whiteSpace: "nowrap"
+            },
+            children: "🔐 Login"
+          }
+        ) })
+      ]
+    }
+  );
+}
+function HeroSection() {
+  const { userId } = useUnifiedAuth();
+  const navigate = useNavigate();
+  const isLoggedIn = !!userId;
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs(
+    "section",
+    {
+      className: "relative px-4 py-10 flex flex-col items-center text-center overflow-hidden",
+      style: {
+        background: "linear-gradient(180deg, rgba(0,255,136,0.06) 0%, rgba(255,255,255,0) 60%)",
+        minHeight: 280
+      },
+      children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsx(
+          "div",
+          {
+            "aria-hidden": "true",
+            style: {
+              position: "absolute",
+              top: -40,
+              left: "50%",
+              transform: "translateX(-50%)",
+              width: 280,
+              height: 180,
+              background: "radial-gradient(ellipse, rgba(0,255,136,0.10) 0%, transparent 70%)",
+              pointerEvents: "none"
+            }
+          }
+        ),
+        /* @__PURE__ */ jsxRuntimeExports.jsxs(
+          "h1",
+          {
+            style: {
+              fontFamily: "'Orbitron', 'Rajdhani', sans-serif",
+              fontWeight: 900,
+              fontSize: "clamp(1.5rem, 7vw, 2.8rem)",
+              lineHeight: 1.1,
+              textTransform: "uppercase",
+              letterSpacing: "0.04em",
+              color: "#333333",
+              textShadow: "0 0 20px rgba(0,255,136,0.2)",
+              marginBottom: 12,
+              position: "relative",
+              zIndex: 1
+            },
+            "data-ocid": "home.hero.heading",
+            children: [
+              "🔥 DOMINATE THE",
+              /* @__PURE__ */ jsxRuntimeExports.jsx("br", {}),
+              /* @__PURE__ */ jsxRuntimeExports.jsx(
+                "span",
+                {
+                  style: {
+                    background: "linear-gradient(90deg, #00FF88 0%, #00cc66 50%, #9d4edd 100%)",
+                    WebkitBackgroundClip: "text",
+                    WebkitTextFillColor: "transparent",
+                    backgroundClip: "text",
+                    filter: "drop-shadow(0 0 20px rgba(0,255,136,0.4))"
+                  },
+                  children: "BATTLEGROUND"
+                }
+              )
+            ]
+          }
+        ),
+        /* @__PURE__ */ jsxRuntimeExports.jsx(
+          "p",
+          {
+            style: {
+              fontFamily: "'Rajdhani', sans-serif",
+              fontSize: "clamp(13px, 3.5vw, 16px)",
+              color: "#666666",
+              letterSpacing: "0.08em",
+              textTransform: "uppercase",
+              marginBottom: 28,
+              position: "relative",
+              zIndex: 1
+            },
+            "data-ocid": "home.hero.subtext",
+            children: "India's Premier Free Fire Platform"
+          }
+        ),
+        /* @__PURE__ */ jsxRuntimeExports.jsxs(
+          "div",
+          {
+            className: "flex flex-col items-center gap-3 w-full",
+            style: { maxWidth: 360, position: "relative", zIndex: 1 },
+            children: [
+              !isLoggedIn ? (
+                /* Login button — navigates to login page */
+                /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                  "button",
+                  {
+                    type: "button",
+                    onClick: () => void navigate({ to: "/login" }),
+                    "data-ocid": "home.hero.get_started.primary_button",
+                    style: {
+                      width: "100%",
+                      fontFamily: "'Orbitron', 'Rajdhani', sans-serif",
+                      fontWeight: 900,
+                      fontSize: "clamp(12px, 3vw, 15px)",
+                      textTransform: "uppercase",
+                      letterSpacing: "0.08em",
+                      padding: "15px 24px",
+                      borderRadius: 14,
+                      border: "none",
+                      cursor: "pointer",
+                      background: "linear-gradient(135deg, #00FF88 0%, #00cc66 60%, #9d4edd 100%)",
+                      color: "#FFFFFF",
+                      boxShadow: "0 0 24px rgba(0,255,136,0.4), 0 4px 16px rgba(0,0,0,0.12)",
+                      transition: "all 0.3s ease",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: 8
+                    },
+                    children: [
+                      /* @__PURE__ */ jsxRuntimeExports.jsx("span", { style: { fontSize: "1.1em" }, children: "🚀" }),
+                      "LOGIN / SIGN IN"
+                    ]
+                  }
+                )
+              ) : (
+                /* Logged-in CTAs */
+                /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-3 w-full", children: [
+                  /* @__PURE__ */ jsxRuntimeExports.jsx(Link, { to: "/tournaments", style: { flex: 1 }, children: /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                    "button",
+                    {
+                      type: "button",
+                      style: {
+                        width: "100%",
+                        fontFamily: "'Orbitron', 'Rajdhani', sans-serif",
+                        fontWeight: 800,
+                        fontSize: "clamp(11px, 2.8vw, 13px)",
+                        textTransform: "uppercase",
+                        letterSpacing: "0.06em",
+                        padding: "12px 16px",
+                        borderRadius: 12,
+                        border: "none",
+                        cursor: "pointer",
+                        background: "linear-gradient(135deg, #00FF88 0%, #9d4edd 100%)",
+                        color: "#FFFFFF",
+                        boxShadow: "0 0 16px rgba(0,255,136,0.35), 0 4px 12px rgba(0,0,0,0.1)",
+                        transition: "all 0.25s ease",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: 6
+                      },
+                      children: [
+                        /* @__PURE__ */ jsxRuntimeExports.jsx(Zap, { style: { width: 14, height: 14 } }),
+                        "PLAY NOW"
+                      ]
+                    }
+                  ) }),
+                  /* @__PURE__ */ jsxRuntimeExports.jsx(Link, { to: "/rules", style: { flex: 1 }, children: /* @__PURE__ */ jsxRuntimeExports.jsx(
+                    "button",
+                    {
+                      type: "button",
+                      style: {
+                        width: "100%",
+                        fontFamily: "'Orbitron', 'Rajdhani', sans-serif",
+                        fontWeight: 800,
+                        fontSize: "clamp(11px, 2.8vw, 13px)",
+                        textTransform: "uppercase",
+                        letterSpacing: "0.06em",
+                        padding: "12px 16px",
+                        borderRadius: 12,
+                        cursor: "pointer",
+                        background: "transparent",
+                        color: "#00FF88",
+                        border: "2px solid rgba(0,255,136,0.5)",
+                        transition: "all 0.25s ease",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: 6
+                      },
+                      children: "📖 RULES"
+                    }
+                  ) })
+                ] })
+              ),
+              !isLoggedIn && /* @__PURE__ */ jsxRuntimeExports.jsx(
+                "p",
+                {
+                  style: {
+                    fontFamily: "'Rajdhani', sans-serif",
+                    fontSize: 12,
+                    color: "#999999",
+                    letterSpacing: "0.04em",
+                    textAlign: "center"
+                  },
+                  children: "🔒 Face ID / Fingerprint / Google — No password needed"
+                }
+              )
+            ]
+          }
+        )
+      ]
+    }
+  );
+}
+function UpcomingTournamentsSection() {
+  const { data: tournaments } = useGetTournaments();
+  const upcoming = tournaments == null ? void 0 : tournaments.filter((t) => t.status === "upcoming").map((t) => ({ ...t, ...decodeTournament(t) })).slice(0, 2);
+  const hasReal = upcoming && upcoming.length > 0;
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs("section", { className: "px-4 pb-6", "data-ocid": "home.upcoming.section", children: [
+    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between mb-4", children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsx(
+        "h2",
+        {
+          style: {
+            fontFamily: "'Orbitron', 'Rajdhani', sans-serif",
+            fontWeight: 900,
+            fontSize: "clamp(13px, 3.5vw, 16px)",
+            textTransform: "uppercase",
+            letterSpacing: "0.1em",
+            color: "#333333"
+          },
+          "data-ocid": "home.upcoming.heading",
+          children: "📅 UPCOMING TOURNAMENTS"
+        }
+      ),
+      /* @__PURE__ */ jsxRuntimeExports.jsx(
+        Link,
+        {
+          to: "/tournaments",
+          "data-ocid": "home.upcoming.view_all.link",
+          style: {
+            fontFamily: "'Rajdhani', sans-serif",
+            fontSize: 12,
+            fontWeight: 700,
+            color: "#00FF88",
+            textDecoration: "none",
+            letterSpacing: "0.06em",
+            textTransform: "uppercase"
+          },
+          children: "View All →"
+        }
+      )
+    ] }),
+    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "space-y-3", children: hasReal ? upcoming.map((t, idx) => {
+      const idxNum = idx + 1;
+      const entryFee = formatCurrency(t.entryFee);
+      const maxTeams = Number(t.maxTeams);
+      return /* @__PURE__ */ jsxRuntimeExports.jsx(
+        TournamentCard,
+        {
+          name: t.name,
+          schedule: `${entryFee} Entry`,
+          entry: entryFee,
+          teams: `0/${maxTeams} Teams`,
+          to: `/tournament/${t.id.toString()}`,
+          idx: idxNum
+        },
+        t.id.toString()
+      );
+    }) : /* @__PURE__ */ jsxRuntimeExports.jsxs(
+      "div",
+      {
+        style: {
+          textAlign: "center",
+          padding: "24px",
+          color: "#666666",
+          fontFamily: "'Rajdhani', sans-serif"
+        },
+        children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx("p", { style: { fontSize: 32, marginBottom: 8 }, children: "🏆" }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx("p", { style: { fontSize: 16 }, children: "No upcoming tournaments yet" })
+        ]
+      }
+    ) })
+  ] });
+}
+function TournamentCard({
+  name,
+  schedule,
+  entry,
+  teams,
+  to,
+  idx
+}) {
+  return /* @__PURE__ */ jsxRuntimeExports.jsx(
+    "div",
+    {
+      className: "rounded-[12px] p-4 transition-all duration-200",
+      style: {
+        background: "#F5F5F5",
+        border: "1px solid #E0E0E0",
+        boxShadow: "0 2px 8px rgba(0,0,0,0.08)"
+      },
+      "data-ocid": `home.upcoming.item.${idx}`,
+      children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-start justify-between gap-3", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex-1 min-w-0", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx(
+            "p",
+            {
+              style: {
+                fontFamily: "'Orbitron', 'Rajdhani', sans-serif",
+                fontWeight: 800,
+                fontSize: "clamp(13px, 3.5vw, 15px)",
+                color: "#333333",
+                textTransform: "uppercase",
+                letterSpacing: "0.03em",
+                marginBottom: 6,
+                lineHeight: 1.3
+              },
+              children: name
+            }
+          ),
+          /* @__PURE__ */ jsxRuntimeExports.jsxs(
+            "p",
+            {
+              style: {
+                fontFamily: "'Rajdhani', sans-serif",
+                fontSize: 12,
+                color: "#666666",
+                letterSpacing: "0.04em",
+                marginBottom: 8
+              },
+              children: [
+                schedule,
+                " • ",
+                entry
+              ]
+            }
+          ),
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-1", children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsx(Users, { style: { width: 12, height: 12, color: "#9d4edd" } }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx(
+              "span",
+              {
+                style: {
+                  fontFamily: "'Rajdhani', sans-serif",
+                  fontSize: 12,
+                  color: "#9d4edd",
+                  fontWeight: 700
+                },
+                children: teams
+              }
+            )
+          ] })
+        ] }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx(
+          Link,
+          {
+            to,
+            "data-ocid": `home.upcoming.register.${idx}.primary_button`,
+            style: { flexShrink: 0, alignSelf: "center" },
+            children: /* @__PURE__ */ jsxRuntimeExports.jsxs(
+              "button",
+              {
+                type: "button",
+                style: {
+                  fontFamily: "'Orbitron', 'Rajdhani', sans-serif",
+                  fontWeight: 800,
+                  fontSize: 11,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.05em",
+                  padding: "9px 14px",
+                  borderRadius: 10,
+                  border: "none",
+                  cursor: "pointer",
+                  background: "linear-gradient(135deg, #00FF88 0%, #9d4edd 100%)",
+                  color: "#FFFFFF",
+                  boxShadow: "0 0 12px rgba(0,255,136,0.3)",
+                  transition: "all 0.2s ease",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 4,
+                  whiteSpace: "nowrap"
+                },
+                children: [
+                  /* @__PURE__ */ jsxRuntimeExports.jsx(Zap, { style: { width: 12, height: 12 } }),
+                  "REGISTER"
+                ]
+              }
+            )
+          }
+        )
+      ] })
+    }
+  );
+}
+function loadFreeMyMatchesHome() {
+  try {
+    return JSON.parse(localStorage.getItem("ke_free_my_matches") || "[]");
+  } catch {
+    return [];
+  }
+}
+function MyMatchesPreview() {
+  const { userId } = useUnifiedAuth();
+  const { data: paidRegistrations } = useGetCallerTeamRegistrations();
+  const { data: tournaments } = useGetTournaments();
+  const [freeMatches, setFreeMatches] = reactExports.useState([]);
+  reactExports.useEffect(() => {
+    setFreeMatches(loadFreeMyMatchesHome());
+    const handler = () => setFreeMatches(loadFreeMyMatchesHome());
+    window.addEventListener("freeTournamentUpdated", handler);
+    window.addEventListener("storage", handler);
+    return () => {
+      window.removeEventListener("freeTournamentUpdated", handler);
+      window.removeEventListener("storage", handler);
+    };
+  }, []);
+  if (!userId) return null;
+  if (freeMatches.length === 0 && (!paidRegistrations || paidRegistrations.length === 0))
+    return null;
+  const getFreeTournamentStatus = (id) => {
+    if (localStorage.getItem(`freeMatchDone_${id}`) === "true") return "DONE";
+    if (localStorage.getItem(`freeMatchStarted_${id}`) === "true")
+      return "LIVE";
+    return "UPCOMING";
+  };
+  const getFreeTournamentRoomId = (id) => localStorage.getItem(`freeRoomId_${id}`) || "";
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs("section", { className: "px-4 pb-5", "data-ocid": "home.my_matches_preview.section", children: [
+    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between mb-3", children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsxs(
+        "h2",
+        {
+          style: {
+            fontFamily: "'Orbitron', 'Rajdhani', sans-serif",
+            fontWeight: 900,
+            fontSize: "clamp(12px, 3.2vw, 15px)",
+            textTransform: "uppercase",
+            letterSpacing: "0.1em",
+            color: "#333333",
+            display: "flex",
+            alignItems: "center",
+            gap: 6
+          },
+          children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsx(Swords, { style: { width: 16, height: 16, color: "#00FF88" } }),
+            "MY MATCHES"
+          ]
+        }
+      ),
+      /* @__PURE__ */ jsxRuntimeExports.jsx(
+        Link,
+        {
+          to: "/my-matches",
+          style: {
+            fontFamily: "'Rajdhani', sans-serif",
+            fontSize: 12,
+            fontWeight: 700,
+            color: "#00FF88",
+            textDecoration: "none",
+            letterSpacing: "0.06em",
+            textTransform: "uppercase"
+          },
+          children: "View All →"
+        }
+      )
+    ] }),
+    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "space-y-2", children: [
+      freeMatches.slice(0, 2).map((match) => {
+        const status = getFreeTournamentStatus(match.tournamentId);
+        const roomId = getFreeTournamentRoomId(match.tournamentId);
+        const isLive = status === "LIVE";
+        const isDone = status === "DONE";
+        return /* @__PURE__ */ jsxRuntimeExports.jsxs(
+          "div",
+          {
+            style: {
+              background: isLive ? "rgba(255,68,68,0.04)" : "#F8F8F8",
+              border: isLive ? "1px solid rgba(220,53,69,0.3)" : "1px solid #E0E0E0",
+              borderRadius: 12,
+              padding: "12px 14px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: 10
+            },
+            children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: { flex: 1, minWidth: 0 }, children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                  "div",
+                  {
+                    style: {
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 6,
+                      marginBottom: 4,
+                      flexWrap: "wrap"
+                    },
+                    children: [
+                      /* @__PURE__ */ jsxRuntimeExports.jsx(
+                        "span",
+                        {
+                          style: {
+                            background: "#00FF88",
+                            color: "#000",
+                            borderRadius: 20,
+                            padding: "2px 8px",
+                            fontSize: 9,
+                            fontWeight: 800
+                          },
+                          children: "FREE"
+                        }
+                      ),
+                      /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                        "span",
+                        {
+                          style: {
+                            background: isLive ? "#dc3545" : isDone ? "#6c757d" : "#0d6efd",
+                            color: "#fff",
+                            borderRadius: 20,
+                            padding: "2px 8px",
+                            fontSize: 9,
+                            fontWeight: 700
+                          },
+                          children: [
+                            isLive && /* @__PURE__ */ jsxRuntimeExports.jsx(
+                              "span",
+                              {
+                                style: {
+                                  display: "inline-block",
+                                  width: 5,
+                                  height: 5,
+                                  borderRadius: "50%",
+                                  background: "#fff",
+                                  marginRight: 3
+                                }
+                              }
+                            ),
+                            status
+                          ]
+                        }
+                      )
+                    ]
+                  }
+                ),
+                /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                  "p",
+                  {
+                    style: {
+                      fontFamily: "'Rajdhani', sans-serif",
+                      fontWeight: 700,
+                      fontSize: 13,
+                      color: "#111827",
+                      marginBottom: 2,
+                      whiteSpace: "nowrap",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis"
+                    },
+                    children: [
+                      "🎮 ",
+                      match.name
+                    ]
+                  }
+                ),
+                /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                  "p",
+                  {
+                    style: {
+                      fontFamily: "'Rajdhani', sans-serif",
+                      fontSize: 11,
+                      color: "#666",
+                      margin: 0
+                    },
+                    children: [
+                      match.mode,
+                      " • Prize: ",
+                      match.prizePool,
+                      isLive && roomId && ` • Room: ${roomId}`
+                    ]
+                  }
+                )
+              ] }),
+              /* @__PURE__ */ jsxRuntimeExports.jsx(Link, { to: "/my-matches", children: /* @__PURE__ */ jsxRuntimeExports.jsx(
+                "button",
+                {
+                  type: "button",
+                  style: {
+                    background: isLive ? "linear-gradient(135deg, #dc3545, #a71d2a)" : "linear-gradient(135deg, #00FF88, #00cc66)",
+                    color: isLive ? "#fff" : "#000",
+                    border: "none",
+                    borderRadius: 8,
+                    padding: "6px 12px",
+                    fontSize: 10,
+                    fontWeight: 700,
+                    fontFamily: "'Orbitron', sans-serif",
+                    cursor: "pointer",
+                    whiteSpace: "nowrap"
+                  },
+                  children: isLive ? "VIEW" : isDone ? "RESULT" : "VIEW"
+                }
+              ) })
+            ]
+          },
+          match.tournamentId
+        );
+      }),
+      (paidRegistrations ?? []).slice(0, 2).map((reg) => {
+        const tournament = tournaments == null ? void 0 : tournaments.find(
+          (t) => t.id.toString() === reg.tournamentId.toString()
+        );
+        const isLive = (tournament == null ? void 0 : tournament.status) === "ongoing";
+        const isDone = (tournament == null ? void 0 : tournament.status) === "completed";
+        return /* @__PURE__ */ jsxRuntimeExports.jsxs(
+          "div",
+          {
+            style: {
+              background: isLive ? "rgba(255,68,68,0.04)" : "#F8F8F8",
+              border: isLive ? "1px solid rgba(220,53,69,0.3)" : "1px solid #E0E0E0",
+              borderRadius: 12,
+              padding: "12px 14px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: 10
+            },
+            children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: { flex: 1, minWidth: 0 }, children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                  "div",
+                  {
+                    style: {
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 6,
+                      marginBottom: 4,
+                      flexWrap: "wrap"
+                    },
+                    children: [
+                      /* @__PURE__ */ jsxRuntimeExports.jsx(
+                        "span",
+                        {
+                          style: {
+                            background: "#AA44FF",
+                            color: "#fff",
+                            borderRadius: 20,
+                            padding: "2px 8px",
+                            fontSize: 9,
+                            fontWeight: 800
+                          },
+                          children: "PAID"
+                        }
+                      ),
+                      /* @__PURE__ */ jsxRuntimeExports.jsx(
+                        "span",
+                        {
+                          style: {
+                            background: isLive ? "#dc3545" : isDone ? "#6c757d" : "#0d6efd",
+                            color: "#fff",
+                            borderRadius: 20,
+                            padding: "2px 8px",
+                            fontSize: 9,
+                            fontWeight: 700
+                          },
+                          children: isLive ? "LIVE" : isDone ? "DONE" : "UPCOMING"
+                        }
+                      )
+                    ]
+                  }
+                ),
+                /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                  "p",
+                  {
+                    style: {
+                      fontFamily: "'Rajdhani', sans-serif",
+                      fontWeight: 700,
+                      fontSize: 13,
+                      color: "#111827",
+                      marginBottom: 2,
+                      whiteSpace: "nowrap",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis"
+                    },
+                    children: [
+                      "🎮 ",
+                      (tournament == null ? void 0 : tournament.name) ?? "Tournament"
+                    ]
+                  }
+                ),
+                /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                  "p",
+                  {
+                    style: {
+                      fontFamily: "'Rajdhani', sans-serif",
+                      fontSize: 11,
+                      color: "#666",
+                      margin: 0
+                    },
+                    children: [
+                      formatCurrency((tournament == null ? void 0 : tournament.entryFee) ?? BigInt(0)),
+                      " Entry",
+                      isLive && (tournament == null ? void 0 : tournament.roomId) && ` • Room: ${tournament.roomId}`
+                    ]
+                  }
+                )
+              ] }),
+              /* @__PURE__ */ jsxRuntimeExports.jsx(Link, { to: "/my-matches", children: /* @__PURE__ */ jsxRuntimeExports.jsx(
+                "button",
+                {
+                  type: "button",
+                  style: {
+                    background: isLive ? "linear-gradient(135deg, #dc3545, #a71d2a)" : "linear-gradient(135deg, #AA44FF, #6a0dad)",
+                    color: "#fff",
+                    border: "none",
+                    borderRadius: 8,
+                    padding: "6px 12px",
+                    fontSize: 10,
+                    fontWeight: 700,
+                    fontFamily: "'Orbitron', sans-serif",
+                    cursor: "pointer",
+                    whiteSpace: "nowrap"
+                  },
+                  children: isDone ? "RESULT" : "VIEW"
+                }
+              ) })
+            ]
+          },
+          reg.tournamentId.toString()
+        );
+      })
+    ] })
+  ] });
+}
+function HomePage() {
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs(
+    "div",
+    {
+      className: "min-h-screen overflow-x-hidden",
+      style: { background: "#FFFFFF", paddingBottom: 80 },
+      children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsx(TopBar, {}),
+        /* @__PURE__ */ jsxRuntimeExports.jsx(LiveClock, {}),
+        /* @__PURE__ */ jsxRuntimeExports.jsx(HeroSection, {}),
+        /* @__PURE__ */ jsxRuntimeExports.jsx(MyMatchesPreview, {}),
+        /* @__PURE__ */ jsxRuntimeExports.jsx(UpcomingTournamentsSection, {})
+      ]
+    }
+  );
+}
+export {
+  HomePage
+};

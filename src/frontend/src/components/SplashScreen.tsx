@@ -52,7 +52,7 @@ export function SplashScreen() {
         }}
       />
 
-      {/* Center logo */}
+      {/* Center logo — slide down + fade in */}
       <div
         style={{
           position: "relative",
@@ -61,6 +61,8 @@ export function SplashScreen() {
           alignItems: "center",
           gap: 20,
           zIndex: 1,
+          animation:
+            "splashSlideIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both",
         }}
       >
         {/* Pulsing glow ring */}
@@ -162,6 +164,9 @@ export function SplashScreen() {
             India's Premier Gaming Platform
           </p>
         </div>
+
+        {/* Live clock on splash screen */}
+        <SplashClock />
       </div>
 
       {/* Loading bar */}
@@ -196,6 +201,10 @@ export function SplashScreen() {
       </div>
 
       <style>{`
+        @keyframes splashSlideIn {
+          0% { opacity: 0; transform: translateY(-32px) scale(0.92); }
+          100% { opacity: 1; transform: translateY(0) scale(1); }
+        }
         @keyframes splash-pulse-ring {
           0%, 100% { transform: scale(1); opacity: 0.4; }
           50% { transform: scale(1.12); opacity: 0.1; }
@@ -208,7 +217,112 @@ export function SplashScreen() {
           from { width: 0%; }
           to { width: 100%; }
         }
+        @keyframes splashLiveDot {
+          0%, 100% { opacity: 1; box-shadow: 0 0 6px #FF4444; }
+          50% { opacity: 0.2; box-shadow: 0 0 2px #FF4444; }
+        }
+        @keyframes splashClockGlow {
+          0%, 100% { text-shadow: 0 0 8px rgba(0,255,136,0.8), 0 0 16px rgba(0,255,136,0.4); }
+          50% { text-shadow: 0 0 14px rgba(0,255,136,1), 0 0 28px rgba(0,255,136,0.7); }
+        }
+        @keyframes splashClockScale {
+          0% { transform: scale(1); }
+          50% { transform: scale(1.04); }
+          100% { transform: scale(1); }
+        }
       `}</style>
+    </div>
+  );
+}
+
+// Embedded clock for splash screen
+function SplashClock() {
+  const [time, setTime] = useState("");
+  const [pulse, setPulse] = useState(false);
+
+  useEffect(() => {
+    let prevSec = -1;
+    const tick = () => {
+      const now = new Date();
+      const utc = now.getTime() + now.getTimezoneOffset() * 60000;
+      const ist = new Date(utc + 5.5 * 3600000);
+      let hh = ist.getHours();
+      const mm = String(ist.getMinutes()).padStart(2, "0");
+      const ss = String(ist.getSeconds()).padStart(2, "0");
+      const ampm = hh >= 12 ? "PM" : "AM";
+      hh = hh % 12 || 12;
+      const timeStr = `${String(hh).padStart(2, "0")}:${mm}:${ss} ${ampm}`;
+      setTime(timeStr);
+      if (ist.getSeconds() !== prevSec) {
+        prevSec = ist.getSeconds();
+        setPulse(true);
+        setTimeout(() => setPulse(false), 300);
+      }
+    };
+    tick();
+    const id = setInterval(tick, 200);
+    return () => clearInterval(id);
+  }, []);
+
+  return (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 8,
+        padding: "6px 14px",
+        background: "rgba(0,0,0,0.4)",
+        border: "1px solid rgba(0,255,136,0.25)",
+        borderRadius: 8,
+        marginTop: 8,
+      }}
+    >
+      <span
+        style={{
+          width: 7,
+          height: 7,
+          borderRadius: "50%",
+          background: "#FF4444",
+          display: "inline-block",
+          animation: "splashLiveDot 1s ease-in-out infinite",
+          flexShrink: 0,
+        }}
+      />
+      <span
+        style={{
+          fontFamily: "'Orbitron', sans-serif",
+          fontSize: 9,
+          fontWeight: 800,
+          color: "#FF4444",
+          letterSpacing: "0.1em",
+          flexShrink: 0,
+        }}
+      >
+        LIVE
+      </span>
+      <span
+        style={{
+          width: 1,
+          height: 14,
+          background: "rgba(0,255,136,0.25)",
+          flexShrink: 0,
+        }}
+      />
+      <span
+        style={{
+          fontFamily: "'Courier New', monospace",
+          fontSize: 15,
+          color: "#00FF88",
+          fontWeight: 800,
+          letterSpacing: "0.06em",
+          display: "inline-block",
+          animation: pulse
+            ? "splashClockScale 0.3s ease-out, splashClockGlow 1s ease-in-out infinite"
+            : "splashClockGlow 1s ease-in-out infinite",
+        }}
+      >
+        {time}
+      </span>
     </div>
   );
 }

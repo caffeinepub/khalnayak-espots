@@ -240,11 +240,50 @@ export interface KLNotification {
     | "matchLive"
     | "resultDeclared"
     | "timeUpdated"
-    | "matchCancelled";
-  tournamentId: string;
-  tournamentName: string;
+    | "matchCancelled"
+    | "broadcast";
+  tournamentId?: string;
+  tournamentName?: string;
   read: boolean;
   createdAt: number;
+}
+
+export async function getAllUserIds(): Promise<string[]> {
+  try {
+    const db = getFirebaseDb();
+    const snap = await getDocs(collection(db, "users"));
+    return snap.docs.map((d) => d.id);
+  } catch {
+    return [];
+  }
+}
+
+export async function broadcastNotificationToAllUsers(data: {
+  title: string;
+  message: string;
+  type: "broadcast";
+}): Promise<void> {
+  try {
+    const db = getFirebaseDb();
+    const userIds = await getAllUserIds();
+    const now = Date.now();
+    await Promise.all(
+      userIds.map((uid) =>
+        addDoc(collection(db, "notifications"), {
+          userId: uid,
+          title: data.title,
+          message: data.message,
+          type: data.type,
+          tournamentId: "",
+          tournamentName: "",
+          read: false,
+          createdAt: now,
+        }),
+      ),
+    );
+  } catch {
+    /* ignore */
+  }
 }
 
 export async function addNotification(
