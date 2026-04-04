@@ -1,9 +1,13 @@
 import { useUnifiedAuth } from "@/context/UnifiedAuthContext";
 import { useIIProfile } from "@/hooks/useIIProfile";
-import { useGetTournaments } from "@/hooks/useQueries";
+import {
+  useGetCallerTeamRegistrations,
+  useGetTournaments,
+} from "@/hooks/useQueries";
 import { decodeTournament, formatCurrency } from "@/utils/format";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { Bell, User, Users, Zap } from "lucide-react";
+import { Bell, Swords, User, Users, Zap } from "lucide-react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 // ─── KL Esports Life Logo Component ─────────────────────────────────────────────────
@@ -557,6 +561,337 @@ function TournamentCard({
   );
 }
 
+// ─── My Matches Preview Section ────────────────────────────────────────────────
+
+type FreeMyMatchHome = {
+  tournamentId: string;
+  name: string;
+  mode: string;
+  prizePool: string;
+  registeredAt: number;
+};
+
+function loadFreeMyMatchesHome(): FreeMyMatchHome[] {
+  try {
+    return JSON.parse(localStorage.getItem("ke_free_my_matches") || "[]");
+  } catch {
+    return [];
+  }
+}
+
+function MyMatchesPreview() {
+  const { userId } = useUnifiedAuth();
+  const { data: paidRegistrations } = useGetCallerTeamRegistrations();
+  const { data: tournaments } = useGetTournaments();
+  const [freeMatches, setFreeMatches] = useState<FreeMyMatchHome[]>([]);
+
+  useEffect(() => {
+    setFreeMatches(loadFreeMyMatchesHome());
+    const handler = () => setFreeMatches(loadFreeMyMatchesHome());
+    window.addEventListener("freeTournamentUpdated", handler);
+    window.addEventListener("storage", handler);
+    return () => {
+      window.removeEventListener("freeTournamentUpdated", handler);
+      window.removeEventListener("storage", handler);
+    };
+  }, []);
+
+  if (!userId) return null;
+  if (
+    freeMatches.length === 0 &&
+    (!paidRegistrations || paidRegistrations.length === 0)
+  )
+    return null;
+
+  const getFreeTournamentStatus = (id: string) => {
+    if (localStorage.getItem(`freeMatchDone_${id}`) === "true") return "DONE";
+    if (localStorage.getItem(`freeMatchStarted_${id}`) === "true")
+      return "LIVE";
+    return "UPCOMING";
+  };
+
+  const getFreeTournamentRoomId = (id: string) =>
+    localStorage.getItem(`freeRoomId_${id}`) || "";
+
+  return (
+    <section className="px-4 pb-5" data-ocid="home.my_matches_preview.section">
+      <div className="flex items-center justify-between mb-3">
+        <h2
+          style={{
+            fontFamily: "'Orbitron', 'Rajdhani', sans-serif",
+            fontWeight: 900,
+            fontSize: "clamp(12px, 3.2vw, 15px)",
+            textTransform: "uppercase",
+            letterSpacing: "0.1em",
+            color: "#333333",
+            display: "flex",
+            alignItems: "center",
+            gap: 6,
+          }}
+        >
+          <Swords style={{ width: 16, height: 16, color: "#00FF88" }} />
+          MY MATCHES
+        </h2>
+        <Link
+          to="/my-matches"
+          style={{
+            fontFamily: "'Rajdhani', sans-serif",
+            fontSize: 12,
+            fontWeight: 700,
+            color: "#00FF88",
+            textDecoration: "none",
+            letterSpacing: "0.06em",
+            textTransform: "uppercase",
+          }}
+        >
+          View All →
+        </Link>
+      </div>
+
+      <div className="space-y-2">
+        {/* Free matches */}
+        {freeMatches.slice(0, 2).map((match) => {
+          const status = getFreeTournamentStatus(match.tournamentId);
+          const roomId = getFreeTournamentRoomId(match.tournamentId);
+          const isLive = status === "LIVE";
+          const isDone = status === "DONE";
+          return (
+            <div
+              key={match.tournamentId}
+              style={{
+                background: isLive ? "rgba(255,68,68,0.04)" : "#F8F8F8",
+                border: isLive
+                  ? "1px solid rgba(220,53,69,0.3)"
+                  : "1px solid #E0E0E0",
+                borderRadius: 12,
+                padding: "12px 14px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: 10,
+              }}
+            >
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 6,
+                    marginBottom: 4,
+                    flexWrap: "wrap",
+                  }}
+                >
+                  <span
+                    style={{
+                      background: "#00FF88",
+                      color: "#000",
+                      borderRadius: 20,
+                      padding: "2px 8px",
+                      fontSize: 9,
+                      fontWeight: 800,
+                    }}
+                  >
+                    FREE
+                  </span>
+                  <span
+                    style={{
+                      background: isLive
+                        ? "#dc3545"
+                        : isDone
+                          ? "#6c757d"
+                          : "#0d6efd",
+                      color: "#fff",
+                      borderRadius: 20,
+                      padding: "2px 8px",
+                      fontSize: 9,
+                      fontWeight: 700,
+                    }}
+                  >
+                    {isLive && (
+                      <span
+                        style={{
+                          display: "inline-block",
+                          width: 5,
+                          height: 5,
+                          borderRadius: "50%",
+                          background: "#fff",
+                          marginRight: 3,
+                        }}
+                      />
+                    )}
+                    {status}
+                  </span>
+                </div>
+                <p
+                  style={{
+                    fontFamily: "'Rajdhani', sans-serif",
+                    fontWeight: 700,
+                    fontSize: 13,
+                    color: "#111827",
+                    marginBottom: 2,
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                  }}
+                >
+                  🎮 {match.name}
+                </p>
+                <p
+                  style={{
+                    fontFamily: "'Rajdhani', sans-serif",
+                    fontSize: 11,
+                    color: "#666",
+                    margin: 0,
+                  }}
+                >
+                  {match.mode} • Prize: {match.prizePool}
+                  {isLive && roomId && ` • Room: ${roomId}`}
+                </p>
+              </div>
+              <Link to="/my-matches">
+                <button
+                  type="button"
+                  style={{
+                    background: isLive
+                      ? "linear-gradient(135deg, #dc3545, #a71d2a)"
+                      : "linear-gradient(135deg, #00FF88, #00cc66)",
+                    color: isLive ? "#fff" : "#000",
+                    border: "none",
+                    borderRadius: 8,
+                    padding: "6px 12px",
+                    fontSize: 10,
+                    fontWeight: 700,
+                    fontFamily: "'Orbitron', sans-serif",
+                    cursor: "pointer",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {isLive ? "VIEW" : isDone ? "RESULT" : "VIEW"}
+                </button>
+              </Link>
+            </div>
+          );
+        })}
+
+        {/* Paid matches */}
+        {(paidRegistrations ?? []).slice(0, 2).map((reg) => {
+          const tournament = tournaments?.find(
+            (t) => t.id.toString() === reg.tournamentId.toString(),
+          );
+          const isLive = tournament?.status === "ongoing";
+          const isDone = tournament?.status === "completed";
+          return (
+            <div
+              key={reg.tournamentId.toString()}
+              style={{
+                background: isLive ? "rgba(255,68,68,0.04)" : "#F8F8F8",
+                border: isLive
+                  ? "1px solid rgba(220,53,69,0.3)"
+                  : "1px solid #E0E0E0",
+                borderRadius: 12,
+                padding: "12px 14px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: 10,
+              }}
+            >
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 6,
+                    marginBottom: 4,
+                    flexWrap: "wrap",
+                  }}
+                >
+                  <span
+                    style={{
+                      background: "#AA44FF",
+                      color: "#fff",
+                      borderRadius: 20,
+                      padding: "2px 8px",
+                      fontSize: 9,
+                      fontWeight: 800,
+                    }}
+                  >
+                    PAID
+                  </span>
+                  <span
+                    style={{
+                      background: isLive
+                        ? "#dc3545"
+                        : isDone
+                          ? "#6c757d"
+                          : "#0d6efd",
+                      color: "#fff",
+                      borderRadius: 20,
+                      padding: "2px 8px",
+                      fontSize: 9,
+                      fontWeight: 700,
+                    }}
+                  >
+                    {isLive ? "LIVE" : isDone ? "DONE" : "UPCOMING"}
+                  </span>
+                </div>
+                <p
+                  style={{
+                    fontFamily: "'Rajdhani', sans-serif",
+                    fontWeight: 700,
+                    fontSize: 13,
+                    color: "#111827",
+                    marginBottom: 2,
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                  }}
+                >
+                  🎮 {tournament?.name ?? "Tournament"}
+                </p>
+                <p
+                  style={{
+                    fontFamily: "'Rajdhani', sans-serif",
+                    fontSize: 11,
+                    color: "#666",
+                    margin: 0,
+                  }}
+                >
+                  {formatCurrency(tournament?.entryFee ?? BigInt(0))} Entry
+                  {isLive &&
+                    tournament?.roomId &&
+                    ` • Room: ${tournament.roomId}`}
+                </p>
+              </div>
+              <Link to="/my-matches">
+                <button
+                  type="button"
+                  style={{
+                    background: isLive
+                      ? "linear-gradient(135deg, #dc3545, #a71d2a)"
+                      : "linear-gradient(135deg, #AA44FF, #6a0dad)",
+                    color: "#fff",
+                    border: "none",
+                    borderRadius: 8,
+                    padding: "6px 12px",
+                    fontSize: 10,
+                    fontWeight: 700,
+                    fontFamily: "'Orbitron', sans-serif",
+                    cursor: "pointer",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {isDone ? "RESULT" : "VIEW"}
+                </button>
+              </Link>
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
 // ─── Home Page ────────────────────────────────────────────────────────────────────
 
 export function HomePage() {
@@ -567,6 +902,7 @@ export function HomePage() {
     >
       <TopBar />
       <HeroSection />
+      <MyMatchesPreview />
       <UpcomingTournamentsSection />
     </div>
   );

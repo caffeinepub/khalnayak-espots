@@ -192,3 +192,38 @@ export async function getPaidRegistrations(): Promise<PaidRegistration[]> {
     return [];
   }
 }
+
+// ── Registration Count Helpers ─────────────────────────────────────────────────
+
+export async function getFreeRegistrationCount(
+  tournamentId: string,
+): Promise<number> {
+  try {
+    const db = getFirebaseDb();
+    const q = query(
+      collection(db, "freeRegistrations"),
+      where("tournamentId", "==", tournamentId),
+    );
+    const snap = await getDocs(q);
+    return snap.size;
+  } catch {
+    return 0;
+  }
+}
+
+export async function getPaidRegistrationCount(
+  tournamentId: string,
+): Promise<number> {
+  try {
+    const db = getFirebaseDb();
+    const q = query(
+      collection(db, "paid_registrations"),
+      where("tournamentId", "==", tournamentId),
+      where("paymentStatus", "==", "Success"),
+    );
+    const snap = await getDocs(q);
+    return snap.size;
+  } catch {
+    return 0;
+  }
+}

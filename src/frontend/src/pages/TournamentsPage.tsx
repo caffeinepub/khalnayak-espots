@@ -15,7 +15,11 @@ import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useGetTournaments } from "@/hooks/useQueries";
 import { useTokens } from "@/hooks/useTokens";
-import { saveFreeRegistration } from "@/lib/firestore";
+import {
+  getFreeRegistrationCount,
+  getPaidRegistrationCount,
+  saveFreeRegistration,
+} from "@/lib/firestore";
 import {
   formatCurrency,
   getTournamentPlayerInfo,
@@ -539,7 +543,31 @@ function FreeTournamentCard({
     setResultLoading(false);
   };
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: mount-only fetch, t.id stable
   useEffect(() => {
+    const fetchCount = async () => {
+      try {
+        const count = await getFreeRegistrationCount(t.id);
+        if (count > 0) {
+          setJoinCount(count);
+          setFreeJoinCount(t.id, count);
+        }
+      } catch {}
+    };
+    fetchCount();
+  }, []);
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: event listener setup, t.id stable
+  useEffect(() => {
+    const fetchCount = async () => {
+      try {
+        const count = await getFreeRegistrationCount(t.id);
+        if (count > 0) {
+          setJoinCount(count);
+          setFreeJoinCount(t.id, count);
+        }
+      } catch {}
+    };
     const handler = () => {
       setJoinCount(getFreeJoinCount(t.id));
       setRoomId(getFreeRoomId(t.id));
@@ -547,6 +575,7 @@ function FreeTournamentCard({
       setMatchStarted(isFreeMatchStarted(t.id));
       setIsDone(localStorage.getItem(`freeMatchDone_${t.id}`) === "true");
       setIsJoined(localStorage.getItem(`ke_free_joined_${t.id}`) === "true");
+      fetchCount();
     };
     window.addEventListener("storage", handler);
     window.addEventListener("freeTournamentUpdated", handler);
@@ -554,7 +583,7 @@ function FreeTournamentCard({
       window.removeEventListener("storage", handler);
       window.removeEventListener("freeTournamentUpdated", handler);
     };
-  }, [t.id]);
+  }, []);
 
   const spotsLeft = Math.max(0, t.maxPlayers - joinCount);
   const isFull = spotsLeft === 0;
@@ -1704,6 +1733,10 @@ function TournamentCard({
   const isUpcoming = tournament.status === "upcoming";
   const isOngoing = tournament.status === "ongoing";
   const isCompleted = tournament.status === "completed";
+  const totalTeams = Number(tournament.maxTeams);
+
+  // Real-time registration count from Firestore
+  const [registeredCount, setRegisteredCount] = useState(0);
 
   // Check if current user has already registered for this paid tournament
   const [isPaidRegistered, setIsPaidRegistered] = useState(() => {
@@ -1714,13 +1747,33 @@ function TournamentCard({
       return false;
     }
   });
+  const [showPaidRoomPopup, setShowPaidRoomPopup] = useState(false);
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: mount-only fetch, tournament.id stable
+  useEffect(() => {
+    const fetchCount = async () => {
+      try {
+        const count = await getPaidRegistrationCount(tournament.id.toString());
+        setRegisteredCount(count);
+      } catch {}
+    };
+    fetchCount();
+  }, []);
 
   // Listen for registration updates
+  // biome-ignore lint/correctness/useExhaustiveDependencies: event listener setup, tournament.id stable
   useEffect(() => {
+    const fetchCount = async () => {
+      try {
+        const count = await getPaidRegistrationCount(tournament.id.toString());
+        setRegisteredCount(count);
+      } catch {}
+    };
     const handler = () => {
       try {
         const key = `ke_paid_joined_${tournament.id.toString()}`;
         setIsPaidRegistered(localStorage.getItem(key) === "true");
+        fetchCount();
       } catch {}
     };
     window.addEventListener("storage", handler);
@@ -1729,7 +1782,7 @@ function TournamentCard({
       window.removeEventListener("storage", handler);
       window.removeEventListener("paidTournamentUpdated", handler);
     };
-  }, [tournament.id]);
+  }, []);
 
   const modeIcon =
     tournament.tournamentType === "battleground"
@@ -1851,11 +1904,13 @@ function TournamentCard({
           </div>
         </div>
 
-        {/* Progress bar — teams registered */}
+        {/* Progress bar — teams registered (real count) */}
         {(() => {
-          const totalTeams = Number(tournament.maxTeams);
-          // Use a simple visual based on status; real count not available on list
-          const pct = isCompleted ? 100 : isOngoing ? 75 : 30;
+          const isFull = registeredCount >= totalTeams;
+          const pct =
+            totalTeams > 0
+              ? Math.min(100, (registeredCount / totalTeams) * 100)
+              : 0;
           return (
             <div style={{ marginBottom: 12 }}>
               <div
@@ -1865,7 +1920,9 @@ function TournamentCard({
                   style={{
                     height: 4,
                     width: `${pct}%`,
-                    background: "#00FF88",
+                    background: isFull
+                      ? "#dc3545"
+                      : "linear-gradient(90deg, #9d4edd, #00FF88)",
                     borderRadius: 2,
                     transition: "width 0.4s ease",
                   }}
@@ -1879,38 +1936,87 @@ function TournamentCard({
                   color: "#888888",
                   marginTop: 4,
                   fontFamily: "'Rajdhani', sans-serif",
+                  fontWeight: 600,
                 }}
               >
-                <span>0/{totalTeams} teams</span>
-                <span>{totalTeams} spots total</span>
+                <span style={{ color: isFull ? "#dc3545" : "#333333" }}>
+                  👥 {registeredCount}/{totalTeams} teams joined
+                </span>
+                {isFull ? (
+                  <span style={{ color: "#dc3545", fontWeight: 700 }}>
+                    🚫 FULL
+                  </span>
+                ) : (
+                  <span>{totalTeams - registeredCount} spots left</span>
+                )}
               </div>
             </div>
           );
         })()}
 
         {isOngoing ? (
-          <button
-            type="button"
-            className="block w-full text-center py-2.5 rounded-lg font-bold text-sm uppercase tracking-wide transition-all flex items-center justify-center gap-2"
-            style={{
-              background: "linear-gradient(135deg, #dc3545, #a71d2a)",
-              color: "#FFFFFF",
-              boxShadow: "0 0 12px rgba(220,53,69,0.3)",
-              border: "none",
-              cursor: "pointer",
-              borderRadius: 8,
-            }}
-            data-ocid="tournaments.view_live.button"
-            onClick={() =>
-              window.open(
-                "https://www.youtube.com/@kl_tournament_007",
-                "_blank",
-              )
-            }
-          >
-            <span className="inline-block w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
-            🔴 VIEW LIVE
-          </button>
+          <div className="space-y-2">
+            {isPaidRegistered && (
+              <div
+                className="block w-full text-center py-2 rounded-lg font-bold text-sm uppercase tracking-wide"
+                style={{
+                  background: "transparent",
+                  color: "#00FF88",
+                  border: "2px solid #00FF88",
+                  borderRadius: 50,
+                  fontFamily: "'Orbitron', sans-serif",
+                  cursor: "default",
+                }}
+                data-ocid="tournaments.registered.badge"
+              >
+                ✓ Registered
+              </div>
+            )}
+            <button
+              type="button"
+              className="block w-full text-center py-2.5 rounded-lg font-bold text-sm uppercase tracking-wide transition-all"
+              disabled={!tournament.roomId}
+              onClick={() => tournament.roomId && setShowPaidRoomPopup(true)}
+              style={{
+                background: tournament.roomId
+                  ? "linear-gradient(135deg, #9d4edd, #6b21a8)"
+                  : "#F0F0F0",
+                color: tournament.roomId ? "#FFFFFF" : "#CCCCCC",
+                border: tournament.roomId ? "none" : "1px solid #E0E0E0",
+                boxShadow: tournament.roomId
+                  ? "0 0 10px rgba(157,78,221,0.3)"
+                  : "none",
+                cursor: tournament.roomId ? "pointer" : "not-allowed",
+                borderRadius: 8,
+                fontFamily: "'Orbitron', sans-serif",
+              }}
+              data-ocid="tournaments.id_password.button"
+            >
+              🔑 ID/PASSWORD
+            </button>
+            <button
+              type="button"
+              className="block w-full text-center py-2.5 rounded-lg font-bold text-sm uppercase tracking-wide transition-all flex items-center justify-center gap-2"
+              style={{
+                background: "linear-gradient(135deg, #dc3545, #a71d2a)",
+                color: "#FFFFFF",
+                boxShadow: "0 0 12px rgba(220,53,69,0.3)",
+                border: "none",
+                cursor: "pointer",
+                borderRadius: 8,
+              }}
+              data-ocid="tournaments.view_live.button"
+              onClick={() =>
+                window.open(
+                  "https://www.youtube.com/@kl_tournament_007",
+                  "_blank",
+                )
+              }
+            >
+              <span className="inline-block w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+              🔴 VIEW LIVE
+            </button>
+          </div>
         ) : isCompleted ? (
           <Link
             to="/tournament/$id"
@@ -1958,6 +2064,151 @@ function TournamentCard({
           </Link>
         )}
       </div>
+
+      {showPaidRoomPopup && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{
+            background: "rgba(0,0,0,0.75)",
+            backdropFilter: "blur(6px)",
+          }}
+          role="presentation"
+          onClick={() => setShowPaidRoomPopup(false)}
+          onKeyDown={(e) => e.key === "Escape" && setShowPaidRoomPopup(false)}
+        >
+          <div
+            className="w-full max-w-xs rounded-xl p-5 space-y-4"
+            style={{
+              background: "#FFFFFF",
+              border: "1px solid #E0E0E0",
+              boxShadow: "0 8px 32px rgba(0,0,0,0.15)",
+            }}
+            role="presentation"
+            onClick={(e) => e.stopPropagation()}
+            onKeyDown={(e) => e.stopPropagation()}
+          >
+            <h3
+              className="text-center font-bold text-lg"
+              style={{ fontFamily: "'Orbitron', sans-serif", color: "#000000" }}
+            >
+              🔑 Room Details
+            </h3>
+            <div
+              className="rounded-lg p-3 space-y-2"
+              style={{
+                background: "#F5F5F5",
+                border: "1px solid #E0E0E0",
+              }}
+            >
+              <div className="space-y-1">
+                <span
+                  style={{ color: "#111827", fontSize: 12, fontWeight: 700 }}
+                >
+                  Room ID
+                </span>
+                <div className="flex items-center justify-between gap-2">
+                  <span
+                    style={{
+                      fontFamily: "monospace",
+                      fontWeight: 700,
+                      fontSize: 20,
+                      color: "#111827",
+                      letterSpacing: "0.05em",
+                    }}
+                  >
+                    {tournament.roomId}
+                  </span>
+                  <button
+                    type="button"
+                    style={{
+                      fontFamily: "'Orbitron', sans-serif",
+                      fontSize: 11,
+                      fontWeight: 700,
+                      padding: "5px 12px",
+                      borderRadius: 7,
+                      border: "none",
+                      background: "#00FF88",
+                      color: "#000000",
+                      cursor: "pointer",
+                      whiteSpace: "nowrap",
+                    }}
+                    onClick={() => {
+                      navigator.clipboard
+                        .writeText(tournament.roomId ?? "")
+                        .then(() => {
+                          toast.success("✅ Copied!", { duration: 2000 });
+                        });
+                    }}
+                  >
+                    📋 COPY ROOM ID
+                  </button>
+                </div>
+              </div>
+              <div className="space-y-1">
+                <span
+                  style={{ color: "#111827", fontSize: 12, fontWeight: 700 }}
+                >
+                  Password
+                </span>
+                <div className="flex items-center justify-between gap-2">
+                  <span
+                    style={{
+                      fontFamily: "monospace",
+                      fontWeight: 700,
+                      fontSize: 20,
+                      color: "#111827",
+                      letterSpacing: "0.05em",
+                    }}
+                  >
+                    {tournament.roomPassword || "—"}
+                  </span>
+                  <button
+                    type="button"
+                    style={{
+                      fontFamily: "'Orbitron', sans-serif",
+                      fontSize: 11,
+                      fontWeight: 700,
+                      padding: "5px 12px",
+                      borderRadius: 7,
+                      border: "none",
+                      background: "#00FF88",
+                      color: "#000000",
+                      cursor: tournament.roomPassword
+                        ? "pointer"
+                        : "not-allowed",
+                      opacity: tournament.roomPassword ? 1 : 0.5,
+                      whiteSpace: "nowrap",
+                    }}
+                    disabled={!tournament.roomPassword}
+                    onClick={() => {
+                      if (!tournament.roomPassword) return;
+                      navigator.clipboard
+                        .writeText(tournament.roomPassword)
+                        .then(() => {
+                          toast.success("✅ Copied!", { duration: 2000 });
+                        });
+                    }}
+                  >
+                    📋 COPY PASSWORD
+                  </button>
+                </div>
+              </div>
+            </div>
+            <button
+              type="button"
+              className="w-full py-1.5 rounded-lg text-sm"
+              style={{
+                color: "#333333",
+                background: "#F5F5F5",
+                border: "1px solid #E0E0E0",
+              }}
+              onClick={() => setShowPaidRoomPopup(false)}
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

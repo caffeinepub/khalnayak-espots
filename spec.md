@@ -1,35 +1,35 @@
-# Khalnayak Esports — Tournament Button Logic + Readability + Scoreboard
+# Khalnayak Esports
 
 ## Current State
-- Free tournament join button always shows regardless of LIVE/DONE status (no state-based hiding)
-- Paid tournament DONE state shows "View Details" gray link — no Result button
-- No LIVE state disables registration — user can still try to join while match is ongoing
-- FreeMatchCard in MyMatchesPage labels "📊 RESULTS" but actually opens Room ID dialog
-- Admin Scores tab has one combined dropdown for both free and paid tournaments (not separated)
-- Text readability issues: registration form labels, room details popup numbers, inputs have dark background
+- Free tournament join count reads from localStorage only (`freeJoinCount_{id}`) — not synced with Firestore
+- Paid tournament progress bar uses a hardcoded fake percentage (30/75/100%) and shows `0/{maxTeams}` statically
+- Registration status (✓ Registered) uses localStorage only
+- Admin Manage Matches shows all tournament cards fully expanded at once — becomes very long with many tournaments
+- Home page has no My Matches inline section
+- MyMatchesPage exists in menu and works fine
 
 ## Requested Changes (Diff)
 
 ### Add
-- Result button on tournament cards (free + paid) when status is DONE/completed
-- Result button navigates to result page showing: player name, kills, rank, prize
-- Separate Free Scoreboard tab and Paid Scoreboard tab in Admin Scores section
-- Each scoreboard: tournament dropdown (filtered by type), player name, kills, rank, prize auto-calc
+- Real-time joined count for free tournaments: fetch count from Firestore `freeRegistrations` collection filtered by `tournamentId`, display as "X/Total teams joined"; update after registration success
+- Real-time joined count for paid tournaments: fetch count from Firestore `paid_registrations` collection filtered by `tournamentId`, display as "X/Total teams joined"
+- Show "Full" label when count reaches maxTeams/maxPlayers
+- My Matches mini-section on Home page: shows user's registered matches (free from localStorage, paid from useGetCallerTeamRegistrations), each card with tournament name, date, status, Room ID if LIVE, Result if DONE
+- Accordion/collapsible design for Admin Panel Manage Matches: each tournament card collapsed by default showing only Name | Mode | Status | Date; click to expand full details
 
 ### Modify
-- Free tournament card: UPCOMING/LIVE → show "Watch Ad & Join" button; DONE → hide join button, show "Result" button
-- Free tournament card LIVE state: hide/disable join button completely, show "VIEW LIVE" button only
-- Paid tournament card: UPCOMING → show "Pay & Register" button; LIVE/ongoing → show "View Live" button, hide register; DONE/completed → show "Result" button
-- FreeMatchCard in MyMatchesPage: fix "RESULTS" button to open actual result data (not Room ID popup)
-- Registration form: label colors black/dark gray bold, inputs light gray bg #F5F5F5 black text, checkbox text dark gray #333333, COMPLETE REGISTRATION button neon green #00FF88 black text
-- Room Details popup: Room ID label black bold, numbers black bold 20px, COPY buttons neon green black text, white card background
+- FreeTournamentCard: fetch count from Firestore on mount and after registration; also keep localStorage as fallback/optimistic update
+- TournamentCard (paid): fetch real count from `paid_registrations` on mount instead of fake percentage
+- Admin ManageMatchesTab: wrap each DynamicPaidTournamentAdminCard and free tournament card in accordion
+- HomePage: add MyMatchesPreview section between HeroSection and UpcomingTournamentsSection
 
 ### Remove
-- Mixed dropdown in Admin Scores tab (replaced by separate tabs)
+- Hardcoded fake percentage in paid tournament progress bar
 
 ## Implementation Plan
-1. TournamentsPage.tsx: Add status check in free tournament card — LIVE/DONE states control button visibility
-2. TournamentsPage.tsx: Paid tournament card — completed state shows Result button linking to /tournament/:id
-3. TournamentsPage.tsx + registration modal: Fix colors for labels, inputs, buttons per readability spec
-4. AdminPage.tsx Scores section: Split into two sub-tabs — Free Scoreboard (free tournament dropdown) and Paid Scoreboard (paid tournament dropdown) with separate prize calculation
-5. MyMatchesPage.tsx: Fix FreeMatchCard RESULTS button to show actual match result data
+1. Add `getFreeRegistrationCount(tournamentId)` helper in firestore.ts using `getDocs` with filter
+2. Add `getPaidRegistrationCount(tournamentId)` helper similarly
+3. Update FreeTournamentCard to fetch Firestore count on mount + listen for `freeTournamentUpdated` event to refetch
+4. Update TournamentCard (paid) to fetch Firestore count on mount
+5. Add MyMatchesPreview component to HomePage between Hero and Upcoming sections
+6. Convert Admin ManageMatchesTab cards to accordion (collapsible) design with expand/collapse toggle

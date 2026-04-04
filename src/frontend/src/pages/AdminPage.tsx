@@ -1578,6 +1578,7 @@ function DynamicFreeTournamentList() {
   );
 }
 
+// biome-ignore lint/correctness/noUnusedVariables: kept for compatibility
 function FreeTournamentsInMatchesSection() {
   const [tournaments, setTournaments] = useState<
     { id: string; data: StoredFreeTournament }[]
@@ -1612,6 +1613,46 @@ function FreeTournamentsInMatchesSection() {
           />
         ))}
       </div>
+    </div>
+  );
+}
+
+function FreeTournamentsInMatchesSectionAccordion() {
+  const [tournaments, setTournaments] = useState<
+    { id: string; data: StoredFreeTournament }[]
+  >([]);
+
+  const refresh = useCallback(
+    () => setTournaments(loadStoredFreeTournaments()),
+    [],
+  );
+
+  useEffect(() => {
+    refresh();
+    window.addEventListener("freeTournamentUpdated", refresh);
+    return () => window.removeEventListener("freeTournamentUpdated", refresh);
+  }, [refresh]);
+
+  if (tournaments.length === 0) return null;
+
+  return (
+    <div className="space-y-2 mt-4">
+      <div className="flex items-center gap-2 mb-3">
+        <span className="text-xl">🎁</span>
+        <h3 className="font-bold text-lg font-display">Free Tournaments</h3>
+        <span style={{ color: "#888", fontSize: 13 }}>
+          ({tournaments.length})
+        </span>
+      </div>
+      {tournaments.map((t, idx) => (
+        <AccordionFreeTournamentCard
+          key={t.id}
+          id={t.id}
+          data={t.data}
+          onDelete={refresh}
+          index={idx + 1}
+        />
+      ))}
     </div>
   );
 }
@@ -2548,6 +2589,302 @@ function DynamicPaidTournamentAdminCard({
   );
 }
 
+function AccordionTournamentCard({
+  tournament,
+  index,
+}: { tournament: any; index: number }) {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const isLive = tournament.status === "ongoing";
+  const isCompleted = tournament.status === "completed";
+
+  const startMs = Number(tournament.startTime) / 1_000_000;
+  const dateStr = new Date(startMs).toLocaleDateString("en-IN", {
+    day: "2-digit",
+    month: "2-digit",
+  });
+
+  const statusColor = isLive ? "#dc3545" : isCompleted ? "#6c757d" : "#3B82F6";
+  const statusLabel = isLive
+    ? "🔴 LIVE"
+    : isCompleted
+      ? "✅ DONE"
+      : "⏰ UPCOMING";
+
+  return (
+    <div
+      style={{
+        background: "#FFFFFF",
+        border: `1px solid ${isLive ? "rgba(220,53,69,0.35)" : "#E5E7EB"}`,
+        borderRadius: 14,
+        overflow: "hidden",
+        boxShadow: isLive
+          ? "0 2px 12px rgba(220,53,69,0.12)"
+          : "0 2px 8px rgba(0,0,0,0.06)",
+        transition: "all 0.2s ease",
+      }}
+    >
+      {/* Collapsed Header — always visible */}
+      <button
+        type="button"
+        onClick={() => setIsExpanded((v) => !v)}
+        style={{
+          width: "100%",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          padding: "14px 16px",
+          background: isExpanded ? "#f9fafb" : "#FFFFFF",
+          border: "none",
+          cursor: "pointer",
+          textAlign: "left",
+          gap: 10,
+          transition: "background 0.15s ease",
+        }}
+        data-ocid={`admin.accordion.${index}.toggle`}
+      >
+        <div
+          style={{
+            flex: 1,
+            minWidth: 0,
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+            flexWrap: "wrap",
+          }}
+        >
+          {/* Expand/collapse chevron */}
+          <span style={{ color: "#666", fontSize: 14, flexShrink: 0 }}>
+            {isExpanded ? "▼" : "▶"}
+          </span>
+          <span
+            style={{
+              fontFamily: "'Orbitron', sans-serif",
+              fontWeight: 700,
+              fontSize: 13,
+              color: "#111827",
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              maxWidth: "160px",
+            }}
+          >
+            {tournament.name}
+          </span>
+          <span
+            style={{
+              background: "rgba(170,68,255,0.12)",
+              color: "#AA44FF",
+              border: "1px solid rgba(170,68,255,0.3)",
+              borderRadius: 20,
+              padding: "2px 8px",
+              fontSize: 10,
+              fontWeight: 700,
+              whiteSpace: "nowrap",
+              flexShrink: 0,
+            }}
+          >
+            {getTournamentTypeLabel(tournament.tournamentType)}
+          </span>
+          <span
+            style={{
+              background: `rgba(${isLive ? "220,53,69" : isCompleted ? "107,114,128" : "59,130,246"},0.12)`,
+              color: statusColor,
+              border: `1px solid rgba(${isLive ? "220,53,69" : isCompleted ? "107,114,128" : "59,130,246"},0.35)`,
+              borderRadius: 20,
+              padding: "2px 8px",
+              fontSize: 10,
+              fontWeight: 700,
+              whiteSpace: "nowrap",
+              flexShrink: 0,
+              display: "flex",
+              alignItems: "center",
+              gap: 3,
+            }}
+          >
+            {isLive && (
+              <span
+                style={{
+                  width: 5,
+                  height: 5,
+                  borderRadius: "50%",
+                  background: "#dc3545",
+                  display: "inline-block",
+                  animation: "pulse 1s infinite",
+                }}
+              />
+            )}
+            {statusLabel}
+          </span>
+          <span
+            style={{
+              color: "#888",
+              fontSize: 11,
+              whiteSpace: "nowrap",
+              flexShrink: 0,
+            }}
+          >
+            📅 {dateStr}
+          </span>
+        </div>
+      </button>
+
+      {/* Expanded Content */}
+      {isExpanded && (
+        <div
+          style={{
+            borderTop: "1px solid #E5E7EB",
+            padding: "0 16px 16px 16px",
+          }}
+        >
+          <div style={{ paddingTop: 16 }}>
+            <DynamicPaidTournamentAdminCard
+              tournament={tournament}
+              index={index}
+            />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function AccordionFreeTournamentCard({
+  id,
+  data,
+  onDelete,
+  index: _index,
+}: {
+  id: string;
+  data: StoredFreeTournament;
+  onDelete: () => void;
+  index: number;
+}) {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const isStarted = localStorage.getItem(`freeMatchStarted_${id}`) === "true";
+  const isDone = localStorage.getItem(`freeMatchDone_${id}`) === "true";
+
+  const startTimeRaw = localStorage.getItem(`freeMatchTime_${id}`) || "";
+  const dateStr = startTimeRaw
+    ? new Date(startTimeRaw).toLocaleDateString("en-IN", {
+        day: "2-digit",
+        month: "2-digit",
+      })
+    : "TBD";
+
+  const statusLabel = isDone
+    ? "✅ DONE"
+    : isStarted
+      ? "🔴 LIVE"
+      : "⏰ UPCOMING";
+  const statusColor = isDone ? "#6c757d" : isStarted ? "#dc3545" : "#3B82F6";
+
+  return (
+    <div
+      style={{
+        background: "#FFFFFF",
+        border: `1px solid ${isStarted && !isDone ? "rgba(220,53,69,0.35)" : "#E5E7EB"}`,
+        borderRadius: 14,
+        overflow: "hidden",
+        boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
+      }}
+    >
+      <button
+        type="button"
+        onClick={() => setIsExpanded((v) => !v)}
+        style={{
+          width: "100%",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          padding: "14px 16px",
+          background: isExpanded ? "#f9fafb" : "#FFFFFF",
+          border: "none",
+          cursor: "pointer",
+          textAlign: "left",
+          gap: 10,
+          transition: "background 0.15s ease",
+        }}
+      >
+        <div
+          style={{
+            flex: 1,
+            minWidth: 0,
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+            flexWrap: "wrap",
+          }}
+        >
+          <span style={{ color: "#666", fontSize: 14, flexShrink: 0 }}>
+            {isExpanded ? "▼" : "▶"}
+          </span>
+          <span
+            style={{
+              fontFamily: "'Orbitron', sans-serif",
+              fontWeight: 700,
+              fontSize: 13,
+              color: "#111827",
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              maxWidth: "160px",
+            }}
+          >
+            {data.name}
+          </span>
+          <span
+            style={{
+              background: "rgba(0,255,136,0.12)",
+              color: "#00AA55",
+              border: "1px solid rgba(0,255,136,0.35)",
+              borderRadius: 20,
+              padding: "2px 8px",
+              fontSize: 10,
+              fontWeight: 700,
+              flexShrink: 0,
+            }}
+          >
+            🎁 {data.mode}
+          </span>
+          <span
+            style={{
+              background: `rgba(${isDone ? "107,114,128" : isStarted ? "220,53,69" : "59,130,246"},0.12)`,
+              color: statusColor,
+              border: `1px solid rgba(${isDone ? "107,114,128" : isStarted ? "220,53,69" : "59,130,246"},0.35)`,
+              borderRadius: 20,
+              padding: "2px 8px",
+              fontSize: 10,
+              fontWeight: 700,
+              flexShrink: 0,
+            }}
+          >
+            {statusLabel}
+          </span>
+          <span style={{ color: "#888", fontSize: 11, flexShrink: 0 }}>
+            📅 {dateStr}
+          </span>
+        </div>
+      </button>
+      {isExpanded && (
+        <div
+          style={{
+            borderTop: "1px solid #E5E7EB",
+            padding: "0 16px 16px 16px",
+          }}
+        >
+          <div style={{ paddingTop: 16 }}>
+            <DynamicFreeTournamentAdminCard
+              id={id}
+              data={data}
+              onDelete={onDelete}
+            />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function ManageMatchesTab() {
   const { data: tournaments } = useGetTournaments();
   const [filter, setFilter] = useState<MatchFilter>("all");
@@ -2588,7 +2925,7 @@ function ManageMatchesTab() {
         <div>
           <h2 className="text-2xl font-bold font-display">Manage Matches</h2>
           <p className="text-sm text-muted-foreground">
-            Set room details, reschedule, cancel, and submit results
+            Click any tournament to expand and manage details
           </p>
         </div>
       </div>
@@ -2619,11 +2956,11 @@ function ManageMatchesTab() {
         )}
       </div>
 
-      {/* Tournament list */}
+      {/* Tournament list — accordion */}
       {sorted.length > 0 ? (
-        <div className="space-y-4">
+        <div className="space-y-2">
           {sorted.map((tournament, idx) => (
-            <DynamicPaidTournamentAdminCard
+            <AccordionTournamentCard
               key={tournament.id.toString()}
               tournament={tournament}
               index={idx + 1}
@@ -2644,8 +2981,8 @@ function ManageMatchesTab() {
         </div>
       )}
 
-      {/* Free Tournaments in Manage Matches */}
-      <FreeTournamentsInMatchesSection />
+      {/* Free Tournaments in Manage Matches — also accordion */}
+      <FreeTournamentsInMatchesSectionAccordion />
     </div>
   );
 }
