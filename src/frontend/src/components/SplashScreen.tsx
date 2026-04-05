@@ -3,6 +3,8 @@ import { useEffect, useState } from "react";
 export function SplashScreen() {
   const [visible, setVisible] = useState(false);
   const [fading, setFading] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const DURATION_MS = 8000; // 8 seconds auto-redirect
 
   useEffect(() => {
     const alreadyShown = sessionStorage.getItem("pwa_splash_shown");
@@ -11,10 +13,20 @@ export function SplashScreen() {
     setVisible(true);
     sessionStorage.setItem("pwa_splash_shown", "true");
 
-    const fadeTimer = setTimeout(() => setFading(true), 2200);
-    const hideTimer = setTimeout(() => setVisible(false), 2800);
+    // Progress bar animation
+    const startTime = Date.now();
+    const progressInterval = setInterval(() => {
+      const elapsed = Date.now() - startTime;
+      const pct = Math.min((elapsed / DURATION_MS) * 100, 100);
+      setProgress(pct);
+      if (pct >= 100) clearInterval(progressInterval);
+    }, 50);
+
+    const fadeTimer = setTimeout(() => setFading(true), DURATION_MS - 600);
+    const hideTimer = setTimeout(() => setVisible(false), DURATION_MS);
 
     return () => {
+      clearInterval(progressInterval);
       clearTimeout(fadeTimer);
       clearTimeout(hideTimer);
     };
@@ -54,6 +66,60 @@ export function SplashScreen() {
         }}
       />
 
+      {/* Corner accent lines */}
+      <div
+        style={{
+          position: "absolute",
+          top: 20,
+          left: 20,
+          width: 40,
+          height: 40,
+          borderTop: "2px solid rgba(0,255,136,0.5)",
+          borderLeft: "2px solid rgba(0,255,136,0.5)",
+          borderRadius: "4px 0 0 0",
+          pointerEvents: "none",
+        }}
+      />
+      <div
+        style={{
+          position: "absolute",
+          top: 20,
+          right: 20,
+          width: 40,
+          height: 40,
+          borderTop: "2px solid rgba(0,255,136,0.5)",
+          borderRight: "2px solid rgba(0,255,136,0.5)",
+          borderRadius: "0 4px 0 0",
+          pointerEvents: "none",
+        }}
+      />
+      <div
+        style={{
+          position: "absolute",
+          bottom: 80,
+          left: 20,
+          width: 40,
+          height: 40,
+          borderBottom: "2px solid rgba(0,255,136,0.3)",
+          borderLeft: "2px solid rgba(0,255,136,0.3)",
+          borderRadius: "0 0 0 4px",
+          pointerEvents: "none",
+        }}
+      />
+      <div
+        style={{
+          position: "absolute",
+          bottom: 80,
+          right: 20,
+          width: 40,
+          height: 40,
+          borderBottom: "2px solid rgba(0,255,136,0.3)",
+          borderRight: "2px solid rgba(0,255,136,0.3)",
+          borderRadius: "0 0 4px 0",
+          pointerEvents: "none",
+        }}
+      />
+
       {/* Radial glow behind hero text */}
       <div
         style={{
@@ -61,66 +127,96 @@ export function SplashScreen() {
           top: "50%",
           left: "50%",
           transform: "translate(-50%, -58%)",
-          width: "min(500px, 90vw)",
-          height: "min(300px, 50vw)",
+          width: "min(600px, 95vw)",
+          height: "min(350px, 55vw)",
           background:
-            "radial-gradient(ellipse, rgba(0,255,136,0.12) 0%, rgba(0,255,136,0.04) 40%, transparent 70%)",
+            "radial-gradient(ellipse, rgba(0,255,136,0.14) 0%, rgba(0,255,136,0.05) 40%, transparent 70%)",
           pointerEvents: "none",
           zIndex: 0,
         }}
       />
 
-      {/* Main content block — slide in + scale */}
+      {/* Main content block */}
       <div
         style={{
           position: "relative",
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
-          gap: 16,
+          gap: 14,
           zIndex: 1,
           animation:
             "splashContentIn 0.65s cubic-bezier(0.34, 1.56, 0.64, 1) both",
           textAlign: "center",
         }}
       >
-        {/* Fire emojis row */}
+        {/* Crown + Fire row */}
         <div
           style={{
-            fontSize: "clamp(20px, 5vw, 28px)",
+            fontSize: "clamp(22px, 5.5vw, 32px)",
             lineHeight: 1,
-            letterSpacing: "0.5em",
-            paddingLeft: "0.5em",
+            letterSpacing: "0.3em",
+            paddingLeft: "0.3em",
+            animation: "splashBounce 1.6s ease-in-out 0s infinite",
           }}
         >
-          🔥🔥🔥
+          👑🔥👑
         </div>
 
-        {/* KHALNAYAK hero text */}
-        <h1
+        {/* KL TOURNAMENTS headline */}
+        <div style={{ position: "relative" }}>
+          <h1
+            style={{
+              fontFamily: "'Orbitron', sans-serif",
+              fontWeight: 900,
+              fontSize: "clamp(28px, 9vw, 58px)",
+              color: "#00FF88",
+              textTransform: "uppercase",
+              letterSpacing: "0.08em",
+              lineHeight: 1,
+              margin: 0,
+              animation: "khalnayakGlow 1.8s ease-in-out infinite",
+            }}
+          >
+            KL TOURNAMENTS
+          </h1>
+          {/* Neon underline */}
+          <div
+            style={{
+              height: 2,
+              background:
+                "linear-gradient(90deg, transparent, #00FF88, transparent)",
+              boxShadow: "0 0 10px rgba(0,255,136,0.8)",
+              borderRadius: 2,
+              marginTop: 6,
+              animation: "underlineExpand 0.8s ease-out 0.5s both",
+            }}
+          />
+        </div>
+
+        {/* KHALNAYAK secondary brand */}
+        <p
           style={{
-            fontFamily: "'Orbitron', sans-serif",
-            fontWeight: 900,
-            fontSize: "clamp(36px, 12vw, 72px)",
-            color: "#00FF88",
+            fontFamily: "'Rajdhani', sans-serif",
+            fontWeight: 700,
+            fontSize: "clamp(16px, 4.5vw, 24px)",
+            color: "#cccccc",
+            letterSpacing: "0.3em",
             textTransform: "uppercase",
-            letterSpacing: "0.05em",
-            lineHeight: 1,
             margin: 0,
-            animation: "khalnayakGlow 1.8s ease-in-out infinite",
           }}
         >
-          KHALNAYAK
-        </h1>
+          KHALNAYAK ESPORTS
+        </p>
 
-        {/* KL ESPORTS LIFE sub text */}
+        {/* KL ESPORTS LIFE */}
         <p
           style={{
             fontFamily: "'Rajdhani', sans-serif",
             fontWeight: 600,
-            fontSize: "clamp(14px, 4vw, 20px)",
-            color: "#e8e8e8",
-            letterSpacing: "0.25em",
+            fontSize: "clamp(12px, 3vw, 16px)",
+            color: "rgba(0,255,136,0.75)",
+            letterSpacing: "0.22em",
             textTransform: "uppercase",
             margin: 0,
           }}
@@ -132,11 +228,11 @@ export function SplashScreen() {
         <p
           style={{
             fontFamily: "'Rajdhani', sans-serif",
-            fontSize: 12,
+            fontSize: "clamp(10px, 2.5vw, 13px)",
             fontWeight: 500,
             letterSpacing: "3px",
             textTransform: "uppercase",
-            color: "#888888",
+            color: "#777777",
             margin: 0,
           }}
         >
@@ -148,16 +244,16 @@ export function SplashScreen() {
           style={{
             display: "flex",
             gap: "clamp(16px, 4vw, 28px)",
-            marginTop: 8,
+            marginTop: 4,
           }}
         >
           {(["🎮", "🏆", "🔫"] as const).map((icon, i) => (
             <span
               key={icon}
               style={{
-                fontSize: "clamp(24px, 6vw, 36px)",
+                fontSize: "clamp(22px, 5.5vw, 34px)",
                 display: "inline-block",
-                animation: `splashBounce 1.2s ease-in-out ${i * 0.15}s infinite`,
+                animation: `splashBounce 1.2s ease-in-out ${i * 0.18}s infinite`,
               }}
             >
               {icon}
@@ -169,34 +265,53 @@ export function SplashScreen() {
         <SplashClock />
       </div>
 
-      {/* Loading bar */}
+      {/* Loading bar — bottom of screen */}
       <div
         style={{
           position: "absolute",
-          bottom: "48px",
+          bottom: "36px",
           left: "50%",
           transform: "translateX(-50%)",
-          width: "min(280px, 80vw)",
+          width: "min(300px, 82vw)",
           zIndex: 1,
         }}
       >
-        <p
+        <div
           style={{
-            fontFamily: "'Rajdhani', sans-serif",
-            fontSize: 11,
-            color: "rgba(0,255,136,0.6)",
-            textAlign: "center",
-            letterSpacing: "3px",
-            textTransform: "uppercase",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
             marginBottom: 6,
           }}
         >
-          Loading...
-        </p>
+          <p
+            style={{
+              fontFamily: "'Rajdhani', sans-serif",
+              fontSize: 11,
+              color: "rgba(0,255,136,0.6)",
+              letterSpacing: "3px",
+              textTransform: "uppercase",
+              margin: 0,
+            }}
+          >
+            Loading...
+          </p>
+          <p
+            style={{
+              fontFamily: "'Orbitron', sans-serif",
+              fontSize: 10,
+              color: "rgba(0,255,136,0.5)",
+              margin: 0,
+              letterSpacing: "0.05em",
+            }}
+          >
+            {Math.round(progress)}%
+          </p>
+        </div>
         <div
           style={{
-            height: "2px",
-            background: "rgba(0,255,136,0.15)",
+            height: "3px",
+            background: "rgba(0,255,136,0.12)",
             borderRadius: "999px",
             overflow: "hidden",
           }}
@@ -204,19 +319,23 @@ export function SplashScreen() {
           <div
             style={{
               height: "100%",
+              width: `${progress}%`,
               background: "linear-gradient(90deg, #00FF88, #9d4edd)",
-              boxShadow: "0 0 8px rgba(0,255,136,0.8)",
+              boxShadow:
+                "0 0 10px rgba(0,255,136,0.9), 0 0 20px rgba(0,255,136,0.4)",
               borderRadius: "999px",
-              animation: "splash-load-bar 2.2s linear forwards",
+              transition: "width 0.1s linear",
             }}
           />
         </div>
       </div>
 
       <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Rajdhani:wght@500;600;700&display=swap');
+
         @keyframes splashContentIn {
-          0% { opacity: 0; transform: scale(0.85); }
-          100% { opacity: 1; transform: scale(1); }
+          0% { opacity: 0; transform: scale(0.82) translateY(20px); }
+          100% { opacity: 1; transform: scale(1) translateY(0); }
         }
         @keyframes khalnayakGlow {
           0%, 100% {
@@ -228,18 +347,14 @@ export function SplashScreen() {
           50% {
             text-shadow:
               0 0 30px rgba(0,255,136,1),
-              0 0 60px rgba(0,255,136,0.9),
-              0 0 120px rgba(0,255,136,0.5);
+              0 0 65px rgba(0,255,136,0.95),
+              0 0 130px rgba(0,255,136,0.55);
           }
         }
         @keyframes splashBounce {
           0%, 100% { transform: translateY(0) scale(1); }
           40% { transform: translateY(-10px) scale(1.15); }
           60% { transform: translateY(-5px) scale(1.05); }
-        }
-        @keyframes splash-load-bar {
-          from { width: 0%; }
-          to { width: 100%; }
         }
         @keyframes splashLiveDot {
           0%, 100% { opacity: 1; box-shadow: 0 0 6px #FF4444; }
@@ -253,6 +368,10 @@ export function SplashScreen() {
           0% { transform: scale(1); }
           50% { transform: scale(1.04); }
           100% { transform: scale(1); }
+        }
+        @keyframes underlineExpand {
+          from { transform: scaleX(0); opacity: 0; }
+          to { transform: scaleX(1); opacity: 1; }
         }
       `}</style>
     </div>
@@ -295,10 +414,11 @@ function SplashClock() {
         alignItems: "center",
         gap: 8,
         padding: "6px 14px",
-        background: "rgba(0,0,0,0.4)",
-        border: "1px solid rgba(0,255,136,0.25)",
+        background: "rgba(0,0,0,0.45)",
+        border: "1px solid rgba(0,255,136,0.3)",
         borderRadius: 8,
-        marginTop: 8,
+        marginTop: 6,
+        boxShadow: "0 0 12px rgba(0,255,136,0.08)",
       }}
     >
       <span
