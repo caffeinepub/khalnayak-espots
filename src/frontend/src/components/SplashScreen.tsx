@@ -29,7 +29,8 @@ export function SplashScreen() {
         position: "fixed",
         inset: 0,
         zIndex: 9999,
-        background: "#000000",
+        background:
+          "linear-gradient(160deg, #0a0a0a 0%, #111111 50%, #1a1a1a 100%)",
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
@@ -38,6 +39,7 @@ export function SplashScreen() {
         transition: "opacity 0.6s ease",
         opacity: fading ? 0 : 1,
         pointerEvents: fading ? "none" : "all",
+        overflow: "hidden",
       }}
     >
       {/* Atmospheric grid */}
@@ -52,120 +54,118 @@ export function SplashScreen() {
         }}
       />
 
-      {/* Center logo — slide down + fade in */}
+      {/* Radial glow behind hero text */}
+      <div
+        style={{
+          position: "absolute",
+          top: "50%",
+          left: "50%",
+          transform: "translate(-50%, -58%)",
+          width: "min(500px, 90vw)",
+          height: "min(300px, 50vw)",
+          background:
+            "radial-gradient(ellipse, rgba(0,255,136,0.12) 0%, rgba(0,255,136,0.04) 40%, transparent 70%)",
+          pointerEvents: "none",
+          zIndex: 0,
+        }}
+      />
+
+      {/* Main content block — slide in + scale */}
       <div
         style={{
           position: "relative",
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
-          gap: 20,
+          gap: 16,
           zIndex: 1,
           animation:
-            "splashSlideIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both",
+            "splashContentIn 0.65s cubic-bezier(0.34, 1.56, 0.64, 1) both",
+          textAlign: "center",
         }}
       >
-        {/* Pulsing glow ring */}
-        <div style={{ position: "relative", display: "inline-flex" }}>
-          <div
-            style={{
-              position: "absolute",
-              inset: "-24px",
-              borderRadius: "50%",
-              border: "1px solid rgba(0,255,136,0.15)",
-              animation: "splash-pulse-ring 2s ease-in-out infinite",
-            }}
-          />
-          <div
-            style={{
-              position: "absolute",
-              inset: "-10px",
-              borderRadius: "50%",
-              border: "1.5px solid rgba(0,255,136,0.4)",
-              boxShadow: "0 0 32px rgba(0,255,136,0.3)",
-              animation: "splash-glow-ring 2s ease-in-out infinite",
-            }}
-          />
-          {/* Logo circle container */}
-          <div
-            style={{
-              width: 120,
-              height: 120,
-              borderRadius: "50%",
-              background: "rgba(0,255,136,0.06)",
-              border: "2px solid rgba(0,255,136,0.3)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              boxShadow: "0 0 40px rgba(0,255,136,0.2)",
-            }}
-          >
-            <span
-              style={{
-                fontFamily: "'Orbitron', sans-serif",
-                fontWeight: 900,
-                fontSize: 36,
-                color: "#00FF88",
-                textShadow:
-                  "0 0 20px rgba(0,255,136,1), 0 0 40px rgba(0,255,136,0.6)",
-                letterSpacing: "-2px",
-                lineHeight: 1,
-              }}
-            >
-              KL
-            </span>
-          </div>
+        {/* Fire emojis row */}
+        <div
+          style={{
+            fontSize: "clamp(20px, 5vw, 28px)",
+            lineHeight: 1,
+            letterSpacing: "0.5em",
+            paddingLeft: "0.5em",
+          }}
+        >
+          🔥🔥🔥
         </div>
 
-        {/* Brand name */}
-        <div style={{ textAlign: "center" }}>
-          <div
-            style={{
-              fontFamily: "'Orbitron', sans-serif",
-              fontWeight: 900,
-              fontSize: "clamp(18px, 5vw, 26px)",
-              letterSpacing: "0.1em",
-              textTransform: "uppercase",
-              lineHeight: 1.1,
-            }}
-          >
+        {/* KHALNAYAK hero text */}
+        <h1
+          style={{
+            fontFamily: "'Orbitron', sans-serif",
+            fontWeight: 900,
+            fontSize: "clamp(36px, 12vw, 72px)",
+            color: "#00FF88",
+            textTransform: "uppercase",
+            letterSpacing: "0.05em",
+            lineHeight: 1,
+            margin: 0,
+            animation: "khalnayakGlow 1.8s ease-in-out infinite",
+          }}
+        >
+          KHALNAYAK
+        </h1>
+
+        {/* KL ESPORTS LIFE sub text */}
+        <p
+          style={{
+            fontFamily: "'Rajdhani', sans-serif",
+            fontWeight: 600,
+            fontSize: "clamp(14px, 4vw, 20px)",
+            color: "#e8e8e8",
+            letterSpacing: "0.25em",
+            textTransform: "uppercase",
+            margin: 0,
+          }}
+        >
+          KL ESPORTS LIFE
+        </p>
+
+        {/* Tagline */}
+        <p
+          style={{
+            fontFamily: "'Rajdhani', sans-serif",
+            fontSize: 12,
+            fontWeight: 500,
+            letterSpacing: "3px",
+            textTransform: "uppercase",
+            color: "#888888",
+            margin: 0,
+          }}
+        >
+          India&apos;s Premier Gaming Platform
+        </p>
+
+        {/* Gaming icons with staggered bounce */}
+        <div
+          style={{
+            display: "flex",
+            gap: "clamp(16px, 4vw, 28px)",
+            marginTop: 8,
+          }}
+        >
+          {(["🎮", "🏆", "🔫"] as const).map((icon, i) => (
             <span
+              key={icon}
               style={{
-                color: "#00FF88",
-                textShadow:
-                  "0 0 15px rgba(0,255,136,0.9), 0 0 30px rgba(0,255,136,0.5)",
+                fontSize: "clamp(24px, 6vw, 36px)",
+                display: "inline-block",
+                animation: `splashBounce 1.2s ease-in-out ${i * 0.15}s infinite`,
               }}
             >
-              KL
-            </span>{" "}
-            <span
-              style={{
-                background: "linear-gradient(90deg, #9d4edd, #c77dff)",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-                backgroundClip: "text",
-                filter: "drop-shadow(0 0 8px rgba(157,78,221,0.7))",
-              }}
-            >
-              Esports Life
+              {icon}
             </span>
-          </div>
-          <p
-            style={{
-              fontFamily: "'Rajdhani', sans-serif",
-              fontSize: 12,
-              fontWeight: 500,
-              letterSpacing: "3px",
-              textTransform: "uppercase",
-              color: "rgba(148,163,184,0.7)",
-              marginTop: 8,
-            }}
-          >
-            India's Premier Gaming Platform
-          </p>
+          ))}
         </div>
 
-        {/* Live clock on splash screen */}
+        {/* Live clock */}
         <SplashClock />
       </div>
 
@@ -180,6 +180,19 @@ export function SplashScreen() {
           zIndex: 1,
         }}
       >
+        <p
+          style={{
+            fontFamily: "'Rajdhani', sans-serif",
+            fontSize: 11,
+            color: "rgba(0,255,136,0.6)",
+            textAlign: "center",
+            letterSpacing: "3px",
+            textTransform: "uppercase",
+            marginBottom: 6,
+          }}
+        >
+          Loading...
+        </p>
         <div
           style={{
             height: "2px",
@@ -201,17 +214,28 @@ export function SplashScreen() {
       </div>
 
       <style>{`
-        @keyframes splashSlideIn {
-          0% { opacity: 0; transform: translateY(-32px) scale(0.92); }
-          100% { opacity: 1; transform: translateY(0) scale(1); }
+        @keyframes splashContentIn {
+          0% { opacity: 0; transform: scale(0.85); }
+          100% { opacity: 1; transform: scale(1); }
         }
-        @keyframes splash-pulse-ring {
-          0%, 100% { transform: scale(1); opacity: 0.4; }
-          50% { transform: scale(1.12); opacity: 0.1; }
+        @keyframes khalnayakGlow {
+          0%, 100% {
+            text-shadow:
+              0 0 20px rgba(0,255,136,1),
+              0 0 40px rgba(0,255,136,0.6),
+              0 0 80px rgba(0,255,136,0.3);
+          }
+          50% {
+            text-shadow:
+              0 0 30px rgba(0,255,136,1),
+              0 0 60px rgba(0,255,136,0.9),
+              0 0 120px rgba(0,255,136,0.5);
+          }
         }
-        @keyframes splash-glow-ring {
-          0%, 100% { box-shadow: 0 0 24px rgba(0,255,136,0.35); }
-          50% { box-shadow: 0 0 40px rgba(0,255,136,0.65); }
+        @keyframes splashBounce {
+          0%, 100% { transform: translateY(0) scale(1); }
+          40% { transform: translateY(-10px) scale(1.15); }
+          60% { transform: translateY(-5px) scale(1.05); }
         }
         @keyframes splash-load-bar {
           from { width: 0%; }
