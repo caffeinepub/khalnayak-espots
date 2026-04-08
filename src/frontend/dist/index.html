@@ -1,102 +1,17 @@
+<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-    <meta http-equiv="Cache-Control" content="public, max-age=3600" />
-
-    <!-- Primary Meta -->
-    <meta name="description" content="KL TOURNAMENTS - Free Fire Tournament Platform. Compete, win prizes, and dominate the battleground!" />
-    <meta name="keywords" content="free fire, tournament, esports, gaming, battle royale, prizes, KL tournaments" />
-    <meta name="author" content="KL Softwer" />
-    <meta name="robots" content="index, follow" />
-
-    <!-- PWA Manifest -->
-    <link rel="manifest" href="/manifest.json" />
-
-    <!-- PWA Theme -->
-    <meta name="theme-color" content="#0A0A0A" />
-    <meta name="background-color" content="#000000" />
-    <meta name="mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="apple-mobile-web-app-title" content="KL" />
-    <meta name="application-name" content="KL TOURNAMENTS" />
-    <meta name="msapplication-TileColor" content="#000000" />
-    <meta name="msapplication-TileImage" content="/assets/generated/kl-icon-192.dim_192x192.png" />
-    <meta name="msapplication-tap-highlight" content="no" />
-
-    <!-- Apple Touch Icons (iOS PWA) -->
-    <link rel="apple-touch-icon" href="/assets/generated/kl-icon-192.dim_192x192.png" />
-    <link rel="apple-touch-icon" sizes="64x64" href="/assets/generated/kl-icon-64.dim_64x64.png" />
-    <link rel="apple-touch-icon" sizes="128x128" href="/assets/generated/kl-icon-128.dim_128x128.png" />
-    <link rel="apple-touch-icon" sizes="192x192" href="/assets/generated/kl-icon-192.dim_192x192.png" />
-    <link rel="apple-touch-icon" sizes="512x512" href="/assets/generated/kl-icon-512.dim_512x512.png" />
-
-    <!-- Apple Splash Screen -->
-    <link rel="apple-touch-startup-image" href="/assets/generated/kl-splash.dim_1080x1920.png" />
-
-    <!-- Favicon -->
-    <link rel="icon" type="image/png" sizes="64x64" href="/assets/generated/kl-icon-64.dim_64x64.png" />
-    <link rel="icon" type="image/png" sizes="128x128" href="/assets/generated/kl-icon-128.dim_128x128.png" />
-    <link rel="icon" type="image/png" sizes="192x192" href="/assets/generated/kl-icon-192.dim_192x192.png" />
-    <link rel="icon" type="image/png" sizes="512x512" href="/assets/generated/kl-icon-512.dim_512x512.png" />
-    <link rel="shortcut icon" href="/assets/generated/kl-icon-192.dim_192x192.png" />
-
-    <!-- Open Graph / Social -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>App</title>
+    <meta name="description" content="Built with caffeine.ai" />
+    <meta property="og:title" content="App" />
+    <meta property="og:description" content="Built with caffeine.ai" />
     <meta property="og:type" content="website" />
-    <meta property="og:title" content="KL TOURNAMENTS - Free Fire Tournament Platform" />
-    <meta property="og:description" content="Compete in Free Fire tournaments, win real prizes, and dominate the battleground!" />
-    <meta property="og:image" content="/assets/generated/kl-icon-512.dim_512x512.png" />
-    <meta property="og:site_name" content="KL TOURNAMENTS" />
-    <meta property="og:url" content="https://khalnayak-espots-8pl.caffeine.xyz" />
-
-    <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="KL TOURNAMENTS" />
-    <meta name="twitter:description" content="Free Fire Tournament Platform - Compete, Win, Dominate!" />
-    <meta name="twitter:image" content="/assets/generated/kl-icon-512.dim_512x512.png" />
-
-    <!-- Google AdSense -->
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9216368060577966"
-      crossorigin="anonymous"></script>
-
-    <!-- Preconnect for performance -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Rajdhani:wght@300;400;500;600;700&family=Fira+Code:wght@300;400;500;600;700&display=swap"
-      rel="stylesheet"
-    />
-
-    <!-- Service Worker Registration -->
-    <script>
-      if ('serviceWorker' in navigator) {
-        window.addEventListener('load', function() {
-          // Register main service worker (sw.js)
-          navigator.serviceWorker.register('/sw.js', { scope: '/' })
-            .then(function(registration) {
-              console.log('[SW] sw.js Registered:', registration.scope);
-              registration.update();
-            })
-            .catch(function(err) {
-              console.log('[SW] sw.js Registration failed:', err);
-            });
-
-          // Register PWABuilder service worker (service-worker.js)
-          navigator.serviceWorker.register('/service-worker.js', { scope: '/' })
-            .then(function(registration) {
-              console.log('[SW] service-worker.js Registered:', registration.scope);
-            })
-            .catch(function(err) {
-              console.log('[SW] service-worker.js Registration failed:', err);
-            });
-        });
-      }
-    </script>
-
-    <title>KL TOURNAMENTS</title>
-    <script type="module" crossorigin src="/assets/index-DdfCp5VG.js"></script>
-    <link rel="stylesheet" crossorigin href="/assets/index-8MIXX0Py.css">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <script type="module" crossorigin src="/assets/index-D-73V9ez.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-Dz3wn-Jw.css">
   </head>
   <body>
     <div id="root"></div>

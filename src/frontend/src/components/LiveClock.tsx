@@ -97,8 +97,8 @@ export function LiveClock() {
           alignItems: "center",
           gap: 10,
           padding: "8px 14px",
-          background: "rgba(0,0,0,0.03)",
-          border: "1px solid rgba(0,255,136,0.18)",
+          background: "#F5F5F5",
+          border: "1px solid rgba(0,255,136,0.25)",
           borderRadius: 12,
           margin: "0 16px 12px 16px",
           flexWrap: "wrap",
@@ -178,7 +178,7 @@ export function LiveClock() {
           className={`clock-time-base${pulse ? " clock-time-pulse" : ""}`}
           style={{
             fontFamily: "'Courier New', 'Roboto Mono', monospace",
-            fontSize: "clamp(12px, 3.2vw, 16px)",
+            fontSize: "clamp(14px, 3.2vw, 16px)",
             color: "#00FF88",
             fontWeight: 800,
             letterSpacing: "0.06em",

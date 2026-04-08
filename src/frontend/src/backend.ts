@@ -220,7 +220,7 @@ export enum Variant_admin_player {
     player = "player"
 }
 export interface backendInterface {
-    _initializeAccessControlWithSecret(userSecret: string): Promise<void>;
+    _initializeAccessControl(): Promise<void>;
     adjustUserBalance(userId: Principal, amount: bigint): Promise<void>;
     approveDeposit(depositId: bigint): Promise<void>;
     approveTeamRegistration(registrationId: bigint): Promise<void>;
@@ -287,17 +287,17 @@ export interface backendInterface {
 import type { DepositRequest as _DepositRequest, NotificationRecord as _NotificationRecord, NotificationType as _NotificationType, Player as _Player, RegistrationStatus as _RegistrationStatus, Team as _Team, TeamRegistration as _TeamRegistration, Time as _Time, Tournament as _Tournament, TournamentStatus as _TournamentStatus, TournamentType as _TournamentType, Transaction as _Transaction, TransactionType as _TransactionType, UserProfile as _UserProfile, UserRole as _UserRole, Wallet as _Wallet, WithdrawalRequest as _WithdrawalRequest } from "./declarations/backend.did.d.ts";
 export class Backend implements backendInterface {
     constructor(private actor: ActorSubclass<_SERVICE>, private _uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, private _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, private processError?: (error: unknown) => never){}
-    async _initializeAccessControlWithSecret(arg0: string): Promise<void> {
+    async _initializeAccessControl(): Promise<void> {
         if (this.processError) {
             try {
-                const result = await this.actor._initializeAccessControlWithSecret(arg0);
+                const result = await this.actor._initializeAccessControl();
                 return result;
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor._initializeAccessControlWithSecret(arg0);
+            const result = await this.actor._initializeAccessControl();
             return result;
         }
     }

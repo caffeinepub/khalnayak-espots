@@ -1,4 +1,3 @@
-import type { Variant_admin_player } from "@/backend";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -148,6 +147,29 @@ export function ProfilePage() {
 
   return (
     <div className="container mx-auto py-6 px-4 max-w-2xl">
+      <style>{`
+        .tournament-tab-trigger {
+          font-family: 'Rajdhani', 'Orbitron', sans-serif;
+          font-size: 13px;
+          font-weight: 600;
+          color: #666666;
+          background: transparent;
+          border-radius: 7px;
+          padding: 6px 10px;
+          transition: none;
+          border: none;
+        }
+        .tournament-tab-trigger[data-state="active"] {
+          background: #00FF88 !important;
+          color: #000000 !important;
+          font-weight: 800 !important;
+          box-shadow: 0 2px 8px rgba(0,255,136,0.35);
+        }
+        .tournament-tab-trigger[data-state="inactive"] {
+          background: transparent !important;
+          color: #666666 !important;
+        }
+      `}</style>
       {/* Profile Card */}
       <Card
         className="gaming-card mb-6"
@@ -732,8 +754,9 @@ export function ProfilePage() {
       <Card
         className="gaming-card"
         style={{
-          background: "rgba(10,10,10,0.9)",
-          border: "1.5px solid rgba(0,255,136,0.15)",
+          background: "#FFFFFF",
+          border: "1.5px solid #E5E7EB",
+          boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
         }}
       >
         <CardHeader className="pb-2">
@@ -746,14 +769,37 @@ export function ProfilePage() {
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="upcoming">
-            <TabsList className="w-full mb-4" style={{ background: "#F9F9F9" }}>
-              <TabsTrigger value="upcoming" data-ocid="profile.tab">
+            <TabsList
+              className="w-full mb-4"
+              style={{
+                background: "#F0F0F0",
+                padding: 3,
+                borderRadius: 10,
+                gap: 2,
+              }}
+            >
+              <TabsTrigger
+                value="upcoming"
+                data-ocid="profile.tab"
+                style={{ flex: 1 }}
+                className="tournament-tab-trigger"
+              >
                 Upcoming
               </TabsTrigger>
-              <TabsTrigger value="live" data-ocid="profile.tab">
+              <TabsTrigger
+                value="live"
+                data-ocid="profile.tab"
+                style={{ flex: 1 }}
+                className="tournament-tab-trigger"
+              >
                 Live
               </TabsTrigger>
-              <TabsTrigger value="completed" data-ocid="profile.tab">
+              <TabsTrigger
+                value="completed"
+                data-ocid="profile.tab"
+                style={{ flex: 1 }}
+                className="tournament-tab-trigger"
+              >
                 Completed
               </TabsTrigger>
             </TabsList>
@@ -783,8 +829,9 @@ export function ProfilePage() {
                             data-ocid={`profile.item.${idx + 1}`}
                             className="p-3 rounded-xl"
                             style={{
-                              background: "rgba(0,255,136,0.05)",
-                              border: "1px solid rgba(0,255,136,0.15)",
+                              background: "#F5F5F5",
+                              border: "1px solid #E5E7EB",
+                              boxShadow: "0 1px 4px rgba(0,0,0,0.05)",
                             }}
                           >
                             <div className="flex items-start justify-between gap-2">
@@ -793,7 +840,7 @@ export function ProfilePage() {
                                   className="text-sm font-bold"
                                   style={{
                                     fontFamily: "'Orbitron', sans-serif",
-                                    color: "white",
+                                    color: "#111827",
                                     fontSize: 11,
                                   }}
                                 >
@@ -812,24 +859,25 @@ export function ProfilePage() {
                                 style={{
                                   background:
                                     status === "live"
-                                      ? "rgba(255,68,68,0.2)"
+                                      ? "rgba(255,68,68,0.15)"
                                       : status === "completed"
-                                        ? "rgba(0,255,136,0.1)"
-                                        : "rgba(255,215,0,0.1)",
+                                        ? "rgba(0,180,96,0.12)"
+                                        : "rgba(13,110,253,0.1)",
                                   color:
                                     status === "live"
-                                      ? "#FF4444"
+                                      ? "#CC2222"
                                       : status === "completed"
-                                        ? "#00FF88"
-                                        : "#FFD700",
+                                        ? "#007744"
+                                        : "#0055CC",
                                   border: `1px solid ${
                                     status === "live"
-                                      ? "rgba(255,68,68,0.3)"
+                                      ? "rgba(204,34,34,0.3)"
                                       : status === "completed"
-                                        ? "rgba(0,255,136,0.2)"
-                                        : "rgba(255,215,0,0.2)"
+                                        ? "rgba(0,119,68,0.25)"
+                                        : "rgba(0,85,204,0.2)"
                                   }`,
                                   fontSize: 9,
+                                  fontWeight: 700,
                                   textTransform: "uppercase",
                                 }}
                               >

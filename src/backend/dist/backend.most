@@ -1,0 +1,137 @@
+// Version: 1.0.0
+type Data__791452850<K, V> =
+  {var count : Nat__490723111; kvs : [var ?(K, V)]};
+type DepositRequest__156460474 =
+  {
+    amount : Nat;
+    id : Nat;
+    status : {#approved; #pending; #rejected};
+    timestamp : Time__900049286;
+    userId : Principal
+  };
+type Int__270357528 = Int__616954475;
+type Int__616954475 = Int;
+type Internal__8484328<K, V> =
+  {children : [var ?Node__46230540<K, V>]; data : Data__791452850<K, V>};
+type Leaf__809889148<K, V> = {data : Data__791452850<K, V>};
+type Map__158565046<K, V> = Map__297112838<K, V>;
+type Map__297112838<K, V> =
+  {var root : Node__46230540<K, V>; var size : Nat__490723111};
+type Map__605269027<K, V> = Map__158565046<K, V>;
+type Nat__490723111 = Nat__920180692;
+type Nat__920180692 = Nat;
+type Node__46230540<K, V> =
+  {#internal : Internal__8484328<K, V>; #leaf : Leaf__809889148<K, V>};
+type NotificationRecord__941149763 =
+  {
+    id : Nat;
+    message : Text;
+    notificationType : NotificationType__754463539;
+    read : Bool;
+    timestamp : Time__900049286;
+    userId : Principal
+  };
+type NotificationType__754463539 =
+  {
+    #prizeCredited;
+    #registrationConfirmed;
+    #scoresUpdated;
+    #tournamentStarting
+  };
+type Player__3343875 = {freeFireId : Text; name : Text};
+type RegistrationStatus__34008622 = {#approved; #pending; #rejected};
+type TeamRegistration__452005834 =
+  {
+    captainId : Principal;
+    id : Nat;
+    status : RegistrationStatus__34008622;
+    teamId : Nat;
+    tournamentId : Nat
+  };
+type Team__97538390 =
+  {
+    captain : Principal;
+    id : Nat;
+    members : [Player__3343875];
+    name : Text;
+    substitutes : ?[Player__3343875]
+  };
+type Time__796480547 = Int__270357528;
+type Time__900049286 = Time__796480547;
+type TournamentScore__800583752 =
+  {id : Nat; kills : Nat; placementRank : Nat; totalPoints : Nat};
+type TournamentStatus__343791570 = {#completed; #ongoing; #upcoming};
+type TournamentType__581820666 = {#battleground; #custom4v4};
+type Tournament__586792266 =
+  {
+    createdBy : Principal;
+    entryFee : Nat;
+    id : Nat;
+    maxTeams : Nat;
+    name : Text;
+    prizePool : Nat;
+    roomId : ?Text;
+    roomPassword : ?Text;
+    startTime : Time__900049286;
+    status : TournamentStatus__343791570;
+    tournamentType : TournamentType__581820666
+  };
+type TransactionType__767491300 =
+  {#bonus; #deposit; #entryFee; #prize; #withdrawal};
+type Transaction__865268250 =
+  {
+    amount : Nat;
+    description : Text;
+    id : Nat;
+    timestamp : Time__900049286;
+    transactionType : TransactionType__767491300;
+    userId : Principal
+  };
+type UserProfile__491224006 =
+  {
+    banned : Bool;
+    email : Text;
+    referralCode : Text;
+    role : {#admin; #player};
+    username : Text
+  };
+type UserRole__1054455867 = {#admin; #guest; #user};
+type Wallet__442667382 =
+  {balance : Nat; transactions : [Transaction__865268250]};
+type WithdrawalRequest__57663818 =
+  {
+    amount : Nat;
+    id : Nat;
+    status : {#approved; #pending; #rejected};
+    timestamp : Time__900049286;
+    userId : Principal
+  };
+actor {
+  stable accessControlState :
+    {
+      var adminAssigned : Bool;
+      userRoles : Map__605269027<Principal, UserRole__1054455867>
+    };
+  stable internal :
+    {
+      deposits : Map__605269027<Nat, DepositRequest__156460474>;
+      notifications :
+        Map__605269027<Principal, [NotificationRecord__941149763]>;
+      teams : Map__605269027<Nat, Team__97538390>;
+      teamsRegistrations : Map__605269027<Nat, TeamRegistration__452005834>;
+      tournamentScores : Map__605269027<Nat, TournamentScore__800583752>;
+      tournaments : Map__605269027<Nat, Tournament__586792266>;
+      transactions : Map__605269027<Nat, Transaction__865268250>;
+      userProfiles : Map__605269027<Principal, UserProfile__491224006>;
+      wallets : Map__605269027<Principal, Wallet__442667382>;
+      withdrawals : Map__605269027<Nat, WithdrawalRequest__57663818>
+    };
+  stable var nextDepositRequestId : Nat;
+  stable var nextNotificationId : Nat;
+  stable var nextRegistrationId : Nat;
+  stable var nextScoreId : Nat;
+  stable var nextTeamId : Nat;
+  stable var nextTournamentId : Nat;
+  stable var nextTransactionId : Nat;
+  stable var nextWithdrawalRequestId : Nat
+};

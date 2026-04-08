@@ -127,7 +127,7 @@ export interface WithdrawalRequest {
   'amount' : bigint,
 }
 export interface _SERVICE {
-  '_initializeAccessControlWithSecret' : ActorMethod<[string], undefined>,
+  '_initializeAccessControl' : ActorMethod<[], undefined>,
   'adjustUserBalance' : ActorMethod<[Principal, bigint], undefined>,
   'approveDeposit' : ActorMethod<[bigint], undefined>,
   'approveTeamRegistration' : ActorMethod<[bigint], undefined>,

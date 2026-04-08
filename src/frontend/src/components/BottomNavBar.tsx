@@ -1,6 +1,5 @@
-import { Link, useRouter } from "@tanstack/react-router";
+import { Link, useRouterState } from "@tanstack/react-router";
 import { Coins, House, Trophy, User } from "lucide-react";
-import { useState } from "react";
 
 const navItems = [
   { to: "/", label: "HOME", icon: House, ocid: "bottom_nav.home.tab" },
@@ -20,9 +19,8 @@ const navItems = [
 ] as const;
 
 export function BottomNavBar() {
-  const router = useRouter();
-  const currentPath = router.state.location.pathname;
-  const [tapped, setTapped] = useState<string | null>(null);
+  const routerState = useRouterState();
+  const currentPath = routerState.location.pathname;
 
   const isActive = (to: string) => {
     if (to === "/") return currentPath === "/";
@@ -36,6 +34,7 @@ export function BottomNavBar() {
         background: "#ffffff",
         borderTop: "1px solid #e0e0e0",
         boxShadow: "0 -2px 12px rgba(0,0,0,0.08)",
+        touchAction: "manipulation",
       }}
       data-ocid="bottom_nav.panel"
       aria-label="Bottom navigation"
@@ -43,7 +42,6 @@ export function BottomNavBar() {
       <div className="flex items-stretch justify-around" style={{ height: 60 }}>
         {navItems.map(({ to, label, icon: Icon, ocid }) => {
           const active = isActive(to);
-          const isTapped = tapped === to;
           return (
             <Link
               key={to}
@@ -55,20 +53,11 @@ export function BottomNavBar() {
                 outline: "none",
                 minHeight: 44,
                 minWidth: 44,
-                transform: isTapped ? "scale(0.9)" : "scale(1.0)",
-                transition: "transform 0.1s ease",
-                filter:
-                  isTapped && active
-                    ? "drop-shadow(0 0 12px rgba(0,255,136,1))"
-                    : "none",
+                transition: "color 0.15s ease",
+                touchAction: "manipulation",
               }}
               data-ocid={ocid}
               aria-current={active ? "page" : undefined}
-              onMouseDown={() => setTapped(to)}
-              onMouseUp={() => setTapped(null)}
-              onMouseLeave={() => setTapped(null)}
-              onTouchStart={() => setTapped(to)}
-              onTouchEnd={() => setTapped(null)}
             >
               {/* Active top indicator */}
               {active && (

@@ -604,10 +604,10 @@ function MyMatchesPreview() {
           style={{
             fontFamily: "'Orbitron', 'Rajdhani', sans-serif",
             fontWeight: 900,
-            fontSize: "clamp(12px, 3.2vw, 15px)",
+            fontSize: "clamp(14px, 3.8vw, 18px)",
             textTransform: "uppercase",
             letterSpacing: "0.1em",
-            color: "#333333",
+            color: "#00FF88",
             display: "flex",
             alignItems: "center",
             gap: 6,
@@ -643,16 +643,19 @@ function MyMatchesPreview() {
             <div
               key={match.tournamentId}
               style={{
-                background: isLive ? "rgba(255,68,68,0.04)" : "#F8F8F8",
+                background: isLive ? "rgba(255,68,68,0.04)" : "#F5F5F5",
                 border: isLive
-                  ? "1px solid rgba(220,53,69,0.3)"
-                  : "1px solid #E0E0E0",
+                  ? "1.5px solid rgba(220,53,69,0.50)"
+                  : "1.5px solid rgba(0,255,136,0.35)",
                 borderRadius: 12,
                 padding: "12px 14px",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "space-between",
                 gap: 10,
+                boxShadow: isLive
+                  ? "0 2px 10px rgba(220,53,69,0.15)"
+                  : "0 2px 10px rgba(0,255,136,0.15)",
               }}
             >
               <div style={{ flex: 1, minWidth: 0 }}>
@@ -768,16 +771,19 @@ function MyMatchesPreview() {
             <div
               key={reg.tournamentId.toString()}
               style={{
-                background: isLive ? "rgba(255,68,68,0.04)" : "#F8F8F8",
+                background: isLive ? "rgba(255,68,68,0.04)" : "#F5F5F5",
                 border: isLive
-                  ? "1px solid rgba(220,53,69,0.3)"
-                  : "1px solid #E0E0E0",
+                  ? "1.5px solid rgba(220,53,69,0.50)"
+                  : "1.5px solid rgba(170,68,255,0.35)",
                 borderRadius: 12,
                 padding: "12px 14px",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "space-between",
                 gap: 10,
+                boxShadow: isLive
+                  ? "0 2px 10px rgba(220,53,69,0.15)"
+                  : "0 2px 10px rgba(170,68,255,0.15)",
               }}
             >
               <div style={{ flex: 1, minWidth: 0 }}>

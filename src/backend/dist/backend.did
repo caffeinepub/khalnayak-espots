@@ -1,0 +1,234 @@
+type WithdrawalRequest = 
+ record {
+   amount: nat;
+   id: nat;
+   status: variant {
+             approved;
+             pending;
+             rejected;
+           };
+   timestamp: Time;
+   userId: principal;
+ };
+type Wallet = 
+ record {
+   balance: nat;
+   transactions: vec Transaction;
+ };
+type UserRole = 
+ variant {
+   admin;
+   guest;
+   user;
+ };
+type UserProfile = 
+ record {
+   banned: bool;
+   email: text;
+   referralCode: text;
+   role: variant {
+           admin;
+           player;
+         };
+   username: text;
+ };
+type TransactionType = 
+ variant {
+   bonus;
+   deposit;
+   entryFee;
+   prize;
+   withdrawal;
+ };
+type Transaction = 
+ record {
+   amount: nat;
+   description: text;
+   id: nat;
+   timestamp: Time;
+   transactionType: TransactionType;
+   userId: principal;
+ };
+type TournamentType = 
+ variant {
+   battleground;
+   custom4v4;
+ };
+type TournamentStatus = 
+ variant {
+   completed;
+   ongoing;
+   upcoming;
+ };
+type TournamentScore = 
+ record {
+   id: nat;
+   kills: nat;
+   placementRank: nat;
+   totalPoints: nat;
+ };
+type Tournament = 
+ record {
+   createdBy: principal;
+   entryFee: nat;
+   id: nat;
+   maxTeams: nat;
+   name: text;
+   prizePool: nat;
+   roomId: opt text;
+   roomPassword: opt text;
+   startTime: Time;
+   status: TournamentStatus;
+   tournamentType: TournamentType;
+ };
+type Time = int;
+type TeamRegistration = 
+ record {
+   captainId: principal;
+   id: nat;
+   status: RegistrationStatus;
+   teamId: nat;
+   tournamentId: nat;
+ };
+type Team = 
+ record {
+   captain: principal;
+   id: nat;
+   members: vec Player;
+   name: text;
+   substitutes: opt vec Player;
+ };
+type RegistrationStatus = 
+ variant {
+   approved;
+   pending;
+   rejected;
+ };
+type PrizeDistribution = 
+ record {
+   firstPlace: nat;
+   highKills: nat;
+   mostKills: nat;
+   remaining: nat;
+   secondPlace: nat;
+   thirdPlace: nat;
+   tournamentId: nat;
+ };
+type Player = 
+ record {
+   freeFireId: text;
+   name: text;
+ };
+type NotificationType = 
+ variant {
+   prizeCredited;
+   registrationConfirmed;
+   scoresUpdated;
+   tournamentStarting;
+ };
+type NotificationRecord = 
+ record {
+   id: nat;
+   message: text;
+   notificationType: NotificationType;
+   read: bool;
+   timestamp: Time;
+   userId: principal;
+ };
+type LeaderboardEntry = 
+ record {
+   kills: nat;
+   placementRank: nat;
+   teamId: nat;
+   totalPoints: nat;
+ };
+type DepositRequest = 
+ record {
+   amount: nat;
+   id: nat;
+   status: variant {
+             approved;
+             pending;
+             rejected;
+           };
+   timestamp: Time;
+   userId: principal;
+ };
+service : {
+  _initializeAccessControl: () -> ();
+  adjustUserBalance: (userId: principal, amount: int) -> ();
+  approveDeposit: (depositId: nat) -> ();
+  approveTeamRegistration: (registrationId: nat) -> ();
+  approveWithdrawal: (withdrawalId: nat) -> ();
+  assignCallerUserRole: (user: principal, role: UserRole) -> ();
+  banUser: (userId: principal) -> ();
+  createTournament: (name: text, tournamentType: TournamentType, entryFee:
+   nat, maxTeams: nat, startTime: Time) -> (nat);
+  distributePrizes: (tournamentId: nat) -> ();
+  getAllNotifications: () ->
+   (vec record {
+          principal;
+          vec NotificationRecord;
+        }) query;
+  getAllTransactions: () -> (vec Transaction) query;
+  getAllUsers: () -> (vec UserProfile) query;
+  getCallerDepositRequests: () -> (vec DepositRequest) query;
+  getCallerNotifications: () -> (vec NotificationRecord) query;
+  getCallerStats: () ->
+   (record {
+      totalWinnings: nat;
+      tournamentsParticipated: nat;
+    }) query;
+  getCallerTeamRegistrations: () -> (vec TeamRegistration) query;
+  getCallerTransactions: () -> (vec Transaction) query;
+  getCallerUserProfile: () -> (opt UserProfile) query;
+  getCallerUserRole: () -> (UserRole) query;
+  getCallerWallet: () -> (opt Wallet) query;
+  getCallerWithdrawalRequests: () -> (vec WithdrawalRequest) query;
+  getDepositRequests: () -> (vec DepositRequest) query;
+  getFutureTournamentStartTimes: () -> (vec Time) query;
+  getLeaderboard: (tournamentId: nat) -> (vec LeaderboardEntry) query;
+  getPlatformStats: () ->
+   (record {
+      totalPlayers: nat;
+      totalPrizeDistributed: nat;
+      totalTournaments: nat;
+    }) query;
+  getPrizeDistributions: () -> (vec PrizeDistribution) query;
+  getRegistrationsByTournament: (tournamentId: nat) ->
+   (vec TeamRegistration) query;
+  getTeamRegistrations: () -> (vec TeamRegistration) query;
+  getTeams: () -> (vec Team) query;
+  getTournamentById: (tournamentId: nat) -> (opt Tournament) query;
+  getTournamentScores: () -> (vec TournamentScore) query;
+  getTournaments: () -> (vec Tournament) query;
+  getTransactionsByType: (transactionType: TransactionType) ->
+   (vec Transaction) query;
+  getTransactionsByUserId: (userId: principal) -> (vec Transaction) query;
+  getUserBalances: () -> (vec nat) query;
+  getUserProfile: (user: principal) -> (opt UserProfile) query;
+  getUserStats: (userId: principal) ->
+   (record {
+      totalWinnings: nat;
+      tournamentsParticipated: nat;
+    }) query;
+  getWalletByUserId: (userId: principal) -> (opt Wallet) query;
+  getWallets: () -> (vec Wallet) query;
+  getWithdrawalRequests: () -> (vec WithdrawalRequest) query;
+  isCallerAdmin: () -> (bool) query;
+  markNotificationAsRead: (notificationId: nat) -> ();
+  registerTeam: (tournamentId: nat, teamName: text, members: vec Player,
+   substitutes: opt vec Player) -> (nat);
+  rejectDeposit: (depositId: nat) -> ();
+  rejectTeamRegistration: (registrationId: nat) -> ();
+  rejectWithdrawal: (withdrawalId: nat) -> ();
+  saveCallerUserProfile: (profile: UserProfile) -> ();
+  unbanUser: (userId: principal) -> ();
+  updateTeamScore: (tournamentId: nat, teamId: nat, kills: nat,
+   placementRank: nat) -> ();
+  updateTournamentRoomCredentials: (tournamentId: nat, roomId: text,
+   roomPassword: text) -> ();
+  updateTournamentStatus: (tournamentId: nat, status: TournamentStatus) -> ();
+  userDeposit: (amount: nat) -> (DepositRequest);
+  userWithdraw: (amount: nat) -> (WithdrawalRequest);
+}

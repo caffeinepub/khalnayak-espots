@@ -8,8 +8,8 @@ import Principal "mo:core/Principal";
 import Text "mo:core/Text";
 import Nat "mo:core/Nat";
 import Int "mo:core/Int";
-import AccessControl "authorization/access-control";
-import MixinAuthorization "authorization/MixinAuthorization";
+import AccessControl "mo:caffeineai-authorization/access-control";
+import MixinAuthorization "mo:caffeineai-authorization/MixinAuthorization";
 
 actor {
   type TournamentType = { #battleground; #custom4v4 };

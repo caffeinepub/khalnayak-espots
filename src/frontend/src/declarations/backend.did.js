@@ -144,7 +144,7 @@ export const TournamentScore = IDL.Record({
 });
 
 export const idlService = IDL.Service({
-  '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
+  '_initializeAccessControl' : IDL.Func([], [], []),
   'adjustUserBalance' : IDL.Func([IDL.Principal, IDL.Int], [], []),
   'approveDeposit' : IDL.Func([IDL.Nat], [], []),
   'approveTeamRegistration' : IDL.Func([IDL.Nat], [], []),
@@ -423,7 +423,7 @@ export const idlFactory = ({ IDL }) => {
   });
   
   return IDL.Service({
-    '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
+    '_initializeAccessControl' : IDL.Func([], [], []),
     'adjustUserBalance' : IDL.Func([IDL.Principal, IDL.Int], [], []),
     'approveDeposit' : IDL.Func([IDL.Nat], [], []),
     'approveTeamRegistration' : IDL.Func([IDL.Nat], [], []),
